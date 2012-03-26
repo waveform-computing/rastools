@@ -10,6 +10,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.cm as cm
 import numpy as np
+from collections import namedtuple
+
+Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
 class RasExtractUtility(rastools.main.Utility):
     """%prog [options] ras-file channel-file
@@ -28,17 +31,26 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.set_defaults(
             cmap_list=False,
             show_axes=False,
+            show_colorbar=False,
+            show_histogram=False,
             cmap='gray',
-            clip=100.0,
+            crop='0,0,0,0',
+            percentile=100.0,
         )
         self.parser.add_option('--help-cmap', dest='cmap_list', action='store_true',
             help="""list the available color-maps""")
-        self.parser.add_option('-c', '--cmap', dest='cmap', action='store',
+        self.parser.add_option('-c', '--color-map', dest='cmap', action='store',
             help="""the color-map to use in output (e.g. gray, jet, hot)""")
-        self.parser.add_option('-p', '--percentile', dest='clip', action='store',
-            help="""clip values in the output image to n% of the input values""")
+        self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
+            help="""clip values in the output image to the specified percentile""")
         self.parser.add_option('-a', '--axes', dest='show_axes', action='store_true',
             help="""display the coordinate axes in the output""")
+        self.parser.add_option('-b', '--color-bar', dest='show_colorbar', action='store_true',
+            help="""draw a color-bar showing the range of the color-map to the right of the output""")
+        self.parser.add_option('-H', '--histogram', dest='show_histogram', action='store_true',
+            help="""draw a histogram of the channel values below the output""")
+        self.parser.add_option('-C', '--crop', dest='crop', action='store',
+            help="""crop the input data by top,left,bottom,right points""")
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
@@ -55,7 +67,7 @@ class RasExtractUtility(rastools.main.Utility):
             ras_f = rastools.rasfile.RasFileReader(sys.stdin, verbose=options.loglevel<logging.WARNING)
         else:
             ras_f = rastools.rasfile.RasFileReader(args[0], verbose=options.loglevel<logging.WARNING)
-        # Parse the channels spec
+        # Parse the channels definition file
         if args[1] == '-':
             if args[0] == '-':
                 raise IOError('you cannot specify stdin for both files!')
@@ -83,51 +95,100 @@ class RasExtractUtility(rastools.main.Utility):
         channel_map.sort()
         # Check the clip level is a valid percentage
         try:
-            options.clip = float(options.clip)
+            options.percentile = float(options.percentile)
         except ValueError:
-            self.parser.error('%s is not a valid percentile clip level' % options.clip)
-        if not (0 <= options.clip <= 100.0):
-            self.parser.error('percentile clip level must be between 0 and 100 (%f specified)' % options.clip)
+            self.parser.error('%s is not a valid percentile' % options.percentile)
+        if not (0 <= options.percentile <= 100.0):
+            self.parser.error('percentile must be between 0 and 100 (%f specified)' % options.percentile)
         # Check the colormap is known
         if not cm.get_cmap(options.cmap):
             self.parser.error('color-map %s is invalid' % options.cmap)
+        # Check the crop values
+        try:
+            options.crop = options.crop.split(',', 4)
+        except ValueError:
+            self.parser.error('you must specify 4 integer values for the --crop option')
+        try:
+            options.crop = Crop(*[int(i) for i in options.crop])
+        except ValueError:
+            self.parser.error('non-integer values found in --crop value %s' % ','.join(options.crop))
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
             ras_f.channel_count,
             ','.join(str(channel) for (channel, _, _) in channel_map)
         ))
         for (channel, name, filename) in channel_map:
+            # Perform any cropping requested. This must be done before
+            # calculation of the data's range and percentile limiting is
+            # performed for obvious reasons
+            data = ras_f.channels[channel]
+            data = data[
+                options.crop.top:data.shape[0] - options.crop.bottom,
+                options.crop.left:data.shape[1] - options.crop.right
+            ]
             # Find the minimum and maximum values in the channel and clip them
             # to a percentile if required
-            vsorted = np.sort(ras_f.channels[channel], None)
+            vsorted = np.sort(data, None)
             vmin = vsorted[0]
             vmax = vsorted[-1]
-            if options.clip < 100.0:
-                vmax = vsorted[round(options.clip * len(vsorted) / 100.0)]
+            if options.percentile < 100.0:
+                vmax = vsorted[round(options.percentile * len(vsorted) / 100.0)]
             if vmin == vmax:
                 logging.warning('Channel %d (%s) is empty, skipping' % (channel, name))
             else:
-                # Generate a normalized version of the channel with floating
-                # point values between 0.0 and 1.0
                 logging.info('Writing channel %d (%s) to %s' % (channel, name, filename))
-                data = np.array(ras_f.channels[channel], np.float)
+                # Copy the data into a floating-point array (matplotlib's image
+                # module won't play with uint32 data - only uint8 or float32)
+                # and crop it as necessary
+                data = np.array(data, np.float)
+                # Calculate the figure dimensions and margins, and construct
+                # the necessary objects
                 dpi = 72.0
-                (width, height) = (ras_f.point_count / dpi, ras_f.raster_count / dpi)
-                margins = (
-                    (0.0, 1.0)[options.show_axes], # left
-                    (0.0, 1.0)[options.show_axes], # bottom
-                    (0.0, 1.0)[options.show_axes], # right
-                    (0.0, 1.0)[options.show_axes], # top
+                (img_width, img_height) = (
+                    (ras_f.point_count - options.crop.left - options.crop.right) / dpi,
+                    (ras_f.raster_count - options.crop.top - options.crop.bottom) / dpi
                 )
-                fig = Figure(figsize=(width + margins[0] + margins[2], height + margins[1] + margins[3]), dpi=dpi)
+                (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
+                (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
+                margin = (0.0, 1.0)[options.show_axes or options.show_colorbar or options.show_histogram]
+                fig_width = img_width + margin * 2
+                fig_height = img_height + hist_height + cbar_height + margin * 2
+                fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
                 canvas = FigureCanvas(fig)
+                # Construct an axis in which to draw the channel data and draw
+                # it. The imshow() call takes care of clamping values with vmin
+                # and vmax and color-mapping. Interpolation is set manually to
+                # 'nearest' to avoid any blurring (after all, we're sizing the
+                # axis precisely to the image data so interpolation shouldn't
+                # be needed)
                 ax = fig.add_axes((
-                    (margins[0]) / (width + margins[0] + margins[2]),  # left
-                    (margins[1]) / (height + margins[1] + margins[3]), # bottom
-                    width / (width + margins[0] + margins[2]),         # width
-                    height / (height + margins[1] + margins[3]),       # height
+                    margin / fig_width,      # left
+                    (margin + hist_height + cbar_height) / fig_height, # bottom
+                    img_width / fig_width,   # width
+                    img_height / fig_height, # height
                 ), frame_on=options.show_axes)
+                if not options.show_axes:
+                    ax.set_axis_off()
                 img = ax.imshow(data, cmap=cm.get_cmap(options.cmap), vmin=vmin, vmax=vmax, interpolation='nearest')
+                # Construct an axis for the histogram, if requested
+                if options.show_histogram:
+                    hax = fig.add_axes((
+                        margin / fig_width,               # left
+                        (margin + cbar_height + hist_height * 0.1) / fig_height, # bottom
+                        hist_width / fig_width,           # width
+                        (hist_height * 0.8) / fig_height, # height
+                    ))
+                    hg = hax.hist(data.flat, 512, range=(vmin, vmax))
+                # Construct an axis for the colorbar, if requested
+                if options.show_colorbar:
+                    cax = fig.add_axes((
+                        margin / fig_width,               # left
+                        (margin + cbar_height * 0.25) / fig_height, # bottom
+                        cbar_width / fig_width,           # width
+                        (cbar_height * 0.5) / fig_height, # height
+                    ))
+                    cb = fig.colorbar(img, cax=cax, orientation='horizontal')
+                # Finally, dump the figure to disk as a PNG
                 canvas.print_figure(filename, dpi=dpi, format='png')
 
 main = RasExtractUtility()
