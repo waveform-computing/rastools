@@ -105,13 +105,13 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('color-map %s is unknown' % options.cmap)
         # Check the crop values
         try:
-            options.crop = options.crop.split(',', 4)
+            top, left, bottom, right = options.crop.split(',', 4)
         except ValueError:
             self.parser.error('you must specify 4 integer values for the --crop option')
         try:
-            options.crop = Crop(*[int(i) for i in options.crop])
+            options.crop = Crop(int(top), int(left), int(bottom), int(right))
         except ValueError:
-            self.parser.error('non-integer values found in --crop value %s' % ','.join(options.crop))
+            self.parser.error('non-integer values found in --crop value %s' % options.crop)
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
             ras_f.channel_count,
