@@ -94,9 +94,9 @@ class RasExtractUtility(rastools.main.Utility):
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
             ras_f.channel_count,
-            ','.join(str(channel) for (channel, filename) in channel_map)
+            ','.join(str(channel) for (channel, _, _) in channel_map)
         ))
-        for (channel, filename) in channel_map:
+        for (channel, name, filename) in channel_map:
             # Find the minimum and maximum values in the channel and clip them
             # to a percentile if required
             vsorted = np.sort(ras_f.channels[channel], None)
@@ -105,11 +105,11 @@ class RasExtractUtility(rastools.main.Utility):
             if options.clip < 100.0:
                 vmax = vsorted[round(options.clip * len(vsorted) / 100.0)]
             if vmin == vmax:
-                logging.warning('Channel %d is empty, skipping' % channel)
+                logging.warning('Channel %d (%s) is empty, skipping' % (channel, name))
             else:
                 # Generate a normalized version of the channel with floating
                 # point values between 0.0 and 1.0
-                logging.info('Writing channel %d to %s' % (channel, filename))
+                logging.info('Writing channel %d (%s) to %s' % (channel, name, filename))
                 data = np.array(ras_f.channels[channel], np.float)
                 dpi = 72.0
                 (width, height) = (ras_f.point_count / dpi, ras_f.raster_count / dpi)
@@ -128,7 +128,6 @@ class RasExtractUtility(rastools.main.Utility):
                     height / (height + margins[1] + margins[3]),       # height
                 ), frame_on=options.show_axes)
                 img = ax.imshow(data, cmap=cm.get_cmap(options.cmap), vmin=vmin, vmax=vmax, interpolation='nearest')
-                cb = fig.colorbar(img)
                 canvas.print_figure(filename, dpi=dpi, format='png')
 
 main = RasExtractUtility()
