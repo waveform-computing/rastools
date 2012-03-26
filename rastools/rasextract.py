@@ -102,7 +102,7 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('percentile must be between 0 and 100 (%f specified)' % options.percentile)
         # Check the colormap is known
         if not cm.get_cmap(options.cmap):
-            self.parser.error('color-map %s is invalid' % options.cmap)
+            self.parser.error('color-map %s is unknown' % options.cmap)
         # Check the crop values
         try:
             options.crop = options.crop.split(',', 4)
