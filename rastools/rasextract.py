@@ -177,7 +177,10 @@ class RasExtractUtility(rastools.main.Utility):
             ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
         ))
         if options.percentile < 100.0:
-            options.vmax_index = round(ras_f.raster_count * ras_f.point_count * options.percentile / 100.0)
+            options.vmax_index = round(
+                (ras_f.raster_count - options.crop.top - options.crop.bottom) *
+                (ras_f.point_count - options.crop.left - options.crop.right) *
+                options.percentile / 100.0)
             logging.info('%gth percentile is at index %d' % (options.percentile, options.vmax_index))
         if options.one_pdf:
             filename = ras_f.format(options.output)
