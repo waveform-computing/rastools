@@ -61,13 +61,15 @@ else:
     })
 try:
     from matplotlib.backends.backend_pdf import FigureCanvasPdf, PdfPages
+except ImportError:
+    pass
+else:
+    mpl.rc('pdf', use14corefonts=True, compression=True)
     IMAGE_FORMATS.update({
         # ext    canvas method                interpolation
         '.pdf':  (FigureCanvasPdf.print_pdf,  'bicubic'),
     })
     MULTI_PAGE_PDF=True
-except ImportError:
-    pass
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
