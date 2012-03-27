@@ -339,7 +339,7 @@ class RasChannel(object):
         self._channels.read_channels()
         return self._data
 
-    def format(self, template):
+    def format(self, template, **kwargs):
         return template.format(
             rasfile            =self._channels._reader._file.name,
             filename           =self._channels._reader.file_name,
@@ -369,4 +369,6 @@ class RasChannel(object):
             channel_enabled    =self.enabled,
             channel_min        =self.data.min(),
             channel_max        =self.data.max(),
+            now                =dt.datetime.now(),
+            **kwargs
         )

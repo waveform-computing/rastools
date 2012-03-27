@@ -37,6 +37,7 @@ class RasExtractUtility(rastools.main.Utility):
             crop='0,0,0,0',
             percentile=100.0,
             output='{filename_root}_{channel:02d}_{channel_name}.png',
+            title='',
         )
         self.parser.add_option('--help-cmap', dest='cmap_list', action='store_true',
             help="""list the available color-maps""")
@@ -53,7 +54,9 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
             help="""crop the input data by top,left,bottom,right points""")
         self.parser.add_option('-o', '--output', dest='output', action='store',
-            help="""specify the template used to generate the output filenames; supports {variables} produced by rasinfo -p. Default is %default""")
+            help="""specify the template used to generate the output filenames; supports {variables} produced by rasinfo -p (default is %default)""")
+        self.parser.add_option('-t', '--title', dest='title', action='store',
+            help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
@@ -102,83 +105,109 @@ class RasExtractUtility(rastools.main.Utility):
             vmax_index = round(ras_f.raster_count * ras_f.point_count * options.percentile / 100.0)
             logging.info('%gth percentile is at index %d' % (options.percentile, vmax_index))
         for channel in ras_f.channels:
-            # Perform any cropping requested. This must be done before
-            # calculation of the data's range and percentile limiting is
-            # performed for obvious reasons
-            filename = channel.format(options.output)
-            data = channel.data
-            data = data[
-                options.crop.top:data.shape[0] - options.crop.bottom,
-                options.crop.left:data.shape[1] - options.crop.right
-            ]
-            # Find the minimum and maximum values in the channel and clip them
-            # to a percentile if required
-            vsorted = np.sort(data, None)
-            vmin = vsorted[0]
-            vmax = vsorted[-1]
-            logging.info('Channel %d (%s) has range %d-%d' % (channel.index, channel.name, vmin, vmax))
-            if options.percentile < 100.0:
-                pmax = vsorted[vmax_index]
-                logging.info('%gth percentile is %d' % (options.percentile, pmax))
-                if pmax != vmax:
-                    vmax = pmax
-                    logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, vmax))
-            if vmin == vmax:
-                logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
-            else:
-                logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
-                # Copy the data into a floating-point array (matplotlib's image
-                # module won't play with uint32 data - only uint8 or float32)
-                # and crop it as necessary
-                data = np.array(data, np.float)
-                # Calculate the figure dimensions and margins, and construct
-                # the necessary objects
-                dpi = 72.0
-                (img_width, img_height) = (
-                    (ras_f.point_count - options.crop.left - options.crop.right) / dpi,
-                    (ras_f.raster_count - options.crop.top - options.crop.bottom) / dpi
-                )
-                (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
-                (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
-                margin = (0.0, 1.0)[options.show_axes or options.show_colorbar or options.show_histogram]
-                fig_width = img_width + margin * 2
-                fig_height = img_height + hist_height + cbar_height + margin * 2
-                fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-                canvas = FigureCanvas(fig)
-                # Construct an axis in which to draw the channel data and draw
-                # it. The imshow() call takes care of clamping values with vmin
-                # and vmax and color-mapping. Interpolation is set manually to
-                # 'nearest' to avoid any blurring (after all, we're sizing the
-                # axis precisely to the image data so interpolation shouldn't
-                # be needed)
-                ax = fig.add_axes((
-                    margin / fig_width,      # left
-                    (margin + hist_height + cbar_height) / fig_height, # bottom
-                    img_width / fig_width,   # width
-                    img_height / fig_height, # height
-                ), frame_on=options.show_axes)
-                if not options.show_axes:
-                    ax.set_axis_off()
-                img = ax.imshow(data, cmap=cm.get_cmap(options.cmap), vmin=vmin, vmax=vmax, interpolation='nearest')
-                # Construct an axis for the histogram, if requested
-                if options.show_histogram:
-                    hax = fig.add_axes((
-                        margin / fig_width,               # left
-                        (margin + cbar_height + hist_height * 0.1) / fig_height, # bottom
-                        hist_width / fig_width,           # width
-                        (hist_height * 0.8) / fig_height, # height
-                    ))
-                    hg = hax.hist(data.flat, 512, range=(vmin, vmax))
-                # Construct an axis for the colorbar, if requested
-                if options.show_colorbar:
-                    cax = fig.add_axes((
-                        margin / fig_width,               # left
-                        (margin + cbar_height * 0.25) / fig_height, # bottom
-                        cbar_width / fig_width,           # width
-                        (cbar_height * 0.5) / fig_height, # height
-                    ))
-                    cb = fig.colorbar(img, cax=cax, orientation='horizontal')
-                # Finally, dump the figure to disk as a PNG
-                canvas.print_figure(filename, dpi=dpi, format='png')
+            if channel.enabled:
+                # Perform any cropping requested. This must be done before
+                # calculation of the data's range and percentile limiting is
+                # performed for obvious reasons
+                filename = channel.format(options.output)
+                data = channel.data
+                data = data[
+                    options.crop.top:data.shape[0] - options.crop.bottom,
+                    options.crop.left:data.shape[1] - options.crop.right
+                ]
+                # Find the minimum and maximum values in the channel and clip
+                # them to a percentile if required
+                vsorted = np.sort(data, None)
+                vmin = vsorted[0]
+                vmax = vsorted[-1]
+                logging.info('Channel %d (%s) has range %d-%d' % (channel.index, channel.name, vmin, vmax))
+                if options.percentile < 100.0:
+                    pmax = vsorted[vmax_index]
+                    logging.info('%gth percentile is %d' % (options.percentile, pmax))
+                    if pmax != vmax:
+                        vmax = pmax
+                        logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, vmax))
+                if vmin == vmax:
+                    logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
+                else:
+                    logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
+                    # Copy the data into a floating-point array (matplotlib's
+                    # image module won't play with uint32 data - only uint8 or
+                    # float32) and crop it as necessary
+                    data = np.array(data, np.float)
+                    # Calculate the figure dimensions and margins, and
+                    # construct the necessary objects
+                    dpi = 72.0
+                    (img_width, img_height) = (
+                        (ras_f.point_count - options.crop.left - options.crop.right) / dpi,
+                        (ras_f.raster_count - options.crop.top - options.crop.bottom) / dpi
+                    )
+                    (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
+                    (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
+                    (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(options.title)]
+                    margin = (0.0, 0.75)[
+                        options.show_axes
+                        or options.show_colorbar
+                        or options.show_histogram
+                        or bool(options.title)]
+                    fig_width = img_width + margin * 2
+                    fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
+                    fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
+                    canvas = FigureCanvas(fig)
+                    # Construct an axis in which to draw the channel data and
+                    # draw it. The imshow() call takes care of clamping values
+                    # with vmin and vmax and color-mapping. Interpolation is
+                    # set manually to 'nearest' to avoid any blurring (after
+                    # all, we're sizing the axis precisely to the image data so
+                    # interpolation shouldn't be needed)
+                    ax = fig.add_axes((
+                        margin / fig_width,      # left
+                        (margin + hist_height + cbar_height) / fig_height, # bottom
+                        img_width / fig_width,   # width
+                        img_height / fig_height, # height
+                    ), frame_on=options.show_axes)
+                    if not options.show_axes:
+                        ax.set_axis_off()
+                    img = ax.imshow(data, cmap=cm.get_cmap(options.cmap), vmin=vmin, vmax=vmax, interpolation='nearest')
+                    # Construct an axis for the histogram, if requested
+                    if options.show_histogram:
+                        hax = fig.add_axes((
+                            margin / fig_width,               # left
+                            (margin + cbar_height + hist_height * 0.1) / fig_height, # bottom
+                            hist_width / fig_width,           # width
+                            (hist_height * 0.8) / fig_height, # height
+                        ))
+                        hg = hax.hist(data.flat, 512, range=(vmin, vmax))
+                    # Construct an axis for the colorbar, if requested
+                    if options.show_colorbar:
+                        cax = fig.add_axes((
+                            margin / fig_width,               # left
+                            (margin + cbar_height * 0.25) / fig_height, # bottom
+                            cbar_width / fig_width,           # width
+                            (cbar_height * 0.5) / fig_height, # height
+                        ))
+                        cb = fig.colorbar(img, cax=cax, orientation='horizontal')
+                    # Construct an axis for the title, if requested
+                    if options.title:
+                        hax = fig.add_axes((
+                            0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
+                            1, head_height / fig_height, # width, height
+                        ))
+                        hax.set_axis_off()
+                        # Render the title. The string_escape codec is used to
+                        # permit new-line escapes, and various options are
+                        # passed-thru to the channel formatter so things like
+                        # percentile can be included in the title
+                        title = channel.format(options.title.decode('string_escape'),
+                            percentile=options.percentile,
+                            colormap=options.cmap,
+                            crop=','.join(str(i) for i in options.crop),
+                            output=filename)
+                        hd = hax.text(0.5, 0.5, title,
+                            horizontalalignment='center', verticalalignment='baseline',
+                            multialignment='center', size='medium', family='sans-serif',
+                            transform=hax.transAxes)
+                    # Finally, dump the figure to disk as a PNG
+                    canvas.print_figure(filename, dpi=dpi, format='png')
 
 main = RasExtractUtility()
