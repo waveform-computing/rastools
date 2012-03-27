@@ -7,6 +7,17 @@ import logging
 import struct
 import datetime as dt
 import numpy as np
+from collections import namedtuple
+
+class Error(Exception):
+    """Base exception class"""
+
+class RasFileError(Error):
+    """Base class for errors encountered in RAS file parsing"""
+
+class ChannelFileError(Error):
+    """Base class for errors encountered in channel file parsing"""
+
 
 class RasFileReader(object):
     """Parser for QSCAN RAS files"""
@@ -145,18 +156,18 @@ class RasFileReader(object):
         + 'i'*4   # command1..command4
         + 'd'*6   # offsets0..offsets5
         + 'i'     # run_num
-        + 'i'     # XXX Not listed in spec, padding?
     )
 
-    def __init__(self, f, verbose=False):
+    def __init__(self, ras_file, channels_file=None, verbose=False):
         """Constructor accepts a filename or file-like object"""
         super(RasFileReader, self).__init__()
         self.verbose = verbose
-        if isinstance(f, basestring):
-            logging.debug('Opening file %s' % f)
-            self._file = open(f, 'rb')
+        if isinstance(ras_file, basestring):
+            logging.debug('Opening QSCAN RAS file %s' % ras_file)
+            self._file = open(ras_file, 'rb')
         else:
-            self._file = f
+            logging.debug('Opening QSCAN RAS file %s' % ras_file.name)
+            self._file = ras_file
         # Parse the header
         logging.debug('Reading QSCAN RAS header')
         self.comments = [''] * 6
@@ -201,12 +212,11 @@ class RasFileReader(object):
             self.offsets[4],
             self.offsets[5],
             self.run_number,
-            _,
         ) = self.header_struct.unpack(self._file.read(self.header_struct.size))
         if not self.version.startswith('Raster Scan'):
-            raise ValueError('This does not appear to be a QSCAN RAS file')
+            raise RasFileError('This does not appear to be a QSCAN RAS file')
         if self.version_number != 1:
-            raise ValueError('Cannot interpret QSCAN RAS version %d - only version 1' % self.version_number)
+            raise RasFileError('Cannot interpret QSCAN RAS version %d - only version 1' % self.version_number)
         # Right strip the various string fields
         strip_chars = '\t\r\n \0'
         self.version = self.version.rstrip(strip_chars)
@@ -225,35 +235,140 @@ class RasFileReader(object):
             self.start_time.rstrip(strip_chars), self.datetime_format)
         self.stop_time = dt.datetime.strptime(
             self.stop_time.rstrip(strip_chars), self.datetime_format)
-        self._channels = None
+        self.channels = RasChannels(self, channels_file)
 
-    @property
-    def channels(self):
-        if self._channels is None:
+
+class RasChannels(object):
+    def __init__(self, reader, channels_file):
+        super(RasChannels, self).__init__()
+        self._reader = reader
+        self._read_channels = False
+        # All channels are initially created unnamed and enabled
+        self._items = [
+            RasChannel(self, index, '', True)
+            for index in xrange(self._reader.channel_count)
+        ]
+        if channels_file:
+            # If a channels file is provided, disable all the channels and
+            # enable only those found within the file
+            for channel in self:
+                channel.enabled = False
+            # Parse the channels file
+            if isinstance(channels_file, basestring):
+                logging.debug('Opening channels file %s' % channels_file)
+                self._file = open(channels_file, 'rb')
+            else:
+                logging.debug('Opening channels file %s' % channels_file.name)
+                self._file = channels_file
+            logging.debug('Parsing channels file')
+            for line_num, line in enumerate(self._file):
+                line = line.strip()
+                # Ignore empty lines and #-prefixed comment lines
+                if line and not line.startswith('#'):
+                    try:
+                        (index, name) = line.split(None, 1)
+                    except ValueError:
+                        raise ChannelFileError('only one value found on line %d' % line_num + 1)
+                    try:
+                        index = int(index)
+                    except ValueError:
+                        raise ChannelFileError('non-integer channel number ("%s") found on line %d' % (index, line_num + 1))
+                    if index < 0:
+                        raise ChannelFileError('negative channel number (%d) found on line %d' % (index, line_num + 1))
+                    if index >= len(self):
+                        raise ChannelFileError('channel number (%d) on line %d exceeds number of channels in RAS file (%d)' % (index, line_num + 1, self.channel_count))
+                    self[index].name = name
+                    self[index].enabled = True
+
+    def read_channels(self):
+        if not self._read_channels:
+            self._read_channels = True
             # Initialize a list of zero-filled arrays
-            self._channels = [
-                np.zeros((self.raster_count, self.point_count), np.uint32)
-                for channel in xrange(self.channel_count)
-            ]
+            logging.debug('Allocating channel arrays')
+            for channel in self:
+                channel._data = np.zeros((self._reader.raster_count, self._reader.point_count), np.uint32)
             # Read a line at a time and extract the specified channel
-            input_struct = struct.Struct('I' * self.point_count * self.channel_count)
-            if self.verbose:
+            input_struct = struct.Struct('I' * self._reader.point_count * self._reader.channel_count)
+            if self._reader.verbose:
                 progress = 0
                 status = 'Reading channel data %d%%' % progress
                 sys.stderr.write(status)
-            for raster in xrange(self.raster_count):
-                data = input_struct.unpack(self._file.read(input_struct.size))
-                for channel in xrange(self.channel_count):
-                    self._channels[channel][raster] = data[channel - 1::self.channel_count]
-                if self.verbose:
-                    new_progress = round(raster * 100.0 / self.raster_count)
+            for raster in xrange(self._reader.raster_count):
+                data = input_struct.unpack(self._reader._file.read(input_struct.size))
+                for channel in self:
+                    channel._data[raster] = data[channel.index::self._reader.channel_count]
+                if self._reader.verbose:
+                    new_progress = round(raster * 100.0 / self._reader.raster_count)
                     if new_progress != progress:
                         progress = new_progress
                         new_status = 'Reading channel data %d%%' % progress
                         sys.stderr.write('\b' * len(status))
                         sys.stderr.write(new_status)
                         status = new_status
-            if self.verbose:
+            if self._reader.verbose:
                 sys.stderr.write('\n')
-        return self._channels
 
+    def __len__(self):
+        return self._reader.channel_count
+
+    def __getitem__(self, index):
+        return self._items[index]
+
+    def __iter__(self):
+        for channel in self._items:
+            yield channel
+
+    def __contains__(self, obj):
+        return obj in self._items
+
+
+class RasChannel(object):
+    def __init__(self, channels, index, name, enabled):
+        self._channels = channels
+        self._data = None
+        self._index = index
+        self.name = name
+        self.enabled = enabled
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def data(self):
+        self._channels.read_channels()
+        return self._data
+
+    def format(self, template):
+        return template.format(
+            rasfile            =self._channels._reader._file.name,
+            filename           =self._channels._reader.file_name,
+            filename_root      =self._channels._reader.file_head,
+            version_name       =self._channels._reader.version,
+            version_number     =self._channels._reader.version_number,
+            pid                =self._channels._reader.pid,
+            x_motor            =self._channels._reader.x_motor,
+            y_motor            =self._channels._reader.y_motor,
+            region_filename    =self._channels._reader.region,
+            start_date         =self._channels._reader.start_time.strftime('%Y-%m-%d'),
+            start_time         =self._channels._reader.start_time.strftime('%H:%M:%S'),
+            stop_date          =self._channels._reader.stop_time.strftime('%Y-%m-%d'),
+            stop_time          =self._channels._reader.stop_time.strftime('%H:%M:%S'),
+            channel_count      =self._channels._reader.channel_count,
+            point_count        =self._channels._reader.point_count,
+            raster_count       =self._channels._reader.raster_count,
+            count_time         =self._channels._reader.count_time,
+            sweep_count        =self._channels._reader.sweep_count,
+            ascii_output       =self._channels._reader.ascii_out,
+            pixels_per_point   =self._channels._reader.pixel_point,
+            scan_direction     =self._channels._reader.scan_direction,
+            scan_type          =self._channels._reader.scan_type,
+            current_x_direction=self._channels._reader.current_x_direction,
+            run_number         =self._channels._reader.run_number,
+            comments           =self._channels._reader.comments,
+            channel            =self.index,
+            channel_name       =self.name,
+            channel_enabled    =self.enabled,
+            channel_min        =self.data.min(),
+            channel_max        =self.data.max(),
+        )

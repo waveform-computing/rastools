@@ -7,10 +7,12 @@ import rastools.main
 import rastools.rasfile
 
 class RasInfoUtility(rastools.main.Utility):
-    """%prog [options] ras-file
+    """%prog [options] ras-file [channels-file]
 
     This utility accepts a source RAS file from QSCAN. It extracts and prints
-    the information from the RAS file's header.
+    the information from the RAS file's header. If the optional channels
+    definition file is also specified, then channels will be named in the
+    output as they would be with rasextract.
 
     The available command line options are listed below.
     """
@@ -28,26 +30,33 @@ class RasInfoUtility(rastools.main.Utility):
 
     def main(self, options, args):
         super(RasInfoUtility, self).main(options, args)
-        if len(args) != 1:
+        if len(args) < 1:
             self.parser.error('you must specify a RAS file')
-        if args[0] == '-':
-            f = rastools.rasfile.RasFileReader(sys.stdin, verbose=options.loglevel<logging.WARNING)
-        else:
-            f = rastools.rasfile.RasFileReader(args[0], verbose=options.loglevel<logging.WARNING)
+        if len(args) > 2:
+            self.parser.error('you cannot specify more than two filenames')
+        if args[0] == '-' and args[1] == '-':
+            self.parser.error('you cannot specify stdin for both files!')
+        f = rastools.rasfile.RasFileReader(
+            sys.stdin if args[0] == '-' else args[0],
+            None if len(args) < 2 else sys.stdin if args[1] == '-' else args[1],
+            verbose=options.loglevel<logging.WARNING)
         if options.program:
-            sys.stdout.write('filename=%s\n' % args[0])
-            sys.stdout.write('original_filename=%s\n' % f.file_name)
-            sys.stdout.write('original_filename_root=%s\n' % f.file_head)
+            sys.stdout.write('rasfile=%s\n' % args[0])
+            sys.stdout.write('filename=%s\n' % f.file_name)
+            sys.stdout.write('filename_root=%s\n' % f.file_head)
             sys.stdout.write('version_name=%s\n' % f.version)
             sys.stdout.write('version_number=%d\n' % f.version_number)
             sys.stdout.write('pid=%d\n' % f.pid)
             sys.stdout.write('x_motor=%s\n' % f.x_motor)
             sys.stdout.write('y_motor=%s\n' % f.y_motor)
             sys.stdout.write('region_filename=%s\n' % f.region)
-            sys.stdout.write('start_time=%s\n' % f.start_time.isoformat())
-            sys.stdout.write('stop_time=%s\n' % f.stop_time.isoformat())
+            sys.stdout.write('start_date=%s\n' % f.start_time.strftime('%Y-%m-%d'))
+            sys.stdout.write('start_time=%s\n' % f.start_time.strftime('%H:%M:%S'))
+            sys.stdout.write('stop_date=%s\n' % f.stop_time.strftime('%Y-%m-%d'))
+            sys.stdout.write('stop_time=%s\n' % f.stop_time.strftime('%H:%M:%S'))
             sys.stdout.write('channel_count=%d\n' % f.channel_count)
-            sys.stdout.write('channel_resolution=%d,%d\n' % (f.point_count, f.raster_count))
+            sys.stdout.write('point_count=%d\n' % f.point_count)
+            sys.stdout.write('raster_count=%d\n' % f.raster_count)
             sys.stdout.write('count_time%f\n' % f.count_time)
             sys.stdout.write('sweep_count=%d\n' % f.sweep_count)
             sys.stdout.write('ascii_output=%d\n' % f.ascii_out)
@@ -56,11 +65,14 @@ class RasInfoUtility(rastools.main.Utility):
             sys.stdout.write('scan_type=%d\n' % f.scan_type)
             sys.stdout.write('current_x_direction=%d\n' % f.current_x_direction)
             sys.stdout.write('run_number=%d\n' % f.run_number)
-            if options.ranges:
-                for channel in range(f.channel_count):
-                    sys.stdout.write('channel_%d_min=%d\n' % (channel, f.channels[channel].min()))
-                    sys.stdout.write('channel_%d_max=%d\n' % (channel, f.channels[channel].max()))
-                sys.stdout.write('\n')
+            for channel in f.channels:
+                sys.stdout.write('channel[%d]=%d\n' % (channel.index, channel.index))
+                sys.stdout.write('channel_name[%d]=%s\n' % (channel.index, channel.name))
+                sys.stdout.write('channel_enabled[%d]=%s\n' % (channel.index, channel.enabled))
+                if options.ranges:
+                    sys.stdout.write('channel_min[%d]=%d\n' % (channel.index, channel.data.min()))
+                    sys.stdout.write('channel_max[%d]=%d\n' % (channel.index, channel.data.max()))
+            sys.stdout.write('\n')
             sys.stdout.write('comments=\n')
             sys.stdout.write(f.comments)
             sys.stdout.write('\n')
@@ -86,13 +98,24 @@ class RasInfoUtility(rastools.main.Utility):
             sys.stdout.write('Scan type:              %d (%s)\n' % (f.scan_type, {1: 'Quick scan', 2: 'Point to point'}[f.scan_type]))
             sys.stdout.write('Current X-direction:    %d\n' % f.current_x_direction)
             sys.stdout.write('Run number:             %d\n' % f.run_number)
-            if options.ranges:
-                for channel in range(f.channel_count):
-                    sys.stdout.write('Channel %2d range:       %d-%d%s\n' % (
-                        channel,
-                        f.channels[channel].min(),
-                        f.channels[channel].max(),
-                        ('', ' (empty)')[f.channels[channel].min() == f.channels[channel].max()]
+            for channel in f.channels:
+                name = '' if not channel.name else (' (%s)' % channel.name)
+                if options.ranges:
+                    sys.stdout.write('Channel %2d%s:%s%s, Range=%d-%d%s\n' % (
+                        channel.index,
+                        name,
+                        ' ' * (13 - len(name)),
+                        ('Disabled', 'Enabled')[channel.enabled],
+                        channel.data.min(),
+                        channel.data.max(),
+                        ('', ' (empty)')[channel.data.min() == channel.data.max()],
+                    ))
+                else:
+                    sys.stdout.write('Channel %2d%s:%s%s\n' % (
+                        channel.index,
+                        name,
+                        ' ' * (13 - len(name)),
+                        ('Disabled', 'Enabled')[channel.enabled],
                     ))
             sys.stdout.write('\n')
             sys.stdout.write('Comments:\n')

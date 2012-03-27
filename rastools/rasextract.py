@@ -15,10 +15,10 @@ from collections import namedtuple
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
 class RasExtractUtility(rastools.main.Utility):
-    """%prog [options] ras-file channel-file
+    """%prog [options] ras-file [channel-file]
 
-    This utility accepts a QSCAN RAS file and a channel definition file. For
-    each channel listed in the latter, an image is produced from the
+    This utility accepts a QSCAN RAS file and an optional channel definition
+    file. For each channel listed in the latter, an image is produced from the
     corresponding channel in the RAS file. Various options are provided for
     customizing the output including percentile limiting, color-mapping, and
     drawing of axes and titles.
@@ -36,6 +36,7 @@ class RasExtractUtility(rastools.main.Utility):
             cmap='gray',
             crop='0,0,0,0',
             percentile=100.0,
+            output='{filename_root}_{channel:02d}_{channel_name}.png',
         )
         self.parser.add_option('--help-cmap', dest='cmap_list', action='store_true',
             help="""list the available color-maps""")
@@ -51,6 +52,8 @@ class RasExtractUtility(rastools.main.Utility):
             help="""draw a histogram of the channel values below the output""")
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
             help="""crop the input data by top,left,bottom,right points""")
+        self.parser.add_option('-o', '--output', dest='output', action='store',
+            help="""specify the template used to generate the output filenames; supports {variables} produced by rasinfo -p. Default is %default""")
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
@@ -60,39 +63,17 @@ class RasExtractUtility(rastools.main.Utility):
             sys.stdout.write('\n\n')
             sys.stdout.write('Append _r to any colormap name to reverse it\n\n')
             return 0
-        if len(args) != 2:
-            self.parser.error('you must specify a RAS file and a channel definitions file')
-        # Parse the input RAS file
-        if args[0] == '-':
-            ras_f = rastools.rasfile.RasFileReader(sys.stdin, verbose=options.loglevel<logging.WARNING)
-        else:
-            ras_f = rastools.rasfile.RasFileReader(args[0], verbose=options.loglevel<logging.WARNING)
-        # Parse the channels definition file
-        if args[1] == '-':
-            if args[0] == '-':
-                raise IOError('you cannot specify stdin for both files!')
-            channels_f = sys.stdin
-        else:
-            channels_f = open(args[1], 'rU')
-        channel_map = []
-        for line_num, line in enumerate(channels_f):
-            line = line.strip()
-            # Ignore empty lines and #-prefixed comment lines
-            if line and not line.startswith('#'):
-                try:
-                    (index, name) = line.split(None, 1)
-                except ValueError:
-                    self.parser.error('only one value found on line %d of channels file' % line_num + 1)
-                try:
-                    index = int(index)
-                except ValueError:
-                    self.parser.error('non-integer channel number ("%s") found on line %d of channels file' % (index, line_num + 1))
-                if index < 0:
-                    self.parser.error('negative channel number (%d) found on line %d of channels file' % (index, line_num + 1))
-                if index >= ras_f.channel_count:
-                    self.parser.error('channel number (%d) on line %d of channels file exceeds number of channels in RAS file (%d)' % (index, line_num + 1, ras_f.channel_count))
-                channel_map.append((index, name, '%s_%02d_%s.png' % (ras_f.file_head, index, name)))
-        channel_map.sort()
+        if len(args) < 1:
+            self.parser.error('you must specify a RAS file')
+        if len(args) > 2:
+            self.parser.error('you cannot specify more than two filenames')
+        if args[0] == '-' and args[1] == '-':
+            self.parser.error('you cannot specify stdin for both files!')
+        # Parse the input files
+        ras_f = rastools.rasfile.RasFileReader(
+            sys.stdin if args[0] == '-' else args[0],
+            None if len(args) < 2 else sys.stdin if args[1] == '-' else args[1],
+            verbose=options.loglevel<logging.WARNING)
         # Check the clip level is a valid percentage
         try:
             options.percentile = float(options.percentile)
@@ -114,14 +95,18 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('non-integer values found in --crop value %s' % options.crop)
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
-            ras_f.channel_count,
-            ','.join(str(channel) for (channel, _, _) in channel_map)
+            len(ras_f.channels),
+            ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
         ))
-        for (channel, name, filename) in channel_map:
+        if options.percentile < 100.0:
+            vmax_index = round(ras_f.raster_count * ras_f.point_count * options.percentile / 100.0)
+            logging.info('%gth percentile is at index %d' % (options.percentile, vmax_index))
+        for channel in ras_f.channels:
             # Perform any cropping requested. This must be done before
             # calculation of the data's range and percentile limiting is
             # performed for obvious reasons
-            data = ras_f.channels[channel]
+            filename = channel.format(options.output)
+            data = channel.data
             data = data[
                 options.crop.top:data.shape[0] - options.crop.bottom,
                 options.crop.left:data.shape[1] - options.crop.right
@@ -131,12 +116,17 @@ class RasExtractUtility(rastools.main.Utility):
             vsorted = np.sort(data, None)
             vmin = vsorted[0]
             vmax = vsorted[-1]
+            logging.info('Channel %d (%s) has range %d-%d' % (channel.index, channel.name, vmin, vmax))
             if options.percentile < 100.0:
-                vmax = vsorted[round(options.percentile * len(vsorted) / 100.0)]
+                pmax = vsorted[vmax_index]
+                logging.info('%gth percentile is %d' % (options.percentile, pmax))
+                if pmax != vmax:
+                    vmax = pmax
+                    logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, vmax))
             if vmin == vmax:
-                logging.warning('Channel %d (%s) is empty, skipping' % (channel, name))
+                logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
             else:
-                logging.info('Writing channel %d (%s) to %s' % (channel, name, filename))
+                logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                 # Copy the data into a floating-point array (matplotlib's image
                 # module won't play with uint32 data - only uint8 or float32)
                 # and crop it as necessary
