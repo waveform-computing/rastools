@@ -237,16 +237,44 @@ class RasFileReader(object):
             self.stop_time.rstrip(strip_chars), self.datetime_format)
         self.channels = RasChannels(self, channels_file)
 
+    def format(self, template, **kwargs):
+        return template.format(
+            rasfile            = self._file.name,
+            filename           = self.file_name,
+            filename_root      = self.file_head,
+            version_name       = self.version,
+            version_number     = self.version_number,
+            pid                = self.pid,
+            x_motor            = self.x_motor,
+            y_motor            = self.y_motor,
+            region_filename    = self.region,
+            start_time         = self.start_time,
+            stop_time          = self.stop_time,
+            channel_count      = self.channel_count,
+            point_count        = self.point_count,
+            raster_count       = self.raster_count,
+            count_time         = self.count_time,
+            sweep_count        = self.sweep_count,
+            ascii_output       = self.ascii_out,
+            pixels_per_point   = self.pixel_point,
+            scan_direction     = self.scan_direction,
+            scan_type          = self.scan_type,
+            current_x_direction= self.current_x_direction,
+            run_number         = self.run_number,
+            comments           = self.comments,
+            now                = dt.datetime.now(),
+            **kwargs
+        )
 
 class RasChannels(object):
-    def __init__(self, reader, channels_file):
+    def __init__(self, ras_file, channels_file):
         super(RasChannels, self).__init__()
-        self._reader = reader
+        self.ras_file = ras_file
         self._read_channels = False
         # All channels are initially created unnamed and enabled
         self._items = [
             RasChannel(self, index, '', True)
-            for index in xrange(self._reader.channel_count)
+            for index in xrange(self.ras_file.channel_count)
         ]
         if channels_file:
             # If a channels file is provided, disable all the channels and
@@ -286,30 +314,30 @@ class RasChannels(object):
             # Initialize a list of zero-filled arrays
             logging.debug('Allocating channel arrays')
             for channel in self:
-                channel._data = np.zeros((self._reader.raster_count, self._reader.point_count), np.uint32)
+                channel._data = np.zeros((self.ras_file.raster_count, self.ras_file.point_count), np.uint32)
             # Read a line at a time and extract the specified channel
-            input_struct = struct.Struct('I' * self._reader.point_count * self._reader.channel_count)
-            if self._reader.verbose:
+            input_struct = struct.Struct('I' * self.ras_file.point_count * self.ras_file.channel_count)
+            if self.ras_file.verbose:
                 progress = 0
                 status = 'Reading channel data %d%%' % progress
                 sys.stderr.write(status)
-            for raster in xrange(self._reader.raster_count):
-                data = input_struct.unpack(self._reader._file.read(input_struct.size))
+            for raster in xrange(self.ras_file.raster_count):
+                data = input_struct.unpack(self.ras_file._file.read(input_struct.size))
                 for channel in self:
-                    channel._data[raster] = data[channel.index::self._reader.channel_count]
-                if self._reader.verbose:
-                    new_progress = round(raster * 100.0 / self._reader.raster_count)
+                    channel._data[raster] = data[channel.index::self.ras_file.channel_count]
+                if self.ras_file.verbose:
+                    new_progress = round(raster * 100.0 / self.ras_file.raster_count)
                     if new_progress != progress:
                         progress = new_progress
                         new_status = 'Reading channel data %d%%' % progress
                         sys.stderr.write('\b' * len(status))
                         sys.stderr.write(new_status)
                         status = new_status
-            if self._reader.verbose:
+            if self.ras_file.verbose:
                 sys.stderr.write('\n')
 
     def __len__(self):
-        return self._reader.channel_count
+        return self.ras_file.channel_count
 
     def __getitem__(self, index):
         return self._items[index]
@@ -339,36 +367,17 @@ class RasChannel(object):
         self._channels.read_channels()
         return self._data
 
+    @property
+    def ras_file(self):
+        return self._channels.ras_file
+
     def format(self, template, **kwargs):
-        return template.format(
-            rasfile            =self._channels._reader._file.name,
-            filename           =self._channels._reader.file_name,
-            filename_root      =self._channels._reader.file_head,
-            version_name       =self._channels._reader.version,
-            version_number     =self._channels._reader.version_number,
-            pid                =self._channels._reader.pid,
-            x_motor            =self._channels._reader.x_motor,
-            y_motor            =self._channels._reader.y_motor,
-            region_filename    =self._channels._reader.region,
-            start_time         =self._channels._reader.start_time,
-            stop_time          =self._channels._reader.stop_time,
-            channel_count      =self._channels._reader.channel_count,
-            point_count        =self._channels._reader.point_count,
-            raster_count       =self._channels._reader.raster_count,
-            count_time         =self._channels._reader.count_time,
-            sweep_count        =self._channels._reader.sweep_count,
-            ascii_output       =self._channels._reader.ascii_out,
-            pixels_per_point   =self._channels._reader.pixel_point,
-            scan_direction     =self._channels._reader.scan_direction,
-            scan_type          =self._channels._reader.scan_type,
-            current_x_direction=self._channels._reader.current_x_direction,
-            run_number         =self._channels._reader.run_number,
-            comments           =self._channels._reader.comments,
-            channel            =self.index,
-            channel_name       =self.name,
-            channel_enabled    =self.enabled,
-            channel_min        =self.data.min(),
-            channel_max        =self.data.max(),
-            now                =dt.datetime.now(),
+        return self.ras_file.format(
+            template,
+            channel         = self.index,
+            channel_name    = self.name,
+            channel_enabled = self.enabled,
+            channel_min     = self.data.min(),
+            channel_max     = self.data.max(),
             **kwargs
         )
