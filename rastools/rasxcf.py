@@ -15,10 +15,16 @@ GIMP_EXECUTABLE = 'gimp'
 # being available this entire module is basically useless!
 try:
     p = subprocess.Popen([
-        GIMP_EXECUTABLE,
-        '-i', '-b', '(gimp-quit 0)'
-    ], shell=False, close_fds=not mswindows)
-    if p.wait() != 0:
+        GIMP_EXECUTABLE, '-i', '-b', '(gimp-quit 0)'],
+        stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        shell=False, close_fds=not mswindows)
+    # Read all the process' output but only print it if an error occurs.
+    # Otherwise, we don't care about any warnings - just that GIMP launched and
+    # quit successfully
+    output = p.communicate()[0]
+    if p.returncode != 0:
+        for line in output.splitlines():
+            logging.error(line.rstrip())
         raise Exception()
 except:
     raise ImportError('Unable to test-launch GIMP executable "%s"' % GIMP_EXECUTABLE)
@@ -91,14 +97,17 @@ class XcfLayers(object):
                 '-b', '(gimp-quit 0)', # ensure we terminate GIMP afterward
             ], stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
             output = p.communicate()[0]
-            # Copy any text from GIMP's output to our log
-            for line in output.splitlines():
-                logging.warning(line.rstrip())
+            # As with the test at the start, only log GIMP's output if an error
+            # occurs - otherwise we don't care
             if p.returncode != 0:
+                for line in output.splitlines():
+                    logging.error(line.rstrip())
                 raise Exception('GIMP XCF generation failed with return code %d - see log for further details' % p.returncode)
             # Check that the output file exists
             if not os.path.exists(self.filename):
-                raise IOError('GIMP failed to write XCF file "%s" - see log for details' % self.filename)
+                for line in output.splitlines():
+                    logging.error(line.rstrip())
+                raise IOError('GIMP succeeded but cannot find XCF file "%s" - see log for details' % self.filename)
         finally:
             # Remove all the temporary files we generated
             while self._layers:

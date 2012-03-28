@@ -143,11 +143,11 @@ class RasExtractUtility(rastools.main.Utility):
             ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
         ))
         if options.one_pdf:
-            filename = ras_f.format(options.output)
+            filename = ras_f.format(options.output, **self.format_options(options))
             logging.warning('Writing all images to %s' % filename)
             pdf_pages = PdfPages(filename)
         elif options.one_xcf:
-            filename = ras_f.format(options.output)
+            filename = ras_f.format(options.output, **self.format_options(options))
             logging.warning('Writing all images to %s' % filename)
             xcf_layers = XcfLayers(filename)
         try:
@@ -155,8 +155,10 @@ class RasExtractUtility(rastools.main.Utility):
                 if channel.enabled:
                     if options.one_pdf:
                         logging.warning('Writing channel %d (%s) to new page' % (channel.index, channel.name))
+                    elif options.one_xcf:
+                        logging.warning('Writing channel %d (%s) to new layer' % (channel.index, channel.name))
                     else:
-                        filename = channel.format(options.output)
+                        filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     figure = self.draw_channel(channel, options, filename, interpolation)
                     # Finally, dump the figure to disk as whatever format the
@@ -175,6 +177,7 @@ class RasExtractUtility(rastools.main.Utility):
                 xcf_layers.close()
 
     def draw_channel(self, channel, options, filename, interpolation):
+        """Draw the specified channel, returning the resulting matplotlib figure"""
         # Perform any cropping requested. This must be done before
         # calculation of the data's range and percentile limiting is
         # performed for obvious reasons
@@ -240,7 +243,7 @@ class RasExtractUtility(rastools.main.Utility):
             if options.show_histogram:
                 hax = fig.add_axes((
                     margin / fig_width,               # left
-                    (margin + cbar_height + hist_height * 0.1) / fig_height, # bottom
+                    (margin + cbar_height) / fig_height, # bottom
                     hist_width / fig_width,           # width
                     (hist_height * 0.8) / fig_height, # height
                 ))
@@ -248,10 +251,10 @@ class RasExtractUtility(rastools.main.Utility):
             # Construct an axis for the colorbar, if requested
             if options.show_colorbar:
                 cax = fig.add_axes((
-                    margin / fig_width,               # left
-                    (margin + cbar_height * 0.25) / fig_height, # bottom
-                    cbar_width / fig_width,           # width
-                    (cbar_height * 0.25) / fig_height, # height
+                    margin / fig_width,                # left
+                    margin / fig_height,               # bottom
+                    cbar_width / fig_width,            # width
+                    (cbar_height * 0.3) / fig_height, # height
                 ))
                 cb = fig.colorbar(img, cax=cax, orientation='horizontal')
             # Construct an axis for the title, if requested
@@ -266,17 +269,23 @@ class RasExtractUtility(rastools.main.Utility):
                 # passed-thru to the channel formatter so things like
                 # percentile can be included in the title
                 title = channel.format(options.title.decode('string_escape'),
-                    percentile=options.percentile,
-                    colormap=options.cmap,
-                    crop=','.join(str(i) for i in options.crop),
-                    output=filename)
+                    output=filename, **self.format_options(options))
                 hd = hax.text(0.5, 0.5, title,
                     horizontalalignment='center', verticalalignment='baseline',
                     multialignment='center', size='medium', family='sans-serif',
                     transform=hax.transAxes)
         return fig
 
+    def format_options(self, options):
+        """Utility routine which converts the options array for use in format substitutions"""
+        return dict(
+            percentile=options.percentile,
+            colormap=options.cmap,
+            crop=','.join(str(i) for i in options.crop),
+        )
+
     def load_backends(self):
+        """Load the various matplotlib backends and custom extensions"""
         logging.info('Loading standard graphics renderer')
         try:
             global FigureCanvasAgg
