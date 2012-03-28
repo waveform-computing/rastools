@@ -196,9 +196,12 @@ class RasExtractUtility(rastools.main.Utility):
             pmax = vsorted[options.vmax_index]
             logging.info('%gth percentile is %d' % (options.percentile, pmax))
             if pmax != vmax:
-                vmax = pmax
-                logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, vmax))
-        if vmin == vmax:
+                logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, pmax))
+        else:
+            pmax = vmax
+        # No minimum for the percentile (yet...)
+        pmin = vmin
+        if pmin == pmax:
             logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
         else:
             # Copy the data into a floating-point array (matplotlib's
@@ -237,7 +240,7 @@ class RasExtractUtility(rastools.main.Utility):
             ), frame_on=options.show_axes)
             if not options.show_axes:
                 ax.set_axis_off()
-            img = ax.imshow(data, cmap=mpl.cm.get_cmap(options.cmap), vmin=vmin, vmax=vmax,
+            img = ax.imshow(data, cmap=mpl.cm.get_cmap(options.cmap), vmin=pmin, vmax=pmax,
                 interpolation=interpolation)
             # Construct an axis for the histogram, if requested
             if options.show_histogram:
@@ -247,7 +250,7 @@ class RasExtractUtility(rastools.main.Utility):
                     hist_width / fig_width,           # width
                     (hist_height * 0.8) / fig_height, # height
                 ))
-                hg = hax.hist(data.flat, 512, range=(vmin, vmax))
+                hg = hax.hist(data.flat, bins=32, range=(pmin, pmax))
             # Construct an axis for the colorbar, if requested
             if options.show_colorbar:
                 cax = fig.add_axes((
@@ -256,7 +259,12 @@ class RasExtractUtility(rastools.main.Utility):
                     cbar_width / fig_width,            # width
                     (cbar_height * 0.3) / fig_height, # height
                 ))
-                cb = fig.colorbar(img, cax=cax, orientation='horizontal')
+                cb = fig.colorbar(img, cax=cax, orientation='horizontal',
+                    extend=
+                    'both' if pmin > vmin and pmax < vmax else
+                    'max' if pmax < vmax else
+                    'min' if pmin > vmin else
+                    'neither')
             # Construct an axis for the title, if requested
             if options.title:
                 hax = fig.add_axes((
