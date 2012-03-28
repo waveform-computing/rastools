@@ -20,11 +20,11 @@ class RasInfoUtility(rastools.main.Utility):
     def __init__(self):
         super(RasInfoUtility, self).__init__()
         self.parser.set_defaults(
-            program=False,
+            templates=False,
             ranges=False,
         )
-        self.parser.add_option('-p', '--program', dest='program', action='store_true',
-            help="""produce output suitable for programmatic use""")
+        self.parser.add_option('-t', '--templates', dest='templates', action='store_true',
+            help="""output substitution templates use with rasextract --title and --output""")
         self.parser.add_option('-r', '--ranges', dest='ranges', action='store_true',
             help="""read each channel in the file and output its range of values""")
 
@@ -40,7 +40,7 @@ class RasInfoUtility(rastools.main.Utility):
             sys.stdin if args[0] == '-' else args[0],
             None if len(args) < 2 else sys.stdin if args[1] == '-' else args[1],
             verbose=options.loglevel<logging.WARNING)
-        if options.program:
+        if options.templates:
             sys.stdout.write('{rasfile}=%s\n' % args[0])
             sys.stdout.write('{filename}=%s\n' % f.file_name)
             sys.stdout.write('{filename_root}=%s\n' % f.file_head)
