@@ -300,8 +300,8 @@ class RasExtractUtility(rastools.main.Utility):
         else:
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
-                '.svg':  (FigureCanvasSVG.print_svg,  'bicubic'),
-                '.svgz': (FigureCanvasSVG.print_svgz, 'bicubic'),
+                '.svg':  (FigureCanvasSVG.print_svg,  'lanczos'),
+                '.svgz': (FigureCanvasSVG.print_svgz, 'lanczos'),
             })
 
         logging.info('Loading JPEG support')
@@ -313,8 +313,8 @@ class RasExtractUtility(rastools.main.Utility):
         else:
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
-                '.jpg':  (FigureCanvasGDK.print_jpg,  'bicubic'),
-                '.jpeg': (FigureCanvasGDK.print_jpg,  'bicubic'),
+                '.jpg':  (FigureCanvasGDK.print_jpg,  'lanczos'),
+                '.jpeg': (FigureCanvasGDK.print_jpg,  'lanczos'),
             })
 
         logging.info('Loading TIFF support')
@@ -340,8 +340,8 @@ class RasExtractUtility(rastools.main.Utility):
         else:
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
-                '.eps':  (FigureCanvasPS.print_eps,  'bicubic'),
-                '.ps':   (FigureCanvasPS.print_ps,   'bicubic'),
+                '.eps':  (FigureCanvasPS.print_eps,  'lanczos'),
+                '.ps':   (FigureCanvasPS.print_ps,   'lanczos'),
             })
 
         logging.info('Loading PDF support')
@@ -354,7 +354,7 @@ class RasExtractUtility(rastools.main.Utility):
             mpl.rc('pdf', use14corefonts=True, compression=True)
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
-                '.pdf':  (FigureCanvasPdf.print_pdf,  'bicubic'),
+                '.pdf':  (FigureCanvasPdf.print_pdf,  'lanczos'),
             })
             MULTI_PAGE_PDF=True
 
