@@ -17,59 +17,7 @@ from collections import namedtuple
 DPI = 72.0
 IMAGE_FORMATS = {}
 MULTI_PAGE_PDF=False
-
-try:
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-except ImportError:
-    # If we can't find the default Agg backend, something's seriously wrong
-    raise
-else:
-    IMAGE_FORMATS.update({
-        # ext    canvas method                interpolation
-        '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest'),
-        '.emf':  (FigureCanvasAgg.print_emf,  'nearest'),
-        '.eps':  (FigureCanvasAgg.print_eps,  'bicubic'),
-        '.pdf':  (FigureCanvasAgg.print_pdf,  'bicubic'),
-        '.png':  (FigureCanvasAgg.print_png,  'nearest'),
-        '.ps':   (FigureCanvasAgg.print_ps,   'bicubic'),
-        '.raw':  (FigureCanvasAgg.print_raw,  'nearest'),
-        '.rgb':  (FigureCanvasAgg.print_rgb,  'nearest'),
-        '.rgba': (FigureCanvasAgg.print_rgba, 'nearest'),
-        '.svg':  (FigureCanvasAgg.print_svg,  'bicubic'),
-        '.svgz': (FigureCanvasAgg.print_svgz, 'bicubic'),
-    })
-try:
-    from rastools.rastiff import FigureCanvasPIL
-except ImportError:
-    pass
-else:
-    IMAGE_FORMATS.update({
-        # ext    canvas method                interpolation
-        '.tif':  (FigureCanvasPIL.print_tif,  'nearest'),
-        '.tiff': (FigureCanvasPIL.print_tif,  'nearest'),
-        '.gif':  (FigureCanvasPIL.print_gif,  'nearest'),
-    })
-try:
-    from matplotlib.backends.backend_gdk import FigureCanvasGDK
-except ImportError:
-    pass
-else:
-    IMAGE_FORMATS.update({
-        # ext    canvas method                interpolation
-        '.jpg':  (FigureCanvasGDK.print_jpg,  'bicubic'),
-        '.jpeg': (FigureCanvasGDK.print_jpg,  'bicubic'),
-    })
-try:
-    from matplotlib.backends.backend_pdf import FigureCanvasPdf, PdfPages
-except ImportError:
-    pass
-else:
-    mpl.rc('pdf', use14corefonts=True, compression=True)
-    IMAGE_FORMATS.update({
-        # ext    canvas method                interpolation
-        '.pdf':  (FigureCanvasPdf.print_pdf,  'bicubic'),
-    })
-    MULTI_PAGE_PDF=True
+MULTI_LAYER_XCF=False
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
@@ -99,6 +47,7 @@ class RasExtractUtility(rastools.main.Utility):
             output='{filename_root}_{channel:02d}_{channel_name}.png',
             title='',
             one_pdf=False,
+            one_xcf=False,
         )
         self.parser.add_option('--help-color-maps', dest='cmap_list', action='store_true',
             help="""list the available color-maps""")
@@ -120,9 +69,10 @@ class RasExtractUtility(rastools.main.Utility):
             help="""specify the template used to generate the output filenames; supports {variables} produced by rasinfo -p (default is %default)""")
         self.parser.add_option('-t', '--title', dest='title', action='store',
             help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
-        if MULTI_PAGE_PDF:
-            self.parser.add_option('--one-pdf', dest='one_pdf', action='store_true',
-                help="""if specified, a single PDF file will be produced with one page per image; the output template must end with .pdf and must not contain channel variable references""")
+        self.parser.add_option('--one-pdf', dest='one_pdf', action='store_true',
+            help="""if specified, a single PDF file will be produced with one page per image; the output template must end with .pdf and must not contain channel variable references""")
+        self.parser.add_option('--one-xcf', dest='one_xcf', action='store_true',
+            help="""if specified, a single XCF file will be produced with one layer per image; the output template must end with .xcf and must not contain channel variable references""")
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
@@ -132,6 +82,7 @@ class RasExtractUtility(rastools.main.Utility):
             sys.stdout.write('\n\n')
             sys.stdout.write('Append _r to any colormap name to reverse it\n\n')
             return 0
+        self.load_backends()
         if options.fmt_list:
             sys.stdout.write('The following file formats are available:\n\n')
             sys.stdout.write('\n'.join(sorted(ext for ext in IMAGE_FORMATS)))
@@ -173,6 +124,11 @@ class RasExtractUtility(rastools.main.Utility):
             (canvas_method, interpolation) = IMAGE_FORMATS[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
+        # Check special format switches
+        if options.one_pdf and ext != '.pdf':
+            self.parser.error('output filename must end with .pdf when --one-pdf is specified')
+        if options.one_xcf and ext != '.xcf':
+            self.parser_error('output filename must end with .xcf when --one-xcf is specified')
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
             len(ras_f.channels),
@@ -188,6 +144,10 @@ class RasExtractUtility(rastools.main.Utility):
             filename = ras_f.format(options.output)
             logging.warning('Writing all images to %s' % filename)
             pdf_pages = PdfPages(filename)
+        elif options.one_xcf:
+            filename = ras_f.format(options.output)
+            logging.warning('Writing all images to %s' % filename)
+            xcf_layers = XcfLayers(filename)
         try:
             for channel in ras_f.channels:
                 if channel.enabled:
@@ -202,11 +162,15 @@ class RasExtractUtility(rastools.main.Utility):
                     canvas = canvas_method.im_class(figure)
                     if options.one_pdf:
                         pdf_pages.savefig(figure)
+                    elif options.one_xcf:
+                        xcf_layers.savefig(figure, title=channel.format('{channel} - {channel_name}'))
                     else:
                         canvas_method(canvas, filename, dpi=DPI)
         finally:
             if options.one_pdf:
                 pdf_pages.close()
+            elif options.one_xcf:
+                xcf_layers.close()
 
     def draw_channel(self, channel, options, filename, interpolation):
         # Perform any cropping requested. This must be done before
@@ -285,7 +249,7 @@ class RasExtractUtility(rastools.main.Utility):
                     margin / fig_width,               # left
                     (margin + cbar_height * 0.25) / fig_height, # bottom
                     cbar_width / fig_width,           # width
-                    (cbar_height * 0.5) / fig_height, # height
+                    (cbar_height * 0.25) / fig_height, # height
                 ))
                 cb = fig.colorbar(img, cax=cax, orientation='horizontal')
             # Construct an axis for the title, if requested
@@ -309,6 +273,85 @@ class RasExtractUtility(rastools.main.Utility):
                     multialignment='center', size='medium', family='sans-serif',
                     transform=hax.transAxes)
         return fig
+
+    def load_backends(self):
+        logging.info('Loading standard graphics renderer')
+        try:
+            global FigureCanvasAgg
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+        except ImportError:
+            # If we can't find the default Agg backend, something's seriously wrong
+            raise
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest'),
+                '.emf':  (FigureCanvasAgg.print_emf,  'nearest'),
+                '.eps':  (FigureCanvasAgg.print_eps,  'bicubic'),
+                '.pdf':  (FigureCanvasAgg.print_pdf,  'bicubic'),
+                '.png':  (FigureCanvasAgg.print_png,  'nearest'),
+                '.ps':   (FigureCanvasAgg.print_ps,   'bicubic'),
+                '.raw':  (FigureCanvasAgg.print_raw,  'nearest'),
+                '.rgb':  (FigureCanvasAgg.print_rgb,  'nearest'),
+                '.rgba': (FigureCanvasAgg.print_rgba, 'nearest'),
+                '.svg':  (FigureCanvasAgg.print_svg,  'bicubic'),
+                '.svgz': (FigureCanvasAgg.print_svgz, 'bicubic'),
+            })
+
+        logging.info('Loading TIFF support')
+        try:
+            global FigureCanvasPIL
+            from rastools.rastiff import FigureCanvasPIL
+        except ImportError:
+            logging.warning('Failed to load TIFF support')
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.tif':  (FigureCanvasPIL.print_tif,  'nearest'),
+                '.tiff': (FigureCanvasPIL.print_tif,  'nearest'),
+                '.gif':  (FigureCanvasPIL.print_gif,  'nearest'),
+            })
+
+        logging.info('Loading JPEG support')
+        try:
+            global FigureCanvasGDK
+            from matplotlib.backends.backend_gdk import FigureCanvasGDK
+        except ImportError:
+            logging.warning('Failed to load JPEG support')
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.jpg':  (FigureCanvasGDK.print_jpg,  'bicubic'),
+                '.jpeg': (FigureCanvasGDK.print_jpg,  'bicubic'),
+            })
+
+        logging.info('Loading PDF support')
+        try:
+            global FigureCanvasPdf, PdfPages
+            from matplotlib.backends.backend_pdf import FigureCanvasPdf, PdfPages
+        except ImportError:
+            logging.warning('Failed to load PDF support')
+        else:
+            mpl.rc('pdf', use14corefonts=True, compression=True)
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.pdf':  (FigureCanvasPdf.print_pdf,  'bicubic'),
+            })
+            MULTI_PAGE_PDF=True
+
+        logging.info('Loading GIMP support')
+        try:
+            global FigureCanvasXcf, XcfLayers
+            from rastools.rasxcf import FigureCanvasXcf, XcfLayers
+        except ImportError:
+            logging.warning('Failed to load GIMP support')
+            raise
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.xcf':  (FigureCanvasXcf.print_xcf,  'nearest'),
+            })
+            MULTI_LAYER_XCF=True
 
 
 main = RasExtractUtility()
