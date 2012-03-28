@@ -305,6 +305,8 @@ class RasChannels(object):
                         raise ChannelFileError('negative channel number (%d) found on line %d' % (index, line_num + 1))
                     if index >= len(self):
                         raise ChannelFileError('channel number (%d) on line %d exceeds number of channels in RAS file (%d)' % (index, line_num + 1, self.channel_count))
+                    if self[index].enabled:
+                        raise ChannelFileError('channel %d has been specified twice; second instance on line %d' % (index, line_num + 1))
                     self[index].name = name
                     self[index].enabled = True
 
