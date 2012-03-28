@@ -9,6 +9,8 @@ import rastools.main
 import rastools.rasfile
 import numpy as np
 import matplotlib as mpl
+import matplotlib.cm
+import matplotlib.image
 from collections import namedtuple
 
 # Import various backends from matplotlib and configure the available formats
@@ -36,8 +38,9 @@ class RasExtractUtility(rastools.main.Utility):
     def __init__(self):
         super(RasExtractUtility, self).__init__()
         self.parser.set_defaults(
-            cmap_list=False,
-            fmt_list=False,
+            list_colormaps=False,
+            list_formats=False,
+            list_interpolations=False,
             show_axes=False,
             show_colorbar=False,
             show_histogram=False,
@@ -46,29 +49,34 @@ class RasExtractUtility(rastools.main.Utility):
             percentile=100.0,
             output='{filename_root}_{channel:02d}_{channel_name}.png',
             title='',
+            interpolation=None,
             one_pdf=False,
             one_xcf=False,
         )
-        self.parser.add_option('--help-color-maps', dest='cmap_list', action='store_true',
+        self.parser.add_option('--help-color-maps', dest='list_colormaps', action='store_true',
             help="""list the available color-maps""")
-        self.parser.add_option('--help-formats', dest='fmt_list', action='store_true',
+        self.parser.add_option('--help-formats', dest='list_formats', action='store_true',
             help="""list the available file output formats""")
-        self.parser.add_option('-c', '--color-map', dest='cmap', action='store',
-            help="""the color-map to use in output (e.g. gray, jet, hot)""")
-        self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
-            help="""clip values in the output image to the specified percentile""")
+        self.parser.add_option('--help-interpolations', dest='list_interpolations', action='store_true',
+            help="""list the available interpolation algorithms""")
         self.parser.add_option('-a', '--axes', dest='show_axes', action='store_true',
-            help="""display the coordinate axes in the output""")
+            help="""draw the coordinate axes in the output""")
         self.parser.add_option('-b', '--color-bar', dest='show_colorbar', action='store_true',
             help="""draw a color-bar showing the range of the color-map to the right of the output""")
         self.parser.add_option('-H', '--histogram', dest='show_histogram', action='store_true',
             help="""draw a histogram of the channel values below the output""")
+        self.parser.add_option('-c', '--color-map', dest='cmap', action='store',
+            help="""the color-map to use in output (e.g. gray, jet, hot); see --help-color-maps for listing""")
+        self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
+            help="""clip values in the output image to the specified percentile""")
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
             help="""crop the input data by top,left,bottom,right points""")
-        self.parser.add_option('-o', '--output', dest='output', action='store',
-            help="""specify the template used to generate the output filenames; supports {variables} produced by rasinfo -p (default is %default)""")
+        self.parser.add_option('-i', '--interpolation', dest='interpolation', action='store',
+            help="""force the use of the specified interpolation algorithm; see --help-interpolation for listing""")
         self.parser.add_option('-t', '--title', dest='title', action='store',
             help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
+        self.parser.add_option('-o', '--output', dest='output', action='store',
+            help="""specify the template used to generate the output filenames; supports {variables}, see --help-formats for supported file formats. Default: %default""")
         self.parser.add_option('--one-pdf', dest='one_pdf', action='store_true',
             help="""if specified, a single PDF file will be produced with one page per image; the output template must end with .pdf and must not contain channel variable references""")
         self.parser.add_option('--one-xcf', dest='one_xcf', action='store_true',
@@ -76,16 +84,22 @@ class RasExtractUtility(rastools.main.Utility):
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
-        if options.cmap_list:
+        if options.list_colormaps:
             sys.stdout.write('The following colormaps are available:\n\n')
             sys.stdout.write('\n'.join(sorted(name for name in mpl.cm.datad if not name.endswith('_r'))))
             sys.stdout.write('\n\n')
-            sys.stdout.write('Append _r to any colormap name to reverse it\n\n')
+            sys.stdout.write('Append _r to any colormap name to reverse it. Previews at:\n')
+            sys.stdout.write('http://matplotlib.sourceforge.net/examples/pylab_examples/show_colormaps.html\n\n')
             return 0
         self.load_backends()
-        if options.fmt_list:
+        if options.list_formats:
             sys.stdout.write('The following file formats are available:\n\n')
             sys.stdout.write('\n'.join(sorted(ext for ext in IMAGE_FORMATS)))
+            sys.stdout.write('\n\n')
+            return 0
+        if options.list_interpolations:
+            sys.stdout.write('The following image interpolation algorithms are available:\n\n')
+            sys.stdout.write('\n'.join(sorted(alg for alg in mpl.image.AxesImage._interpd)))
             sys.stdout.write('\n\n')
             return 0
         if len(args) < 1:
@@ -124,6 +138,11 @@ class RasExtractUtility(rastools.main.Utility):
             (canvas_method, interpolation) = IMAGE_FORMATS[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
+        # Check the requested interpolation is valid
+        if options.interpolation is None:
+            options.interpolation = interpolation
+        if not options.interpolation in mpl.image.AxesImage._interpd:
+            self.parser.error('interpolation algorithm %s is unknown')
         # Check special format switches
         if options.one_pdf and ext != '.pdf':
             self.parser.error('output filename must end with .pdf when --one-pdf is specified')
@@ -160,7 +179,7 @@ class RasExtractUtility(rastools.main.Utility):
                     else:
                         filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
-                    figure = self.draw_channel(channel, options, filename, interpolation)
+                    figure = self.draw_channel(channel, options, filename)
                     # Finally, dump the figure to disk as whatever format the
                     # user requested
                     canvas = canvas_method.im_class(figure)
@@ -176,7 +195,7 @@ class RasExtractUtility(rastools.main.Utility):
             elif options.one_xcf:
                 xcf_layers.close()
 
-    def draw_channel(self, channel, options, filename, interpolation):
+    def draw_channel(self, channel, options, filename):
         """Draw the specified channel, returning the resulting matplotlib figure"""
         # Perform any cropping requested. This must be done before
         # calculation of the data's range and percentile limiting is
@@ -228,10 +247,7 @@ class RasExtractUtility(rastools.main.Utility):
                 facecolor='w', edgecolor='w')
             # Construct an axis in which to draw the channel data and
             # draw it. The imshow() call takes care of clamping values
-            # with vmin and vmax and color-mapping. Interpolation is
-            # set manually to 'nearest' to avoid any blurring (after
-            # all, we're sizing the axis precisely to the image data so
-            # interpolation shouldn't be needed)
+            # with vmin and vmax and color-mapping
             ax = fig.add_axes((
                 margin / fig_width,      # left
                 (margin + hist_height + cbar_height) / fig_height, # bottom
@@ -241,7 +257,7 @@ class RasExtractUtility(rastools.main.Utility):
             if not options.show_axes:
                 ax.set_axis_off()
             img = ax.imshow(data, cmap=mpl.cm.get_cmap(options.cmap), vmin=pmin, vmax=pmax,
-                interpolation=interpolation)
+                interpolation=options.interpolation)
             # Construct an axis for the histogram, if requested
             if options.show_histogram:
                 hax = fig.add_axes((
@@ -288,6 +304,7 @@ class RasExtractUtility(rastools.main.Utility):
         """Utility routine which converts the options array for use in format substitutions"""
         return dict(
             percentile=options.percentile,
+            interpolation=options.interpolation,
             colormap=options.cmap,
             crop=','.join(str(i) for i in options.crop),
         )
