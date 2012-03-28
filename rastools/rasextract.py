@@ -53,8 +53,8 @@ class RasExtractUtility(rastools.main.Utility):
             one_pdf=False,
             one_xcf=False,
         )
-        self.parser.add_option('--help-color-maps', dest='list_colormaps', action='store_true',
-            help="""list the available color-maps""")
+        self.parser.add_option('--help-colormaps', dest='list_colormaps', action='store_true',
+            help="""list the available colormaps""")
         self.parser.add_option('--help-formats', dest='list_formats', action='store_true',
             help="""list the available file output formats""")
         self.parser.add_option('--help-interpolations', dest='list_interpolations', action='store_true',
@@ -62,11 +62,11 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.add_option('-a', '--axes', dest='show_axes', action='store_true',
             help="""draw the coordinate axes in the output""")
         self.parser.add_option('-b', '--color-bar', dest='show_colorbar', action='store_true',
-            help="""draw a color-bar showing the range of the color-map to the right of the output""")
+            help="""draw a color-bar showing the range of the colormap to the right of the output""")
         self.parser.add_option('-H', '--histogram', dest='show_histogram', action='store_true',
             help="""draw a histogram of the channel values below the output""")
-        self.parser.add_option('-c', '--color-map', dest='cmap', action='store',
-            help="""the color-map to use in output (e.g. gray, jet, hot); see --help-color-maps for listing""")
+        self.parser.add_option('-c', '--colormap', dest='cmap', action='store',
+            help="""the colormap to use in output (e.g. gray, jet, hot); see --help-colormaps for listing""")
         self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
             help="""clip values in the output image to the specified percentile""")
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
