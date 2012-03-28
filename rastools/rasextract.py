@@ -129,17 +129,19 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('output filename must end with .pdf when --one-pdf is specified')
         if options.one_xcf and ext != '.xcf':
             self.parser_error('output filename must end with .xcf when --one-xcf is specified')
-        # Extract the specified channels
-        logging.info('File contains %d channels, extracting channels %s' % (
-            len(ras_f.channels),
-            ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
-        ))
+        # Calculate the percentile index (this will be the same for every
+        # channel as every channel has the same dimensions in a RAS file)
         if options.percentile < 100.0:
             options.vmax_index = round(
                 (ras_f.raster_count - options.crop.top - options.crop.bottom) *
                 (ras_f.point_count - options.crop.left - options.crop.right) *
                 options.percentile / 100.0)
             logging.info('%gth percentile is at index %d' % (options.percentile, options.vmax_index))
+        # Extract the specified channels
+        logging.info('File contains %d channels, extracting channels %s' % (
+            len(ras_f.channels),
+            ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
+        ))
         if options.one_pdf:
             filename = ras_f.format(options.output)
             logging.warning('Writing all images to %s' % filename)
