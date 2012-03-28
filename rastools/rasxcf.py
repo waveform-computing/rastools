@@ -32,7 +32,52 @@ except:
 
 class FigureCanvasXcf(FigureCanvasAgg):
     def print_xcf(self, filename_or_obj, *args, **kwargs):
-        pass
+        # If filename_or_obj is a file-like object we need a temporary file for
+        # GIMP's output too...
+        if isinstance(filename_or_obj, basestring):
+            out_temp_handle, out_temp_name = None, filename_or_obj
+        else:
+            out_temp_handle, out_temp_name = tempfile.mkstemp(suffix='.xcf')
+        try:
+            # Create a temporary file and write the "layer" to it as a PNG
+            in_temp_handle, in_temp_name = tempfile.mkstemp(suffix='.png')
+            try:
+                FigureCanvasAgg.print_png(self, in_temp_name, *args, **kwargs)
+                scheme = """\
+(let*
+  (
+    (im (car (file-png-load RUN-NONINTERACTIVE "%(input)s" "%(input)s")))
+    (layer (car (gimp-image-get-active-layer im)))
+  )
+  (gimp-file-save RUN-NONINTERACTIVE im layer "%(output)s" "%(output)s")
+  (gimp-image-delete im)
+)
+""" % {'input': in_temp_name, 'output': out_temp_name}
+                p = subprocess.Popen([
+                    GIMP_EXECUTABLE,       # self-explanatory...
+                    '-i',                  # run in non-interactive mode
+                    '-b', scheme,          # run batch to generate layered XCF
+                    '-b', '(gimp-quit 0)', # ensure we terminate GIMP afterward
+                ], stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
+                output = p.communicate()[0]
+                # As with the test at the start, only log GIMP's output if an
+                # error occurs - otherwise we don't care
+                if p.returncode != 0:
+                    for line in output.splitlines():
+                        logging.error(line.rstrip())
+                    raise Exception('GIMP XCF generation failed with return code %d - see above for further details' % p.returncode)
+            finally:
+                os.close(in_temp_handle)
+                os.unlink(in_temp_name)
+        finally:
+            if out_temp_handle:
+                os.close(out_temp_handle)
+                # If we wrote the XCF to a temporary file, write its content to
+                # the file-like object we were given
+                # XXX What if it's a gigabyte file?!
+                with open(out_temp_name, 'rb') as f:
+                    filename_or_obj.write(f.read())
+                os.unlink(out_temp_name)
 
 
 class XcfLayers(object):
@@ -102,12 +147,12 @@ class XcfLayers(object):
             if p.returncode != 0:
                 for line in output.splitlines():
                     logging.error(line.rstrip())
-                raise Exception('GIMP XCF generation failed with return code %d - see log for further details' % p.returncode)
+                raise Exception('GIMP XCF generation failed with return code %d - see above for further details' % p.returncode)
             # Check that the output file exists
             if not os.path.exists(self.filename):
                 for line in output.splitlines():
                     logging.error(line.rstrip())
-                raise IOError('GIMP succeeded but cannot find XCF file "%s" - see log for details' % self.filename)
+                raise IOError('GIMP succeeded but cannot find XCF file "%s" - see above for details' % self.filename)
         finally:
             # Remove all the temporary files we generated
             while self._layers:
