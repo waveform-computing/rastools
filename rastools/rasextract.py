@@ -286,16 +286,33 @@ class RasExtractUtility(rastools.main.Utility):
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
                 '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest'),
-                '.emf':  (FigureCanvasAgg.print_emf,  'nearest'),
-                '.eps':  (FigureCanvasAgg.print_eps,  'bicubic'),
-                '.pdf':  (FigureCanvasAgg.print_pdf,  'bicubic'),
                 '.png':  (FigureCanvasAgg.print_png,  'nearest'),
-                '.ps':   (FigureCanvasAgg.print_ps,   'bicubic'),
-                '.raw':  (FigureCanvasAgg.print_raw,  'nearest'),
-                '.rgb':  (FigureCanvasAgg.print_rgb,  'nearest'),
-                '.rgba': (FigureCanvasAgg.print_rgba, 'nearest'),
-                '.svg':  (FigureCanvasAgg.print_svg,  'bicubic'),
-                '.svgz': (FigureCanvasAgg.print_svgz, 'bicubic'),
+            })
+
+        logging.info('Loading SVG support')
+        try:
+            global FigureCanvasSVG
+            from matplotlib.backends.backend_svg import FigureCanvasSVG
+        except ImportError:
+            logging.warning('Failed to load Cairo support')
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.svg':  (FigureCanvasSVG.print_svg,  'bicubic'),
+                '.svgz': (FigureCanvasSVG.print_svgz, 'bicubic'),
+            })
+
+        logging.info('Loading JPEG support')
+        try:
+            global FigureCanvasGDK
+            from matplotlib.backends.backend_gdk import FigureCanvasGDK
+        except ImportError:
+            logging.warning('Failed to load JPEG support')
+        else:
+            IMAGE_FORMATS.update({
+                # ext    canvas method                interpolation
+                '.jpg':  (FigureCanvasGDK.print_jpg,  'bicubic'),
+                '.jpeg': (FigureCanvasGDK.print_jpg,  'bicubic'),
             })
 
         logging.info('Loading TIFF support')
@@ -312,17 +329,17 @@ class RasExtractUtility(rastools.main.Utility):
                 '.gif':  (FigureCanvasPIL.print_gif,  'nearest'),
             })
 
-        logging.info('Loading JPEG support')
+        logging.info('Loading PostScript support')
         try:
-            global FigureCanvasGDK
-            from matplotlib.backends.backend_gdk import FigureCanvasGDK
+            global FigureCanvasPS
+            from matplotlib.backends.backend_ps import FigureCanvasPS
         except ImportError:
-            logging.warning('Failed to load JPEG support')
+            logging.warning('Failed to load PostScript support')
         else:
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
-                '.jpg':  (FigureCanvasGDK.print_jpg,  'bicubic'),
-                '.jpeg': (FigureCanvasGDK.print_jpg,  'bicubic'),
+                '.eps':  (FigureCanvasPS.print_eps,  'bicubic'),
+                '.ps':   (FigureCanvasPS.print_ps,   'bicubic'),
             })
 
         logging.info('Loading PDF support')
