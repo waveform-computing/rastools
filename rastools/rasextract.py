@@ -4,7 +4,6 @@
 import os
 import sys
 import logging
-import itertools
 import rastools.main
 import rastools.rasfile
 import numpy as np
@@ -12,9 +11,6 @@ import matplotlib as mpl
 import matplotlib.cm
 import matplotlib.image
 from collections import namedtuple
-
-# Import various backends from matplotlib and configure the available formats
-# depending on what's available
 
 DPI = 72.0
 IMAGE_FORMATS = {}
@@ -219,7 +215,9 @@ class RasExtractUtility(rastools.main.Utility):
         else:
             pmax = vmax
         # No minimum for the percentile (yet...)
-        pmin = vmin
+        pmin = 0
+        if pmin < vmin:
+            logging.warning('Channel %d (%s) has no values below %d' % (channel.index, channel.name, vmin))
         if pmin == pmax:
             logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
         else:
