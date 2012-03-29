@@ -176,15 +176,16 @@ class RasExtractUtility(rastools.main.Utility):
                         filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     figure = self.draw_channel(channel, options, filename)
-                    # Finally, dump the figure to disk as whatever format the
-                    # user requested
-                    canvas = canvas_method.im_class(figure)
-                    if options.one_pdf:
-                        pdf_pages.savefig(figure)
-                    elif options.one_xcf:
-                        xcf_layers.savefig(figure, title=channel.format('{channel} - {channel_name}'))
-                    else:
-                        canvas_method(canvas, filename, dpi=DPI)
+                    if figure:
+                        # Finally, dump the figure to disk as whatever format the
+                        # user requested
+                        canvas = canvas_method.im_class(figure)
+                        if options.one_pdf:
+                            pdf_pages.savefig(figure)
+                        elif options.one_xcf:
+                            xcf_layers.savefig(figure, title=channel.format('{channel} - {channel_name}'))
+                        else:
+                            canvas_method(canvas, filename, dpi=DPI)
         finally:
             if options.one_pdf:
                 pdf_pages.close()
@@ -220,82 +221,82 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Channel %d (%s) has no values below %d' % (channel.index, channel.name, vmin))
         if pmin == pmax:
             logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
-        else:
-            # Copy the data into a floating-point array (matplotlib's
-            # image module won't play with uint32 data - only uint8 or
-            # float32) and crop it as necessary
-            data = np.array(data, np.float)
-            # Calculate the figure dimensions and margins, and
-            # construct the necessary objects
-            (img_width, img_height) = (
-                (channel.ras_file.point_count - options.crop.left - options.crop.right) / DPI,
-                (channel.ras_file.raster_count - options.crop.top - options.crop.bottom) / DPI
-            )
-            (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
-            (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
-            (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(options.title)]
-            margin = (0.0, 0.75)[
-                options.show_axes
-                or options.show_colorbar
-                or options.show_histogram
-                or bool(options.title)]
-            fig_width = img_width + margin * 2
-            fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
-            fig = mpl.figure.Figure(figsize=(fig_width, fig_height), dpi=DPI,
-                facecolor='w', edgecolor='w')
-            # Construct an axis in which to draw the channel data and
-            # draw it. The imshow() call takes care of clamping values
-            # with vmin and vmax and color-mapping
-            ax = fig.add_axes((
-                margin / fig_width,      # left
-                (margin + hist_height + cbar_height) / fig_height, # bottom
-                img_width / fig_width,   # width
-                img_height / fig_height, # height
-            ), frame_on=options.show_axes)
-            if not options.show_axes:
-                ax.set_axis_off()
-            img = ax.imshow(data, cmap=mpl.cm.get_cmap(options.cmap), vmin=pmin, vmax=pmax,
-                interpolation=options.interpolation)
-            # Construct an axis for the histogram, if requested
-            if options.show_histogram:
-                hax = fig.add_axes((
-                    margin / fig_width,               # left
-                    (margin + cbar_height) / fig_height, # bottom
-                    hist_width / fig_width,           # width
-                    (hist_height * 0.8) / fig_height, # height
-                ))
-                hg = hax.hist(data.flat, bins=32, range=(pmin, pmax))
-            # Construct an axis for the colorbar, if requested
-            if options.show_colorbar:
-                cax = fig.add_axes((
-                    margin / fig_width,                # left
-                    margin / fig_height,               # bottom
-                    cbar_width / fig_width,            # width
-                    (cbar_height * 0.3) / fig_height, # height
-                ))
-                cb = fig.colorbar(img, cax=cax, orientation='horizontal',
-                    extend=
-                    'both' if pmin > vmin and pmax < vmax else
-                    'max' if pmax < vmax else
-                    'min' if pmin > vmin else
-                    'neither')
-            # Construct an axis for the title, if requested
-            if options.title:
-                hax = fig.add_axes((
-                    0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
-                    1, head_height / fig_height, # width, height
-                ))
-                hax.set_axis_off()
-                # Render the title. The string_escape codec is used to
-                # permit new-line escapes, and various options are
-                # passed-thru to the channel formatter so things like
-                # percentile can be included in the title
-                title = channel.format(options.title.decode('string_escape'),
-                    output=filename, **self.format_options(options))
-                hd = hax.text(0.5, 0.5, title,
-                    horizontalalignment='center', verticalalignment='baseline',
-                    multialignment='center', size='medium', family='sans-serif',
-                    transform=hax.transAxes)
+            return None
+        # Copy the data into a floating-point array (matplotlib's
+        # image module won't play with uint32 data - only uint8 or
+        # float32) and crop it as necessary
+        data = np.array(data, np.float)
+        # Calculate the figure dimensions and margins, and
+        # construct the necessary objects
+        (img_width, img_height) = (
+            (channel.ras_file.point_count - options.crop.left - options.crop.right) / DPI,
+            (channel.ras_file.raster_count - options.crop.top - options.crop.bottom) / DPI
+        )
+        (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
+        (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
+        (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(options.title)]
+        margin = (0.0, 0.75)[
+            options.show_axes
+            or options.show_colorbar
+            or options.show_histogram
+            or bool(options.title)]
+        fig_width = img_width + margin * 2
+        fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
+        fig = mpl.figure.Figure(figsize=(fig_width, fig_height), dpi=DPI,
+            facecolor='w', edgecolor='w')
+        # Construct an axis in which to draw the channel data and
+        # draw it. The imshow() call takes care of clamping values
+        # with vmin and vmax and color-mapping
+        ax = fig.add_axes((
+            margin / fig_width,      # left
+            (margin + hist_height + cbar_height) / fig_height, # bottom
+            img_width / fig_width,   # width
+            img_height / fig_height, # height
+        ), frame_on=options.show_axes)
+        if not options.show_axes:
+            ax.set_axis_off()
+        img = ax.imshow(data, cmap=mpl.cm.get_cmap(options.cmap), vmin=pmin, vmax=pmax,
+            interpolation=options.interpolation)
+        # Construct an axis for the histogram, if requested
+        if options.show_histogram:
+            hax = fig.add_axes((
+                margin / fig_width,               # left
+                (margin + cbar_height) / fig_height, # bottom
+                hist_width / fig_width,           # width
+                (hist_height * 0.8) / fig_height, # height
+            ))
+            hg = hax.hist(data.flat, bins=32, range=(pmin, pmax))
+        # Construct an axis for the colorbar, if requested
+        if options.show_colorbar:
+            cax = fig.add_axes((
+                margin / fig_width,                # left
+                margin / fig_height,               # bottom
+                cbar_width / fig_width,            # width
+                (cbar_height * 0.3) / fig_height, # height
+            ))
+            cb = fig.colorbar(img, cax=cax, orientation='horizontal',
+                extend=
+                'both' if pmin > vmin and pmax < vmax else
+                'max' if pmax < vmax else
+                'min' if pmin > vmin else
+                'neither')
+        # Construct an axis for the title, if requested
+        if options.title:
+            hax = fig.add_axes((
+                0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
+                1, head_height / fig_height, # width, height
+            ))
+            hax.set_axis_off()
+            # Render the title. The string_escape codec is used to
+            # permit new-line escapes, and various options are
+            # passed-thru to the channel formatter so things like
+            # percentile can be included in the title
+            title = channel.format(options.title.decode('string_escape'),
+                output=filename, **self.format_options(options))
+            hd = hax.text(0.5, 0.5, title,
+                horizontalalignment='center', verticalalignment='baseline',
+                multialignment='center', size='medium', family='sans-serif',
+                transform=hax.transAxes)
         return fig
 
     def format_options(self, options):
