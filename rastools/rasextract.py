@@ -397,7 +397,6 @@ class RasExtractUtility(rastools.main.Utility):
             from rastools.rasxcf import FigureCanvasXcf, XcfLayers
         except ImportError:
             logging.warning('Failed to load GIMP support')
-            raise
         else:
             IMAGE_FORMATS.update({
                 # ext    canvas method                interpolation
