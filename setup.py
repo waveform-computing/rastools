@@ -26,6 +26,7 @@ entry_points = {
     'console_scripts': [
         'rasinfo = rastools.rasinfo:main',
         'rasextract = rastools.rasextract:main',
+        'rasdump = rastools.rasdump:main',
     ]
 }
 
