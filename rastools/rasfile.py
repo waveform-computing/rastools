@@ -129,6 +129,7 @@ class RasFileReader(object):
     #   dump_file_test(argv[1]);
     # }
     datetime_format = '%a %b %d %H:%M:%S %Y'
+    header_version = 1
     header_struct = struct.Struct(
         '<'       # little-endian
         + '80s'   # version
@@ -215,8 +216,8 @@ class RasFileReader(object):
         ) = self.header_struct.unpack(self._file.read(self.header_struct.size))
         if not self.version.startswith('Raster Scan'):
             raise RasFileError('This does not appear to be a QSCAN RAS file')
-        if self.version_number != 1:
-            raise RasFileError('Cannot interpret QSCAN RAS version %d - only version 1' % self.version_number)
+        if self.version_number != self.header_version:
+            raise RasFileError('Cannot interpret QSCAN RAS version %d - only version %d' % (self.version_number, self.header_version))
         # Right strip the various string fields
         strip_chars = '\t\r\n \0'
         self.version = self.version.rstrip(strip_chars)

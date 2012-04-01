@@ -176,7 +176,7 @@ class RasExtractUtility(rastools.main.Utility):
                         filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     figure = self.draw_channel(channel, options, filename)
-                    if figure:
+                    if figure is not None:
                         # Finally, dump the figure to disk as whatever format the
                         # user requested
                         canvas = canvas_method.im_class(figure)
