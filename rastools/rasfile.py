@@ -214,6 +214,15 @@ class RasFileReader(object):
             self.offsets[5],
             self.run_number,
         ) = self.header_struct.unpack(self._file.read(self.header_struct.size))
+        # XXX There's a nasty off-by-one error here. The header actually
+        # contains one more int32 which appears to always be zero. By not
+        # reading it, we mistake it for the first value in the first channel.
+        # The result is that all channel numbers get pushed along by one (0
+        # becomes 1, 1 becomes 2, etc. and the last becomes 0), and skip
+        # reading one value at the end. However, this is also what the original
+        # software does so I'm loathe to do different despite it being an
+        # obvious bug. Anyway, one should avoid using the first channel of data
+        # in a RAS file as its first value will definitely be incorrect
         if not self.version.startswith('Raster Scan'):
             raise RasFileError('This does not appear to be a QSCAN RAS file')
         if self.version_number != self.header_version:
@@ -338,6 +347,7 @@ class RasChannels(object):
                         status = new_status
             if self.ras_file.verbose:
                 sys.stderr.write('\n')
+
 
     def __len__(self):
         return self.ras_file.channel_count

@@ -32,6 +32,7 @@ class RasDumpUtility(rastools.main.Utility):
             crop='0,0,0,0',
             percentile=100.0,
             output='{filename_root}_{channel:02d}_{channel_name}.csv',
+            empty=False,
             multi=False,
         )
         self.parser.add_option('--help-formats', dest='list_formats', action='store_true',
@@ -44,6 +45,8 @@ class RasDumpUtility(rastools.main.Utility):
             help="""specify the template used to generate the output filenames; supports {variables}, see --help-formats for supported file formats. Default: %default""")
         self.parser.add_option('-m', '--multi', dest='multi', action='store_true',
             help="""if specified, produce a single output file with multiple pages or sheets, one per channel (only available with certain formats)""")
+        self.parser.add_option('-e', '--empty', dest='empty', action='store_true',
+            help="""if specified, empty channels in the output (by default empty channels are ignored)""")
 
     def main(self, options, args):
         super(RasDumpUtility, self).main(options, args)
@@ -119,12 +122,13 @@ class RasDumpUtility(rastools.main.Utility):
                         filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     data = self.dump_channel(channel, options)
-                    # Finally, dump the figure to disk as whatever format the
-                    # user requested
-                    if options.multi:
-                        output.write_page(data, channel)
-                    else:
-                        writer_class(filename, channel).write(data)
+                    if data is not None:
+                        # Finally, dump the figure to disk as whatever format
+                        # the user requested
+                        if options.multi:
+                            output.write_page(data, channel)
+                        else:
+                            writer_class(filename, channel).write(data)
         finally:
             if options.multi:
                 output.close()
@@ -155,8 +159,11 @@ class RasDumpUtility(rastools.main.Utility):
         # No minimum for the percentile (yet...)
         pmin = 0
         if pmin == pmax:
-            logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
-            return None
+            if options.empty:
+                logging.warning('Channel %d (%s) is empty' % (channel.index, channel.name))
+            else:
+                logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
+                return None
         # Apply the percentiles
         data[data < pmin] = pmin
         data[data > pmax] = pmax
@@ -184,6 +191,19 @@ class RasDumpUtility(rastools.main.Utility):
                 # ext    writer-class  multi-class
                 '.csv':  (CsvWriter,   None),
                 '.tsv':  (TsvWriter,   None),
+            })
+
+        logging.info('Loading RAS support')
+        try:
+            global RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
+            from rastools.rasras import RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
+        except ImportError:
+            logging.warning('Failed to load RAS support')
+        else:
+            OUTPUT_FORMATS.update({
+                # ext     writer-class     multi-class
+                '.ras':   (RasWriter,      RasMultiWriter),
+                '.ras_a': (RasAsciiWriter, RasAsciiMultiWriter),
             })
 
         logging.info('Loading Excel support')

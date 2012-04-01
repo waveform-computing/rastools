@@ -46,6 +46,7 @@ class RasExtractUtility(rastools.main.Utility):
             output='{filename_root}_{channel:02d}_{channel_name}.png',
             title='',
             interpolation=None,
+            empty=False,
             one_pdf=False,
             one_xcf=False,
         )
@@ -73,6 +74,8 @@ class RasExtractUtility(rastools.main.Utility):
             help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
         self.parser.add_option('-o', '--output', dest='output', action='store',
             help="""specify the template used to generate the output filenames; supports {variables}, see --help-formats for supported file formats. Default: %default""")
+        self.parser.add_option('-e', '--empty', dest='empty', action='store_true',
+            help="""if specified, empty channels in the output (by default empty channels are ignored)""")
         self.parser.add_option('--one-pdf', dest='one_pdf', action='store_true',
             help="""if specified, a single PDF file will be produced with one page per image; the output template must end with .pdf and must not contain channel variable references""")
         self.parser.add_option('--one-xcf', dest='one_xcf', action='store_true',
@@ -220,8 +223,11 @@ class RasExtractUtility(rastools.main.Utility):
         if pmin < vmin:
             logging.warning('Channel %d (%s) has no values below %d' % (channel.index, channel.name, vmin))
         if pmin == pmax:
-            logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
-            return None
+            if options.empty:
+                logging.warning('Channel %d (%s) is empty' % (channel.index, channel.name))
+            else:
+                logging.warning('Channel %d (%s) is empty, skipping' % (channel.index, channel.name))
+                return None
         # Copy the data into a floating-point array (matplotlib's
         # image module won't play with uint32 data - only uint8 or
         # float32) and crop it as necessary
