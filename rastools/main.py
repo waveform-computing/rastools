@@ -126,7 +126,7 @@ class Utility(object):
             # Just ignore system exit and keyboard interrupt errors (after all,
             # they're user generated)
             return 130
-        elif issubclass(type, (IOError, ConfigParser.Error)):
+        elif issubclass(type, (ValueError, IOError, ConfigParser.Error)):
             # For simple errors like IOError just output the message which
             # should be sufficient for the end user (no need to confuse them
             # with a full stack trace)

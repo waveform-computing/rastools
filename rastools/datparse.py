@@ -86,7 +86,7 @@ class DatFileReader(object):
         else:
             logging.debug('Opening DAT file %s' % dat_file.name)
             self._file = dat_file
-        self.filename_root = re.sub(r'^(.*)\d+\.dat$', r'\1', self._file.name)
+        self.filename_root = re.sub(r'^(.*?)[0-9_-]+\.dat$', r'\1', self._file.name)
         # Parse the header
         logging.debug('Reading DAT header')
         self.version_number = self.header_version

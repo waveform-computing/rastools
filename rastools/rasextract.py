@@ -21,11 +21,11 @@ MULTI_LAYER_XCF=False
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
 class RasExtractUtility(rastools.main.Utility):
-    """%prog [options] ras-file [channel-file]
+    """%prog [options] data-file [channel-file]
 
-    This utility accepts a QSCAN RAS file and an optional channel definition
-    file. For each channel listed in the latter, an image is produced from the
-    corresponding channel in the RAS file. Various options are provided for
+    This utility accepts a data file and an optional channel definition file.
+    For each channel listed in the latter, an image is produced from the
+    corresponding channel in the data file. Various options are provided for
     customizing the output including percentile limiting, color-mapping, and
     drawing of axes and titles.
 
@@ -43,7 +43,8 @@ class RasExtractUtility(rastools.main.Utility):
             show_histogram=False,
             cmap='gray',
             crop='0,0,0,0',
-            percentile=100.0,
+            percentile=None,
+            range=None,
             output='{filename_root}_{channel:02d}_{channel_name}.png',
             title='',
             interpolation=None,
@@ -66,7 +67,9 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.add_option('-c', '--colormap', dest='cmap', action='store',
             help="""the colormap to use in output (e.g. gray, jet, hot); see --help-colormaps for listing""")
         self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
-            help="""clip values in the output image to the specified percentile""")
+            help="""clip values in the output image to the specified low,high percentile range (mutually exclusive with --range)""")
+        self.parser.add_option('-r', '--range', dest='range', action='store',
+            help="""clip values in the output image to the specified low,high count range (mutually exclusive with --percentile)""")
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
             help="""crop the input data by top,left,bottom,right points""")
         self.parser.add_option('-i', '--interpolation', dest='interpolation', action='store',
@@ -118,13 +121,35 @@ class RasExtractUtility(rastools.main.Utility):
                 break
         if not f:
             self.parser.error('unrecognized file extension %s' % ext)
-        # Check the clip level is a valid percentage
-        try:
-            options.percentile = float(options.percentile)
-        except ValueError:
-            self.parser.error('%s is not a valid percentile' % options.percentile)
-        if not (0 <= options.percentile <= 100.0):
-            self.parser.error('percentile must be between 0 and 100 (%f specified)' % options.percentile)
+        # Check the percentile range is valid
+        if options.percentile:
+            if options.range:
+                self.parser.error('cannot specify both --percentile and --range')
+            s = options.percentile
+            if ',' in s:
+                s = s.split(',', 1)
+            else:
+                s = ('0.0', s)
+            try:
+                options.percentile = tuple(float(n) for n in s)
+            except ValueError:
+                self.parser.error('%s is not a valid percentile range' % options.percentile)
+            for n in options.percentile:
+                if not (0.0 <= n <= 100.0):
+                    self.parser.error('percentile must be between 0 and 100 (%f specified)' % n)
+        # Check the range is valid
+        if options.range:
+            s = options.range
+            if ',' in s:
+                s = s.split(',', 1)
+            else:
+                s = ('0.0', s)
+            try:
+                options.range = tuple(float(n) for n in s)
+            except ValueError:
+                self.parser.error('%s is not a valid count range' % options.range)
+            if options.range[0] > options.range[1]:
+                self.parser.error('count range must be specified low,high')
         # Check the colormap is known
         if not mpl.cm.get_cmap(options.cmap):
             self.parser.error('color-map %s is unknown' % options.cmap)
@@ -153,14 +178,17 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('output filename must end with .pdf when --one-pdf is specified')
         if options.one_xcf and ext != '.xcf':
             self.parser_error('output filename must end with .xcf when --one-xcf is specified')
-        # Calculate the percentile index (this will be the same for every
+        # Calculate the percentile indices (these will be the same for every
         # channel as every channel has the same dimensions in a RAS file)
-        if options.percentile < 100.0:
-            options.vmax_index = round(
+        if options.percentile:
+            options.percentile_indexes = tuple(
                 (f.y_size - options.crop.top - options.crop.bottom) *
                 (f.x_size - options.crop.left - options.crop.right) *
-                options.percentile / 100.0)
-            logging.info('%gth percentile is at index %d' % (options.percentile, options.vmax_index))
+                n / 100.0
+                for n in options.percentile
+            )
+            for n, i in zip(options.percentile, options.percentile_indexes):
+                logging.info('%gth percentile is at index %d' % (n, i))
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
             len(f.channels),
@@ -217,17 +245,22 @@ class RasExtractUtility(rastools.main.Utility):
         vmin = vsorted[0]
         vmax = vsorted[-1]
         logging.info('Channel %d (%s) has range %d-%d' % (channel.index, channel.name, vmin, vmax))
-        if options.percentile < 100.0:
-            pmax = vsorted[options.vmax_index]
-            logging.info('%gth percentile is %d' % (options.percentile, pmax))
-            if pmax != vmax:
-                logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, vmin, pmax))
+        if options.percentile:
+            pmin = vsorted[options.percentile_indexes[0]]
+            pmax = vsorted[options.percentile_indexes[1]]
+            logging.info('%gth percentile is %d' % (options.percentile[0], pmin))
+            logging.info('%gth percentile is %d' % (options.percentile[1], pmax))
+        elif options.range:
+            pmin, pmax = options.range
         else:
+            pmin = vmin
             pmax = vmax
-        # No minimum for the percentile (yet...)
-        pmin = 0
+        if pmin != vmin or pmax != vmax:
+            logging.info('Channel %d (%s) has new range %d-%d' % (channel.index, channel.name, pmin, pmax))
         if pmin < vmin:
             logging.warning('Channel %d (%s) has no values below %d' % (channel.index, channel.name, vmin))
+        if pmax > vmax:
+            logging.warning('Channel %d (%s) has no values above %d' % (channel.index, channel.name, vmax))
         if pmin == pmax:
             if options.empty:
                 logging.warning('Channel %d (%s) is empty' % (channel.index, channel.name))
@@ -315,6 +348,7 @@ class RasExtractUtility(rastools.main.Utility):
         """Utility routine which converts the options array for use in format substitutions"""
         return dict(
             percentile=options.percentile,
+            range=options.range,
             interpolation=options.interpolation,
             colormap=options.cmap,
             crop=','.join(str(i) for i in options.crop),

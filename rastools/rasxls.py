@@ -5,6 +5,8 @@ import xlwt
 
 class XlsWriter(object):
     def __init__(self, filename_or_obj, channel):
+        if channel.parent.x_size > 256:
+            raise ValueError('Data has too many columns to fit in an Excel spreadsheet (%d)' % channel.parent.x_size)
         self._file = filename_or_obj
         self._workbook = xlwt.Workbook()
         self._worksheet = self._workbook.add_sheet(channel.format('{channel} - {channel_name}'))
@@ -16,7 +18,9 @@ class XlsWriter(object):
         self._workbook.save(self._file)
 
 class XlsMulti(object):
-    def __init__(self, filename_or_obj, ras_file):
+    def __init__(self, filename_or_obj, data_file):
+        if data_file.x_size > 256:
+            raise ValueError('Data has too many columns to fit in an Excel spreadsheet (%d)' % data_file.x_size)
         self._file = filename_or_obj
         self._workbook = xlwt.Workbook()
 
