@@ -8,7 +8,7 @@ import struct
 import datetime as dt
 import numpy as np
 
-class Error(Exception):
+class Error(ValueError):
     """Base exception class"""
 
 class RasFileError(Error):
