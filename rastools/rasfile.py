@@ -7,7 +7,6 @@ import logging
 import struct
 import datetime as dt
 import numpy as np
-from collections import namedtuple
 
 class Error(Exception):
     """Base exception class"""
@@ -128,6 +127,7 @@ class RasFileReader(object):
     #    }
     #   dump_file_test(argv[1]);
     # }
+    ext = ['.ras', '.RAS']
     datetime_format = '%a %b %d %H:%M:%S %Y'
     header_version = 1
     header_struct = struct.Struct(
@@ -159,10 +159,16 @@ class RasFileReader(object):
         + 'i'     # run_num
     )
 
-    def __init__(self, ras_file, channels_file=None, verbose=False):
+    def __init__(self, *args, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(RasFileReader, self).__init__()
-        self.verbose = verbose
+        self.verbose = kwargs.get('verbose', False)
+        if len(args) == 1:
+            ras_file, channels_file = args[0], None
+        elif len(args) == 2:
+            ras_file, channels_file = args
+        else:
+            raise ValueError('expected one or two values to unpack')
         if isinstance(ras_file, basestring):
             logging.debug('Opening QSCAN RAS file %s' % ras_file)
             self._file = open(ras_file, 'rb')
@@ -196,8 +202,8 @@ class RasFileReader(object):
             self.count_time,
             self.sweep_count,
             self.ascii_out,
-            self.point_count,
-            self.raster_count,
+            self.x_size,
+            self.y_size,
             self.pixel_point,
             self.scan_direction,
             self.scan_type,
@@ -249,8 +255,8 @@ class RasFileReader(object):
 
     def format(self, template, **kwargs):
         return template.format(
-            rasfile            = self._file.name,
-            filename           = self.file_name,
+            filename           = self._file.name,
+            filename_original  = self.file_name,
             filename_root      = self.file_head,
             version_name       = self.version,
             version_number     = self.version_number,
@@ -261,8 +267,8 @@ class RasFileReader(object):
             start_time         = self.start_time,
             stop_time          = self.stop_time,
             channel_count      = self.channel_count,
-            point_count        = self.point_count,
-            raster_count       = self.raster_count,
+            x_size             = self.x_size,
+            y_size             = self.y_size,
             count_time         = self.count_time,
             sweep_count        = self.sweep_count,
             ascii_output       = self.ascii_out,
@@ -272,19 +278,19 @@ class RasFileReader(object):
             current_x_direction= self.current_x_direction,
             run_number         = self.run_number,
             comments           = self.comments,
-            now                = dt.datetime.now(),
             **kwargs
         )
 
+
 class RasChannels(object):
-    def __init__(self, ras_file, channels_file):
+    def __init__(self, parent, channels_file):
         super(RasChannels, self).__init__()
-        self.ras_file = ras_file
+        self.parent = parent
         self._read_channels = False
         # All channels are initially created unnamed and enabled
         self._items = [
-            RasChannel(self, index, '', True)
-            for index in xrange(self.ras_file.channel_count)
+            RasChannel(self, index, '')
+            for index in xrange(self.parent.channel_count)
         ]
         if channels_file:
             # If a channels file is provided, disable all the channels and
@@ -326,31 +332,30 @@ class RasChannels(object):
             # Initialize a list of zero-filled arrays
             logging.debug('Allocating channel arrays')
             for channel in self:
-                channel._data = np.zeros((self.ras_file.raster_count, self.ras_file.point_count), np.uint32)
+                channel._data = np.zeros((self.parent.y_size, self.parent.x_size), np.uint32)
             # Read a line at a time and extract the specified channel
-            input_struct = struct.Struct('I' * self.ras_file.point_count * self.ras_file.channel_count)
-            if self.ras_file.verbose:
+            input_struct = struct.Struct('I' * self.parent.x_size * self.parent.channel_count)
+            if self.parent.verbose:
                 progress = 0
                 status = 'Reading channel data %d%%' % progress
                 sys.stderr.write(status)
-            for raster in xrange(self.ras_file.raster_count):
-                data = input_struct.unpack(self.ras_file._file.read(input_struct.size))
+            for y in xrange(self.parent.y_size):
+                data = input_struct.unpack(self.parent._file.read(input_struct.size))
                 for channel in self:
-                    channel._data[raster] = data[channel.index::self.ras_file.channel_count]
-                if self.ras_file.verbose:
-                    new_progress = round(raster * 100.0 / self.ras_file.raster_count)
+                    channel._data[y] = data[channel.index::self.parent.channel_count]
+                if self.parent.verbose:
+                    new_progress = round(y * 100.0 / self.parent.y_size)
                     if new_progress != progress:
                         progress = new_progress
                         new_status = 'Reading channel data %d%%' % progress
                         sys.stderr.write('\b' * len(status))
                         sys.stderr.write(new_status)
                         status = new_status
-            if self.ras_file.verbose:
+            if self.parent.verbose:
                 sys.stderr.write('\n')
 
-
     def __len__(self):
-        return self.ras_file.channel_count
+        return self.parent.channel_count
 
     def __getitem__(self, index):
         return self._items[index]
@@ -364,7 +369,7 @@ class RasChannels(object):
 
 
 class RasChannel(object):
-    def __init__(self, channels, index, name, enabled):
+    def __init__(self, channels, index, name, enabled=True):
         self._channels = channels
         self._data = None
         self._index = index
@@ -381,11 +386,11 @@ class RasChannel(object):
         return self._data
 
     @property
-    def ras_file(self):
-        return self._channels.ras_file
+    def parent(self):
+        return self._channels.parent
 
     def format(self, template, **kwargs):
-        return self.ras_file.format(
+        return self.parent.format(
             template,
             channel         = self.index,
             channel_name    = self.name,

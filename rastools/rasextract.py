@@ -5,12 +5,13 @@ import os
 import sys
 import logging
 import rastools.main
-import rastools.rasfile
 import numpy as np
 import matplotlib as mpl
 import matplotlib.cm
 import matplotlib.image
 from collections import namedtuple
+from rastools.rasfile import RasFileReader
+from rastools.datparse import DatFileReader
 
 DPI = 72.0
 IMAGE_FORMATS = {}
@@ -102,16 +103,21 @@ class RasExtractUtility(rastools.main.Utility):
             sys.stdout.write('\n\n')
             return 0
         if len(args) < 1:
-            self.parser.error('you must specify a RAS file')
+            self.parser.error('you must specify a data file')
         if len(args) > 2:
             self.parser.error('you cannot specify more than two filenames')
         if args[0] == '-' and args[1] == '-':
             self.parser.error('you cannot specify stdin for both files!')
-        # Parse the input files
-        ras_f = rastools.rasfile.RasFileReader(
-            sys.stdin if args[0] == '-' else args[0],
-            None if len(args) < 2 else sys.stdin if args[1] == '-' else args[1],
-            verbose=options.loglevel<logging.WARNING)
+        # Parse the input file(s)
+        ext = os.path.splitext(args[0])[-1]
+        files = (sys.stdin if arg == '-' else arg for arg in args)
+        f = None
+        for cls in (RasFileReader, DatFileReader):
+            if ext in cls.ext:
+                f = cls(*files, verbose=options.loglevel<logging.WARNING)
+                break
+        if not f:
+            self.parser.error('unrecognized file extension %s' % ext)
         # Check the clip level is a valid percentage
         try:
             options.percentile = float(options.percentile)
@@ -151,25 +157,25 @@ class RasExtractUtility(rastools.main.Utility):
         # channel as every channel has the same dimensions in a RAS file)
         if options.percentile < 100.0:
             options.vmax_index = round(
-                (ras_f.raster_count - options.crop.top - options.crop.bottom) *
-                (ras_f.point_count - options.crop.left - options.crop.right) *
+                (f.y_size - options.crop.top - options.crop.bottom) *
+                (f.x_size - options.crop.left - options.crop.right) *
                 options.percentile / 100.0)
             logging.info('%gth percentile is at index %d' % (options.percentile, options.vmax_index))
         # Extract the specified channels
         logging.info('File contains %d channels, extracting channels %s' % (
-            len(ras_f.channels),
-            ','.join(str(channel.index) for channel in ras_f.channels if channel.enabled)
+            len(f.channels),
+            ','.join(str(channel.index) for channel in f.channels if channel.enabled)
         ))
         if options.one_pdf:
-            filename = ras_f.format(options.output, **self.format_options(options))
+            filename = f.format(options.output, **self.format_options(options))
             logging.warning('Writing all images to %s' % filename)
             pdf_pages = PdfPages(filename)
         elif options.one_xcf:
-            filename = ras_f.format(options.output, **self.format_options(options))
+            filename = f.format(options.output, **self.format_options(options))
             logging.warning('Writing all images to %s' % filename)
             xcf_layers = XcfLayers(filename)
         try:
-            for channel in ras_f.channels:
+            for channel in f.channels:
                 if channel.enabled:
                     if options.one_pdf:
                         logging.warning('Writing channel %d (%s) to new page' % (channel.index, channel.name))
@@ -235,8 +241,8 @@ class RasExtractUtility(rastools.main.Utility):
         # Calculate the figure dimensions and margins, and
         # construct the necessary objects
         (img_width, img_height) = (
-            (channel.ras_file.point_count - options.crop.left - options.crop.right) / DPI,
-            (channel.ras_file.raster_count - options.crop.top - options.crop.bottom) / DPI
+            (channel.parent.x_size - options.crop.left - options.crop.right) / DPI,
+            (channel.parent.y_size - options.crop.top - options.crop.bottom) / DPI
         )
         (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[options.show_histogram]
         (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[options.show_colorbar]
