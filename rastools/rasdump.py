@@ -223,7 +223,7 @@ class RasDumpUtility(rastools.main.Utility):
         logging.info('Loading CSV renderer')
         try:
             global CsvWriter
-            from rastools.rascsv import CsvWriter, TsvWriter
+            from rastools.csvwrite import CsvWriter, TsvWriter
         except ImportError:
             # If we can't find the default CSV backend, something's seriously
             # wrong (it's built into python!)
@@ -238,7 +238,7 @@ class RasDumpUtility(rastools.main.Utility):
         logging.info('Loading RAS support')
         try:
             global RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
-            from rastools.rasras import RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
+            from rastools.raswrite import RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
         except ImportError:
             logging.warning('Failed to load RAS support')
         else:
@@ -251,7 +251,7 @@ class RasDumpUtility(rastools.main.Utility):
         logging.info('Loading Excel support')
         try:
             global XlsWriter, XlWorkbook
-            from rastools.rasxls import XlsWriter, XlsMulti
+            from rastools.xlswrite import XlsWriter, XlsMulti
         except ImportError:
             logging.warning('Failed to load Excel support')
         else:

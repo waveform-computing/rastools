@@ -399,7 +399,7 @@ class RasExtractUtility(rastools.main.Utility):
         logging.info('Loading TIFF support')
         try:
             global FigureCanvasPIL
-            from rastools.rastiff import FigureCanvasPIL
+            from rastools.tiffwrite import FigureCanvasPIL
         except ImportError:
             logging.warning('Failed to load TIFF support')
         else:
@@ -440,7 +440,7 @@ class RasExtractUtility(rastools.main.Utility):
         logging.info('Loading GIMP support')
         try:
             global FigureCanvasXcf, XcfLayers
-            from rastools.rasxcf import FigureCanvasXcf, XcfLayers
+            from rastools.xcfwrite import FigureCanvasXcf, XcfLayers
         except ImportError:
             logging.warning('Failed to load GIMP support')
         else:
