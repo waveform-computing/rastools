@@ -15,8 +15,6 @@ from rastools.datparse import DatFileReader
 
 DPI = 72.0
 IMAGE_FORMATS = {}
-MULTI_PAGE_PDF=False
-MULTI_LAYER_XCF=False
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
@@ -49,8 +47,7 @@ class RasExtractUtility(rastools.main.Utility):
             title='',
             interpolation=None,
             empty=False,
-            one_pdf=False,
-            one_xcf=False,
+            multi=False,
         )
         self.parser.add_option('--help-colormaps', dest='list_colormaps', action='store_true',
             help="""list the available colormaps""")
@@ -78,12 +75,10 @@ class RasExtractUtility(rastools.main.Utility):
             help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
         self.parser.add_option('-o', '--output', dest='output', action='store',
             help="""specify the template used to generate the output filenames; supports {variables}, see --help-formats for supported file formats. Default: %default""")
+        self.parser.add_option('-m', '--multi', dest='multi', action='store_true',
+            help="""if specified, produce a single output file with multiple layers or pages, one per channel (only available with certain formats)""")
         self.parser.add_option('-e', '--empty', dest='empty', action='store_true',
-            help="""if specified, empty channels in the output (by default empty channels are ignored)""")
-        self.parser.add_option('--one-pdf', dest='one_pdf', action='store_true',
-            help="""if specified, a single PDF file will be produced with one page per image; the output template must end with .pdf and must not contain channel variable references""")
-        self.parser.add_option('--one-xcf', dest='one_xcf', action='store_true',
-            help="""if specified, a single XCF file will be produced with one layer per image; the output template must end with .xcf and must not contain channel variable references""")
+            help="""if specified, include empty channels in the output (by default empty channels are ignored)""")
 
     def main(self, options, args):
         super(RasExtractUtility, self).main(options, args)
@@ -165,7 +160,7 @@ class RasExtractUtility(rastools.main.Utility):
         # Check the requested file format is known
         ext = os.path.splitext(options.output)[1].lower()
         try:
-            (canvas_method, interpolation) = IMAGE_FORMATS[ext]
+            (canvas_method, interpolation, multi_class) = IMAGE_FORMATS[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
         # Check the requested interpolation is valid
@@ -174,10 +169,12 @@ class RasExtractUtility(rastools.main.Utility):
         if not options.interpolation in mpl.image.AxesImage._interpd:
             self.parser.error('interpolation algorithm %s is unknown')
         # Check special format switches
-        if options.one_pdf and ext != '.pdf':
-            self.parser.error('output filename must end with .pdf when --one-pdf is specified')
-        if options.one_xcf and ext != '.xcf':
-            self.parser_error('output filename must end with .xcf when --one-xcf is specified')
+        if options.multi and not multi_class:
+            multi_ext = [ext for (ext, (_, _, multi)) in IMAGE_FORMATS.iteritems() if multi]
+            if multi_ext:
+                self.parser.error('output filename must end with %s when --multi is specified' % ','.join(multi_ext))
+            else:
+                self.parser.error('--multi is not supported by any registered output formats')
         # Calculate the percentile indices (these will be the same for every
         # channel as every channel has the same dimensions in a RAS file)
         if options.percentile:
@@ -194,21 +191,15 @@ class RasExtractUtility(rastools.main.Utility):
             len(f.channels),
             ','.join(str(channel.index) for channel in f.channels if channel.enabled)
         ))
-        if options.one_pdf:
+        if options.multi:
             filename = f.format(options.output, **self.format_options(options))
-            logging.warning('Writing all images to %s' % filename)
-            pdf_pages = PdfPages(filename)
-        elif options.one_xcf:
-            filename = f.format(options.output, **self.format_options(options))
-            logging.warning('Writing all images to %s' % filename)
-            xcf_layers = XcfLayers(filename)
+            logging.warning('Writing all channels to %s' % filename)
+            output = multi_class(filename)
         try:
             for channel in f.channels:
                 if channel.enabled:
-                    if options.one_pdf:
-                        logging.warning('Writing channel %d (%s) to new page' % (channel.index, channel.name))
-                    elif options.one_xcf:
-                        logging.warning('Writing channel %d (%s) to new layer' % (channel.index, channel.name))
+                    if options.multi:
+                        logging.warning('Writing channel %d (%s) to new page/layer' % (channel.index, channel.name))
                     else:
                         filename = channel.format(options.output, **self.format_options(options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
@@ -217,17 +208,13 @@ class RasExtractUtility(rastools.main.Utility):
                         # Finally, dump the figure to disk as whatever format the
                         # user requested
                         canvas = canvas_method.im_class(figure)
-                        if options.one_pdf:
-                            pdf_pages.savefig(figure)
-                        elif options.one_xcf:
-                            xcf_layers.savefig(figure, title=channel.format('{channel} - {channel_name}'))
+                        if options.multi:
+                            output.savefig(figure, title=channel.format('{channel} - {channel_name}'))
                         else:
                             canvas_method(canvas, filename, dpi=DPI)
         finally:
-            if options.one_pdf:
-                pdf_pages.close()
-            elif options.one_xcf:
-                xcf_layers.close()
+            if options.multi:
+                output.close()
 
     def draw_channel(self, channel, options, filename):
         """Draw the specified channel, returning the resulting matplotlib figure"""
@@ -365,9 +352,9 @@ class RasExtractUtility(rastools.main.Utility):
             raise
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest'),
-                '.png':  (FigureCanvasAgg.print_png,  'nearest'),
+                # ext    canvas method                interpolation  multi-class
+                '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest',     None),
+                '.png':  (FigureCanvasAgg.print_png,  'nearest',     None),
             })
 
         logging.info('Loading SVG support')
@@ -378,9 +365,9 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Failed to load Cairo support')
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.svg':  (FigureCanvasSVG.print_svg,  'lanczos'),
-                '.svgz': (FigureCanvasSVG.print_svgz, 'lanczos'),
+                # ext    canvas method                interpolation  multi-class
+                '.svg':  (FigureCanvasSVG.print_svg,  'lanczos',     None),
+                '.svgz': (FigureCanvasSVG.print_svgz, 'lanczos',     None),
             })
 
         logging.info('Loading JPEG support')
@@ -391,9 +378,9 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Failed to load JPEG support')
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.jpg':  (FigureCanvasGDK.print_jpg,  'lanczos'),
-                '.jpeg': (FigureCanvasGDK.print_jpg,  'lanczos'),
+                # ext    canvas method                interpolation  multi-class
+                '.jpg':  (FigureCanvasGDK.print_jpg,  'lanczos',     None),
+                '.jpeg': (FigureCanvasGDK.print_jpg,  'lanczos',     None),
             })
 
         logging.info('Loading TIFF support')
@@ -404,10 +391,10 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Failed to load TIFF support')
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.tif':  (FigureCanvasPIL.print_tif,  'nearest'),
-                '.tiff': (FigureCanvasPIL.print_tif,  'nearest'),
-                '.gif':  (FigureCanvasPIL.print_gif,  'nearest'),
+                # ext    canvas method                interpolation  multi-class
+                '.tif':  (FigureCanvasPIL.print_tif,  'nearest',     None),
+                '.tiff': (FigureCanvasPIL.print_tif,  'nearest',     None),
+                '.gif':  (FigureCanvasPIL.print_gif,  'nearest',     None),
             })
 
         logging.info('Loading PostScript support')
@@ -418,9 +405,9 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Failed to load PostScript support')
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.eps':  (FigureCanvasPS.print_eps,  'lanczos'),
-                '.ps':   (FigureCanvasPS.print_ps,   'lanczos'),
+                # ext    canvas method                interpolation  multi-class
+                '.eps':  (FigureCanvasPS.print_eps,  'lanczos',      None),
+                '.ps':   (FigureCanvasPS.print_ps,   'lanczos',      None),
             })
 
         logging.info('Loading PDF support')
@@ -432,10 +419,9 @@ class RasExtractUtility(rastools.main.Utility):
         else:
             mpl.rc('pdf', use14corefonts=True, compression=True)
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.pdf':  (FigureCanvasPdf.print_pdf,  'lanczos'),
+                # ext    canvas method                interpolation  multi-class
+                '.pdf':  (FigureCanvasPdf.print_pdf,  'lanczos',     PdfPages),
             })
-            MULTI_PAGE_PDF=True
 
         logging.info('Loading GIMP support')
         try:
@@ -445,10 +431,9 @@ class RasExtractUtility(rastools.main.Utility):
             logging.warning('Failed to load GIMP support')
         else:
             IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation
-                '.xcf':  (FigureCanvasXcf.print_xcf,  'nearest'),
+                # ext    canvas method                interpolation  multi-class
+                '.xcf':  (FigureCanvasXcf.print_xcf,  'nearest',     XcfLayers),
             })
-            MULTI_LAYER_XCF=True
 
 
 main = RasExtractUtility()

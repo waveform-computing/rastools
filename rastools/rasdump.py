@@ -50,7 +50,7 @@ class RasDumpUtility(rastools.main.Utility):
         self.parser.add_option('-m', '--multi', dest='multi', action='store_true',
             help="""if specified, produce a single output file with multiple pages or sheets, one per channel (only available with certain formats)""")
         self.parser.add_option('-e', '--empty', dest='empty', action='store_true',
-            help="""if specified, empty channels in the output (by default empty channels are ignored)""")
+            help="""if specified, include empty channels in the output (by default empty channels are ignored)""")
 
     def main(self, options, args):
         super(RasDumpUtility, self).main(options, args)
@@ -122,7 +122,7 @@ class RasDumpUtility(rastools.main.Utility):
             self.parser.error('unknown output format "%s"' % ext)
         # Check special format switches
         if options.multi and not multi_class:
-            multi_ext = [ext for (ext, (cls, multi)) in OUTPUT_FORMATS.iteritems() if multi]
+            multi_ext = [ext for (ext, (_, multi)) in OUTPUT_FORMATS.iteritems() if multi]
             if multi_ext:
                 self.parser.error('output filename must end with %s when --multi is specified' % ','.join(multi_ext))
             else:
