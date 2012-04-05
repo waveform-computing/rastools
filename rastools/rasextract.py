@@ -10,7 +10,7 @@ import matplotlib as mpl
 import matplotlib.cm
 import matplotlib.image
 from collections import namedtuple
-from rastools.rasfile import RasFileReader
+from rastools.rasparse import RasFileReader
 from rastools.datparse import DatFileReader
 
 DPI = 72.0

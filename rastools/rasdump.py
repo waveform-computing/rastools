@@ -7,7 +7,7 @@ import logging
 import rastools.main
 import numpy as np
 from collections import namedtuple
-from rastools.rasfile import RasFileReader
+from rastools.rasparse import RasFileReader
 from rastools.datparse import DatFileReader
 
 OUTPUT_FORMATS = {}

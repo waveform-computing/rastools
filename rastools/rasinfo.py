@@ -5,7 +5,7 @@ import os
 import sys
 import logging
 import rastools.main
-from rastools.rasfile import RasFileReader
+from rastools.rasparse import RasFileReader
 from rastools.datparse import DatFileReader
 
 class RasInfoUtility(rastools.main.Utility):
