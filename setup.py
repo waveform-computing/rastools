@@ -24,16 +24,17 @@ classifiers = [
 
 entry_points = {
     'console_scripts': [
-        'rasinfo = rastools.rasinfo:main',
+        'rasinfo    = rastools.rasinfo:main',
         'rasextract = rastools.rasextract:main',
-        'rasdump = rastools.rasdump:main',
+        'rasdump    = rastools.rasdump:main',
+        'rasviewer  = rastools.rasviewer:main',
     ]
 }
 
 def get_console_scripts():
     import re
     for s in entry_points['console_scripts']:
-        print re.match(r'^([^= ]*) ?=.*$', s).group(1)
+        print re.match(r'^([^= ]*) *=.*$', s).group(1)
 
 def main():
     from rastools.main import __version__
