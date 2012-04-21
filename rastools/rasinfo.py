@@ -5,8 +5,7 @@ import os
 import sys
 import logging
 import rastools.main
-from rastools.rasparse import RasFileReader
-from rastools.datparse import DatFileReader
+from rastools.parsers import PARSERS
 
 class RasInfoUtility(rastools.main.Utility):
     """%prog [options] ras-file [channels-file]
@@ -41,9 +40,9 @@ class RasInfoUtility(rastools.main.Utility):
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
         f = None
-        for cls in (RasFileReader, DatFileReader):
-            if ext in cls.ext:
-                f = cls(*files, verbose=options.loglevel<logging.WARNING)
+        for p in PARSERS:
+            if ext in p.ext:
+                f = p(*files, verbose=options.loglevel<logging.WARNING)
                 break
         if not f:
             self.parser.error('unrecognized file extension %s' % ext)

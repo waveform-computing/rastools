@@ -10,8 +10,7 @@ import matplotlib as mpl
 import matplotlib.cm
 import matplotlib.image
 from collections import namedtuple
-from rastools.rasparse import RasFileReader
-from rastools.datparse import DatFileReader
+from rastools.parsers import PARSERS
 
 DPI = 72.0
 IMAGE_FORMATS = {}
@@ -110,9 +109,9 @@ class RasExtractUtility(rastools.main.Utility):
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
         f = None
-        for cls in (RasFileReader, DatFileReader):
-            if ext in cls.ext:
-                f = cls(*files, verbose=options.loglevel<logging.WARNING)
+        for p in PARSERS:
+            if ext in p.ext:
+                f = p(*files, verbose=options.loglevel<logging.WARNING)
                 break
         if not f:
             self.parser.error('unrecognized file extension %s' % ext)

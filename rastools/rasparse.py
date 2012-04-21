@@ -128,6 +128,7 @@ class RasFileReader(object):
     #   dump_file_test(argv[1]);
     # }
     ext = ['.ras', '.RAS']
+    label = 'QSCAN raster files'
     datetime_format = '%a %b %d %H:%M:%S %Y'
     header_version = 1
     header_struct = struct.Struct(

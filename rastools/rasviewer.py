@@ -8,8 +8,7 @@ from matplotlib.figure import Figure
 from PyQt4 import QtCore, QtGui
 from rastools.rasview_main import Ui_MainWindow
 from rastools.rasview_open import Ui_OpenDialog
-from rastools.rasparse import RasFileReader
-from rastools.datparse import DatFileReader
+from rastools.parsers import PARSERS
 
 __version__ = '0.1'
 
@@ -42,22 +41,21 @@ class MainWindow(QtGui.QMainWindow):
                 else:
                     files = (d.data_file,)
                 f = None
-                for cls in (RasFileReader, DatFileReader):
-                    if ext in cls.ext:
-                        f = cls(*files)
+                for p in PARSERS:
+                    if ext in p.ext:
+                        f = p(*files)
                         break
                 if not f:
-                    raise ValueError('Unrecognized file extension "%s"' % ext)
+                    raise ValueError(self.tr('Unrecognized file extension "%s"') % ext)
             except Exception, e:
-                QtGui.QMessageBox.critical(self, 'Error', str(e))
-                raise
+                QtGui.QMessageBox.critical(self, self.tr('Error'), str(e))
 
     def about(self):
-        QtGui.QMessageBox.about(self, 'About rasViewer',
-            """<b>rasViewer</b>
+        QtGui.QMessageBox.about(self, self.tr('About rasViewer'),
+            self.tr("""<b>rasViewer</b>
             <p>Version %s</p> <p>rasViewer is a visual previewer for the
             content of .RAS and .DAT files from the SSRL facility</p>
-            <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""" % __version__)
+            <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""") % __version__)
 
     def about_qt(self):
         QtGui.QMessageBox.aboutQt(self, 'About QT')
@@ -69,6 +67,8 @@ class OpenDialog(QtGui.QDialog):
         self.ui = Ui_OpenDialog()
         self.ui.setupUi(self)
         self.ui.data_file_combo.editTextChanged.connect(self.data_file_changed)
+        self.ui.data_file_button.clicked.connect(self.data_file_select)
+        self.ui.channel_file_button.clicked.connect(self.channel_file_select)
         self.data_file_changed()
 
     @property
@@ -91,6 +91,18 @@ class OpenDialog(QtGui.QDialog):
         if value is None:
             value = self.ui.data_file_combo.currentText()
         self.ui.button_box.button(QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
+
+    def data_file_select(self):
+        QtGui.QFileDialog.getOpenFileName(self, self.tr('Select data file'), os.getcwd(),
+            ';;'.join(
+                '%s (%s)' % (self.tr(p.label), ' '.join('*' + e for e in p.ext))
+                for p in PARSERS
+            )
+        )
+
+    def channel_file_select(self):
+        QtGui.QFileDialog.getOpenFileName(self, self.tr('Select channel file'), os.getcwd(),
+            self.tr('Text files (*.txt *.TXT);;All files (*)'))
 
 
 def main(args=None):
