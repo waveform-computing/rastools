@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_open.ui'
 #
-# Created: Fri Apr 20 23:10:06 2012
+# Created: Sat Apr 21 16:47:13 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!

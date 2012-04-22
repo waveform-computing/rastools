@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MDIWindow</class>
+ <widget class="QWidget" name="MDIWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>658</width>
+    <height>525</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QFormLayout" name="form_layout">
+       <item row="0" column="1">
+        <widget class="QComboBox" name="channel_combo"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="colormap_label">
+         <property name="text">
+          <string>Color map</string>
+         </property>
+         <property name="buddy">
+          <cstring>colormap_combo</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="colormap_combo"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="percentile_from_label">
+         <property name="text">
+          <string>Percentile from</string>
+         </property>
+         <property name="buddy">
+          <cstring>percentile_from_slider</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <layout class="QHBoxLayout" name="percentile_from_layout">
+         <item>
+          <widget class="QSlider" name="percentile_from_slider">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+           <property name="singleStep">
+            <number>10</number>
+           </property>
+           <property name="pageStep">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="percentile_from_spinbox">
+           <property name="maximum">
+            <double>100.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="percentile_to_label">
+         <property name="text">
+          <string>Percentile to</string>
+         </property>
+         <property name="buddy">
+          <cstring>percentile_to_slider</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <layout class="QHBoxLayout" name="percentile_to_layout">
+         <item>
+          <widget class="QSlider" name="percentile_to_slider">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+           <property name="singleStep">
+            <number>10</number>
+           </property>
+           <property name="pageStep">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>10000</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="percentile_to_spinbox">
+           <property name="maximum">
+            <double>100.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="value">
+            <double>100.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="range_from_label">
+         <property name="text">
+          <string>Range from</string>
+         </property>
+         <property name="buddy">
+          <cstring>range_from_slider</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <layout class="QHBoxLayout" name="range_from_layout">
+         <item>
+          <widget class="QSlider" name="range_from_slider">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="range_from_spinbox"/>
+         </item>
+        </layout>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="range_to_label">
+         <property name="text">
+          <string>Range to</string>
+         </property>
+         <property name="buddy">
+          <cstring>range_to_slider</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <layout class="QHBoxLayout" name="range_to_layout">
+         <item>
+          <widget class="QSlider" name="range_to_slider">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="range_to_spinbox"/>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="interpolation_label">
+         <property name="text">
+          <string>Interpolation</string>
+         </property>
+         <property name="buddy">
+          <cstring>interpolation_combo</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QComboBox" name="interpolation_combo"/>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="crop_label">
+         <property name="text">
+          <string>Crop</string>
+         </property>
+         <property name="buddy">
+          <cstring>crop_top_spinbox</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <layout class="QGridLayout" name="crop_layout">
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="crop_top_spinbox">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="crop_bottom_spinbox">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSpinBox" name="crop_right_spinbox">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QSpinBox" name="crop_left_spinbox">
+           <property name="maximum">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="zoom_label">
+         <property name="text">
+          <string>Zoom</string>
+         </property>
+         <property name="buddy">
+          <cstring>zoom_slider</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QSlider" name="zoom_slider">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="channel_label">
+         <property name="text">
+          <string>Channel</string>
+         </property>
+         <property name="buddy">
+          <cstring>channel_combo</cstring>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

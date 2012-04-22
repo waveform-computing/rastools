@@ -178,8 +178,8 @@ class RasExtractUtility(rastools.main.Utility):
         # channel as every channel has the same dimensions in a RAS file)
         if options.percentile:
             options.percentile_indexes = tuple(
-                (f.y_size - options.crop.top - options.crop.bottom) *
-                (f.x_size - options.crop.left - options.crop.right) *
+                ((f.y_size - options.crop.top - options.crop.bottom) *
+                (f.x_size - options.crop.left - options.crop.right) - 1) *
                 n / 100.0
                 for n in options.percentile
             )
@@ -204,8 +204,8 @@ class RasExtractUtility(rastools.main.Utility):
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     figure = self.draw_channel(channel, options, filename)
                     if figure is not None:
-                        # Finally, dump the figure to disk as whatever format the
-                        # user requested
+                        # Finally, dump the figure to disk as whatever format
+                        # the user requested
                         canvas = canvas_method.im_class(figure)
                         if options.multi:
                             output.savefig(figure, title=channel.format('{channel} - {channel_name}'))
@@ -257,8 +257,8 @@ class RasExtractUtility(rastools.main.Utility):
         # image module won't play with uint32 data - only uint8 or
         # float32) and crop it as necessary
         data = np.array(data, np.float)
-        # Calculate the figure dimensions and margins, and
-        # construct the necessary objects
+        # Calculate the figure dimensions and margins, and construct the
+        # necessary objects
         (img_width, img_height) = (
             (channel.parent.x_size - options.crop.left - options.crop.right) / DPI,
             (channel.parent.y_size - options.crop.top - options.crop.bottom) / DPI
@@ -275,9 +275,9 @@ class RasExtractUtility(rastools.main.Utility):
         fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
         fig = mpl.figure.Figure(figsize=(fig_width, fig_height), dpi=DPI,
             facecolor='w', edgecolor='w')
-        # Construct an axis in which to draw the channel data and
-        # draw it. The imshow() call takes care of clamping values
-        # with vmin and vmax and color-mapping
+        # Construct an axis in which to draw the channel data and draw it. The
+        # imshow() call takes care of clamping values with vmin and vmax and
+        # color-mapping
         ax = fig.add_axes((
             margin / fig_width,      # left
             (margin + hist_height + cbar_height) / fig_height, # bottom
