@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_main.ui'
 #
-# Created: Sun Apr 22 16:42:18 2012
+# Created: Sun Apr 22 23:22:27 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -36,6 +36,10 @@ class Ui_MainWindow(object):
         self.file_menu = QtGui.QMenu(self.menu_bar)
         self.file_menu.setTitle(QtGui.QApplication.translate("MainWindow", "&File", None, QtGui.QApplication.UnicodeUTF8))
         self.file_menu.setObjectName(_fromUtf8("file_menu"))
+        self.export_menu = QtGui.QMenu(self.file_menu)
+        self.export_menu.setEnabled(False)
+        self.export_menu.setTitle(QtGui.QApplication.translate("MainWindow", "&Export", None, QtGui.QApplication.UnicodeUTF8))
+        self.export_menu.setObjectName(_fromUtf8("export_menu"))
         self.help_menu = QtGui.QMenu(self.menu_bar)
         self.help_menu.setTitle(QtGui.QApplication.translate("MainWindow", "&Help", None, QtGui.QApplication.UnicodeUTF8))
         self.help_menu.setObjectName(_fromUtf8("help_menu"))
@@ -73,8 +77,19 @@ class Ui_MainWindow(object):
         self.about_qt_action = QtGui.QAction(MainWindow)
         self.about_qt_action.setText(QtGui.QApplication.translate("MainWindow", "About QT", None, QtGui.QApplication.UnicodeUTF8))
         self.about_qt_action.setObjectName(_fromUtf8("about_qt_action"))
+        self.export_image_action = QtGui.QAction(MainWindow)
+        self.export_image_action.setEnabled(False)
+        self.export_image_action.setText(QtGui.QApplication.translate("MainWindow", "&Image...", None, QtGui.QApplication.UnicodeUTF8))
+        self.export_image_action.setObjectName(_fromUtf8("export_image_action"))
+        self.export_channel_action = QtGui.QAction(MainWindow)
+        self.export_channel_action.setEnabled(False)
+        self.export_channel_action.setText(QtGui.QApplication.translate("MainWindow", "&Channel...", None, QtGui.QApplication.UnicodeUTF8))
+        self.export_channel_action.setObjectName(_fromUtf8("export_channel_action"))
+        self.export_menu.addAction(self.export_image_action)
+        self.export_menu.addAction(self.export_channel_action)
         self.file_menu.addAction(self.open_action)
         self.file_menu.addAction(self.close_action)
+        self.file_menu.addAction(self.export_menu.menuAction())
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.quit_action)
         self.help_menu.addAction(self.about_action)

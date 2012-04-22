@@ -30,8 +30,17 @@
       <layout class="QHBoxLayout" name="data_file_layout">
        <item>
         <widget class="QComboBox" name="data_file_combo">
+         <property name="maximumSize">
+          <size>
+           <width>800</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="editable">
           <bool>true</bool>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::AdjustToMinimumContentsLength</enum>
          </property>
         </widget>
        </item>
@@ -64,8 +73,17 @@
       <layout class="QHBoxLayout" name="channel_file_layout">
        <item>
         <widget class="QComboBox" name="channel_file_combo">
+         <property name="maximumSize">
+          <size>
+           <width>800</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="editable">
           <bool>true</bool>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::AdjustToMinimumContentsLength</enum>
          </property>
         </widget>
        </item>

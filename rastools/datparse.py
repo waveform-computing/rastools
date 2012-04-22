@@ -54,8 +54,6 @@ class DatFileReader(object):
     # -1.3149	0.3483	1	1	1	25683	60	10	95	18	2	69	107	70	70	189	6910	11	6	7	12	200	13221	9673	
     # -1.3149	0.3473	1	1	1	25679	57	10	70	16	4	87	90	65	84	181	6600	7	6	10	11	196	12614	9314	
     # ...
-    ext = ['.dat', '.DAT']
-    label = "Sam's dat files"
     header_version = 1
     header_ignore = re.compile(r'^\* *(BLANK LINE)?$')
     header_start = 'ABS_COUNT'

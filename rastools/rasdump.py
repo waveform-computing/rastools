@@ -7,10 +7,8 @@ import logging
 import rastools.main
 import numpy as np
 from collections import namedtuple
-from rastools.rasparse import RasFileReader
-from rastools.datparse import DatFileReader
 
-OUTPUT_FORMATS = {}
+DATA_WRITERS = {}
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
@@ -57,7 +55,7 @@ class RasDumpUtility(rastools.main.Utility):
         self.load_backends()
         if options.list_formats:
             sys.stdout.write('The following file formats are available:\n\n')
-            sys.stdout.write('\n'.join(sorted(ext for ext in OUTPUT_FORMATS)))
+            sys.stdout.write('\n'.join(sorted(ext for ext in DATA_WRITERS)))
             sys.stdout.write('\n\n')
             return 0
         if len(args) < 1:
@@ -69,12 +67,9 @@ class RasDumpUtility(rastools.main.Utility):
         # Parse the input file(s)
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
-        f = None
-        for cls in (RasFileReader, DatFileReader):
-            if ext in cls.ext:
-                f = cls(*files, verbose=options.loglevel<logging.WARNING)
-                break
-        if not f:
+        try:
+            f = PARSERS[ext](*files, verbose=options.loglevel<logging.WARNING)
+        except KeyError:
             self.parser.error('unrecognized file extension %s' % ext)
         # Check the percentile range is valid
         if options.percentile:
@@ -115,14 +110,14 @@ class RasDumpUtility(rastools.main.Utility):
         except ValueError:
             self.parser.error('non-integer values found in --crop value %s' % options.crop)
         # Check the requested file format is known
-        ext = os.path.splitext(options.output)[1].lower()
+        ext = os.path.splitext(options.output)[1]
         try:
-            (writer_class, multi_class) = OUTPUT_FORMATS[ext]
+            (writer_class, multi_class) = DATA_WRITERS[ext]
         except KeyError:
             self.parser.error('unknown output format "%s"' % ext)
         # Check special format switches
         if options.multi and not multi_class:
-            multi_ext = [ext for (ext, (_, multi)) in OUTPUT_FORMATS.iteritems() if multi]
+            multi_ext = [ext for (ext, (_, multi)) in DATA_WRITERS.iteritems() if multi]
             if multi_ext:
                 self.parser.error('output filename must end with %s when --multi is specified' % ','.join(multi_ext))
             else:
@@ -220,45 +215,21 @@ class RasDumpUtility(rastools.main.Utility):
 
     def load_backends(self):
         """Load the various matplotlib backends and custom extensions"""
-        logging.info('Loading CSV renderer')
-        try:
-            global CsvWriter
-            from rastools.csvwrite import CsvWriter, TsvWriter
-        except ImportError:
-            # If we can't find the default CSV backend, something's seriously
-            # wrong (it's built into python!)
-            raise
-        else:
-            OUTPUT_FORMATS.update({
-                # ext    writer-class  multi-class
-                '.csv':  (CsvWriter,   None),
-                '.tsv':  (TsvWriter,   None),
-            })
-
-        logging.info('Loading RAS support')
-        try:
-            global RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
-            from rastools.raswrite import RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
-        except ImportError:
-            logging.warning('Failed to load RAS support')
-        else:
-            OUTPUT_FORMATS.update({
-                # ext     writer-class     multi-class
-                '.ras':   (RasWriter,      RasMultiWriter),
-                '.ras_a': (RasAsciiWriter, RasAsciiMultiWriter),
-            })
-
-        logging.info('Loading Excel support')
-        try:
-            global XlsWriter, XlWorkbook
-            from rastools.xlswrite import XlsWriter, XlsMulti
-        except ImportError:
-            logging.warning('Failed to load Excel support')
-        else:
-            OUTPUT_FORMATS.update({
-                # ext    writer-class  multi-class
-                '.xls':  (XlsWriter,   XlsMulti),
-            })
+        global DATA_WRITERS, PARSERS
+        from rastools.parsers import PARSERS
+        from rastools.data_writers import DATA_WRITERS
+        # Re-arrange the arrays into more useful dictionaries keyed by
+        # extension
+        DATA_WRITERS = dict(
+            (ext, (writer_class, multi_class))
+            for (writer_class, exts, _, multi_class) in DATA_WRITERS
+            for ext in exts
+        )
+        PARSERS = dict(
+            (ext, klass)
+            for (klass, exts, _) in PARSERS
+            for ext in exts
+        )
 
 
 main = RasDumpUtility()

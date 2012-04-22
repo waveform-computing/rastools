@@ -43,8 +43,19 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="export_menu">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>&amp;Export</string>
+     </property>
+     <addaction name="export_image_action"/>
+     <addaction name="export_channel_action"/>
+    </widget>
     <addaction name="open_action"/>
     <addaction name="close_action"/>
+    <addaction name="export_menu"/>
     <addaction name="separator"/>
     <addaction name="quit_action"/>
    </widget>
@@ -130,6 +141,22 @@
   <action name="about_qt_action">
    <property name="text">
     <string>About QT</string>
+   </property>
+  </action>
+  <action name="export_image_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Image...</string>
+   </property>
+  </action>
+  <action name="export_channel_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Channel...</string>
    </property>
   </action>
  </widget>

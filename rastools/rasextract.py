@@ -13,7 +13,7 @@ from collections import namedtuple
 from rastools.parsers import PARSERS
 
 DPI = 72.0
-IMAGE_FORMATS = {}
+IMAGE_WRITERS = {}
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
@@ -88,15 +88,15 @@ class RasExtractUtility(rastools.main.Utility):
             sys.stdout.write('Append _r to any colormap name to reverse it. Previews at:\n')
             sys.stdout.write('http://matplotlib.sourceforge.net/examples/pylab_examples/show_colormaps.html\n\n')
             return 0
-        self.load_backends()
-        if options.list_formats:
-            sys.stdout.write('The following file formats are available:\n\n')
-            sys.stdout.write('\n'.join(sorted(ext for ext in IMAGE_FORMATS)))
-            sys.stdout.write('\n\n')
-            return 0
         if options.list_interpolations:
             sys.stdout.write('The following image interpolation algorithms are available:\n\n')
             sys.stdout.write('\n'.join(sorted(alg for alg in mpl.image.AxesImage._interpd)))
+            sys.stdout.write('\n\n')
+            return 0
+        self.load_backends()
+        if options.list_formats:
+            sys.stdout.write('The following file formats are available:\n\n')
+            sys.stdout.write('\n'.join(sorted(ext for ext in IMAGE_WRITERS)))
             sys.stdout.write('\n\n')
             return 0
         if len(args) < 1:
@@ -108,12 +108,9 @@ class RasExtractUtility(rastools.main.Utility):
         # Parse the input file(s)
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
-        f = None
-        for p in PARSERS:
-            if ext in p.ext:
-                f = p(*files, verbose=options.loglevel<logging.WARNING)
-                break
-        if not f:
+        try:
+            f = PARSERS[ext](*files, verbose=options.loglevel<logging.WARNING)
+        except KeyError:
             self.parser.error('unrecognized file extension %s' % ext)
         # Check the percentile range is valid
         if options.percentile:
@@ -157,9 +154,9 @@ class RasExtractUtility(rastools.main.Utility):
         except ValueError:
             self.parser.error('non-integer values found in --crop value %s' % options.crop)
         # Check the requested file format is known
-        ext = os.path.splitext(options.output)[1].lower()
+        ext = os.path.splitext(options.output)[1]
         try:
-            (canvas_method, interpolation, multi_class) = IMAGE_FORMATS[ext]
+            (canvas_method, interpolation, multi_class) = IMAGE_WRITERS[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
         # Check the requested interpolation is valid
@@ -169,7 +166,7 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('interpolation algorithm %s is unknown')
         # Check special format switches
         if options.multi and not multi_class:
-            multi_ext = [ext for (ext, (_, _, multi)) in IMAGE_FORMATS.iteritems() if multi]
+            multi_ext = [ext for (ext, (_, _, multi)) in IMAGE_WRITERS.iteritems() if multi]
             if multi_ext:
                 self.parser.error('output filename must end with %s when --multi is specified' % ','.join(multi_ext))
             else:
@@ -342,97 +339,21 @@ class RasExtractUtility(rastools.main.Utility):
 
     def load_backends(self):
         """Load the various matplotlib backends and custom extensions"""
-        logging.info('Loading standard graphics renderer')
-        try:
-            global FigureCanvasAgg
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-        except ImportError:
-            # If we can't find the default Agg backend, something's seriously wrong
-            raise
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.bmp':  (FigureCanvasAgg.print_bmp,  'nearest',     None),
-                '.png':  (FigureCanvasAgg.print_png,  'nearest',     None),
-            })
-
-        logging.info('Loading SVG support')
-        try:
-            global FigureCanvasSVG
-            from matplotlib.backends.backend_svg import FigureCanvasSVG
-        except ImportError:
-            logging.warning('Failed to load Cairo support')
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.svg':  (FigureCanvasSVG.print_svg,  'lanczos',     None),
-                '.svgz': (FigureCanvasSVG.print_svgz, 'lanczos',     None),
-            })
-
-        logging.info('Loading JPEG support')
-        try:
-            global FigureCanvasGDK
-            from matplotlib.backends.backend_gdk import FigureCanvasGDK
-        except ImportError:
-            logging.warning('Failed to load JPEG support')
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.jpg':  (FigureCanvasGDK.print_jpg,  'lanczos',     None),
-                '.jpeg': (FigureCanvasGDK.print_jpg,  'lanczos',     None),
-            })
-
-        logging.info('Loading TIFF support')
-        try:
-            global FigureCanvasPIL
-            from rastools.tiffwrite import FigureCanvasPIL
-        except ImportError:
-            logging.warning('Failed to load TIFF support')
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.tif':  (FigureCanvasPIL.print_tif,  'nearest',     None),
-                '.tiff': (FigureCanvasPIL.print_tif,  'nearest',     None),
-                '.gif':  (FigureCanvasPIL.print_gif,  'nearest',     None),
-            })
-
-        logging.info('Loading PostScript support')
-        try:
-            global FigureCanvasPS
-            from matplotlib.backends.backend_ps import FigureCanvasPS
-        except ImportError:
-            logging.warning('Failed to load PostScript support')
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.eps':  (FigureCanvasPS.print_eps,  'lanczos',      None),
-                '.ps':   (FigureCanvasPS.print_ps,   'lanczos',      None),
-            })
-
-        logging.info('Loading PDF support')
-        try:
-            global FigureCanvasPdf, PdfPages
-            from matplotlib.backends.backend_pdf import FigureCanvasPdf, PdfPages
-        except ImportError:
-            logging.warning('Failed to load PDF support')
-        else:
-            mpl.rc('pdf', use14corefonts=True, compression=True)
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.pdf':  (FigureCanvasPdf.print_pdf,  'lanczos',     PdfPages),
-            })
-
-        logging.info('Loading GIMP support')
-        try:
-            global FigureCanvasXcf, XcfLayers
-            from rastools.xcfwrite import FigureCanvasXcf, XcfLayers
-        except ImportError:
-            logging.warning('Failed to load GIMP support')
-        else:
-            IMAGE_FORMATS.update({
-                # ext    canvas method                interpolation  multi-class
-                '.xcf':  (FigureCanvasXcf.print_xcf,  'nearest',     XcfLayers),
-            })
+        global IMAGE_WRITERS, PARSERS
+        from rastools.parsers import PARSERS
+        from rastools.image_writers import IMAGE_WRITERS
+        # Re-arrange the arrays into more useful dictionaries keyed by
+        # extension
+        IMAGE_WRITERS = dict(
+            (ext, (method, interpolation, multi_class))
+            for (method, exts, _, interpolation, multi_class) in IMAGE_WRITERS
+            for ext in exts
+        )
+        PARSERS = dict(
+            (ext, klass)
+            for (klass, exts, _) in PARSERS
+            for ext in exts
+        )
 
 
 main = RasExtractUtility()

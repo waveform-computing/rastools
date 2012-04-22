@@ -3,6 +3,7 @@
 import os
 import sys
 import matplotlib
+matplotlib.use('Qt4Agg')
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.cm
@@ -12,6 +13,8 @@ from rastools.rasview_main import Ui_MainWindow
 from rastools.rasview_open import Ui_OpenDialog
 from rastools.rasview_mdi import Ui_MDIWindow
 from rastools.parsers import PARSERS
+from rastools.image_writers import IMAGE_WRITERS
+from rastools.data_writers import DATA_WRITERS
 import numpy as np
 
 __version__ = '0.1'
@@ -41,6 +44,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.about_qt_action.triggered.connect(self.about_qt)
         self.ui.open_action.triggered.connect(self.open_file)
         self.ui.close_action.triggered.connect(self.close_file)
+        self.ui.export_image_action.triggered.connect(self.export_image)
+        self.ui.export_channel_action.triggered.connect(self.export_channel)
         self.figure_dpi = 72.0
 
     def close(self):
@@ -59,17 +64,31 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.mdi_area.activeSubWindow().close()
 
     def about(self):
-        QtGui.QMessageBox.about(self, self.tr('About rasViewer'),
-            self.tr("""<b>rasViewer</b>
-            <p>Version %s</p> <p>rasViewer is a visual previewer for the
-            content of .RAS and .DAT files from the SSRL facility</p>
-            <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""") % __version__)
+        QtGui.QMessageBox.about(self,
+            str(self.tr('About %s')) % APPLICATION.applicationName(),
+            str(self.tr("""<b>%(application)s</b>
+            <p>Version %(version)s</p>
+            <p>%(application)s is a visual previewer for the content of .RAS and
+            .DAT files from the SSRL facility</p>
+            <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""")) % {
+                'application': APPLICATION.applicationName(),
+                'version':     APPLICATION.applicationVersion(),
+            })
 
     def about_qt(self):
         QtGui.QMessageBox.aboutQt(self, self.tr('About QT'))
 
+    def export_image(self):
+        pass
+
+    def export_channel(self):
+        pass
+
     def window_changed(self, window):
         self.ui.close_action.setEnabled(window is not None)
+        self.ui.export_menu.setEnabled(window is not None)
+        self.ui.export_image_action.setEnabled(window is not None)
+        self.ui.export_channel_action.setEnabled(window is not None)
 
 
 class MDIWindow(QtGui.QWidget):
@@ -87,11 +106,14 @@ class MDIWindow(QtGui.QWidget):
                 files = (data_file, channel_file)
             else:
                 files = (data_file,)
-            for p in PARSERS:
-                if ext in p.ext:
-                    self._file = p(*files)
-                    break
-            if not self._file:
+            parsers = dict(
+                (ext, klass)
+                for (klass, exts, _) in PARSERS
+                for ext in exts
+            )
+            try:
+                self._file = parsers[ext](*files)
+            except KeyError:
                 raise ValueError(self.tr('Unrecognized file extension "%s"') % ext)
         except Exception, e:
             QtGui.QMessageBox.critical(self, self.tr('Error'), str(e))
@@ -388,12 +410,15 @@ class OpenDialog(QtGui.QDialog):
         self.ui.button_box.button(QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
 
     def data_file_select(self):
-        f = QtGui.QFileDialog.getOpenFileName(self, self.tr('Select data file'), os.getcwd(),
-            ';;'.join(
-                '%s (%s)' % (self.tr(p.label), ' '.join('*' + e for e in p.ext))
-                for p in PARSERS
-            )
+        filters = ';;'.join(
+            [
+                'All data files (%s)' % ' '.join('*' + ext for (_, exts, _) in PARSERS for ext in exts)
+            ] + [
+                '%s (%s)' % (label, ' '.join('*' + ext for ext in exts))
+                for (klass, exts, label) in PARSERS
+            ]
         )
+        f = QtGui.QFileDialog.getOpenFileName(self, self.tr('Select data file'), os.getcwd(), filters)
         if f:
             os.chdir(os.path.dirname(str(f)))
             self.ui.data_file_combo.setEditText(f)

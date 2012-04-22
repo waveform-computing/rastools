@@ -5,7 +5,7 @@ import os
 import sys
 import struct
 import numpy as np
-from rastools.rasfile import RasFileReader
+from rastools.rasparse import RasFileReader
 
 
 class RasAsciiWriter(object):
