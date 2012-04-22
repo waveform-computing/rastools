@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_main.ui'
 #
-# Created: Sat Apr 21 20:55:37 2012
+# Created: Sun Apr 22 16:42:18 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -54,10 +54,12 @@ class Ui_MainWindow(object):
         self.open_action.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+O", None, QtGui.QApplication.UnicodeUTF8))
         self.open_action.setObjectName(_fromUtf8("open_action"))
         self.close_action = QtGui.QAction(MainWindow)
+        self.close_action.setEnabled(False)
         self.close_action.setText(QtGui.QApplication.translate("MainWindow", "&Close", None, QtGui.QApplication.UnicodeUTF8))
         self.close_action.setToolTip(QtGui.QApplication.translate("MainWindow", "Close the currently selected data file", None, QtGui.QApplication.UnicodeUTF8))
         self.close_action.setStatusTip(QtGui.QApplication.translate("MainWindow", "Close the currently selected data file", None, QtGui.QApplication.UnicodeUTF8))
         self.close_action.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+W", None, QtGui.QApplication.UnicodeUTF8))
+        self.close_action.setShortcutContext(QtCore.Qt.WidgetShortcut)
         self.close_action.setObjectName(_fromUtf8("close_action"))
         self.quit_action = QtGui.QAction(MainWindow)
         self.quit_action.setText(QtGui.QApplication.translate("MainWindow", "&Quit", None, QtGui.QApplication.UnicodeUTF8))

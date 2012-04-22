@@ -16,6 +16,7 @@ import numpy as np
 
 __version__ = '0.1'
 FIGURE_DPI = 72.0
+LAST_USED_LIMIT = 20
 DEFAULT_INTERPOLATION = 'nearest'
 DEFAULT_COLORMAP = 'gray'
 APPLICATION = None
@@ -26,12 +27,27 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        # Connect up actions to methods
+        # Read configuration
+        self.settings = QtCore.QSettings()
+        self.settings.beginGroup('main_window')
+        try:
+            self.resize(self.settings.value('size', QtCore.QSize(640, 480)).toSize())
+            self.move(self.settings.value('position', QtCore.QPoint(100, 100)).toPoint())
+        finally:
+            self.settings.endGroup()
+        # Connect up signals to methods
+        self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
         self.ui.about_action.triggered.connect(self.about)
         self.ui.about_qt_action.triggered.connect(self.about_qt)
         self.ui.open_action.triggered.connect(self.open_file)
         self.ui.close_action.triggered.connect(self.close_file)
         self.figure_dpi = 72.0
+
+    def close(self):
+        super(MainWindow, self).close()
+        self.settings.beginGroup('main_window')
+        self.settings.setValue('size', self.size())
+        self.settings.setValue('position', self.pos())
 
     def open_file(self):
         d = OpenDialog(self)
@@ -40,7 +56,7 @@ class MainWindow(QtGui.QMainWindow):
             w.show()
 
     def close_file(self):
-        pass
+        self.ui.mdi_area.activeSubWindow().close()
 
     def about(self):
         QtGui.QMessageBox.about(self, self.tr('About rasViewer'),
@@ -51,6 +67,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def about_qt(self):
         QtGui.QMessageBox.aboutQt(self, self.tr('About QT'))
+
+    def window_changed(self, window):
+        self.ui.close_action.setEnabled(window is not None)
 
 
 class MDIWindow(QtGui.QWidget):
@@ -276,10 +295,76 @@ class OpenDialog(QtGui.QDialog):
         super(OpenDialog, self).__init__(parent)
         self.ui = Ui_OpenDialog()
         self.ui.setupUi(self)
+        # Read the last-used lists
+        self.settings = self.parent().settings
+        self.settings.beginGroup('last_used')
+        try:
+            count = self.settings.beginReadArray('data_files')
+            try:
+                for i in range(count):
+                    self.settings.setArrayIndex(i)
+                    self.ui.data_file_combo.addItem(self.settings.value('path').toString())
+            finally:
+                self.settings.endArray()
+            count = self.settings.beginReadArray('channel_files')
+            try:
+                for i in range(count):
+                    self.settings.setArrayIndex(i)
+                    self.ui.channel_file_combo.addItem(self.settings.value('path').toString())
+            finally:
+                self.settings.endArray()
+        finally:
+            self.settings.endGroup()
+        # Connect up signals
         self.ui.data_file_combo.editTextChanged.connect(self.data_file_changed)
         self.ui.data_file_button.clicked.connect(self.data_file_select)
         self.ui.channel_file_button.clicked.connect(self.channel_file_select)
         self.data_file_changed()
+
+    def accept(self):
+        super(OpenDialog, self).accept()
+        # When the dialog is accepted append the current filenames to the
+        # combos or, if the entry already exists, move it to the top of the
+        # combo list
+        i = self.ui.data_file_combo.findText(self.ui.data_file_combo.currentText())
+        if i == -1:
+            self.ui.data_file_combo.addItem(self.ui.data_file_combo.currentText())
+        else:
+            self.ui.data_file_combo.insertItem(0, self.ui.data_file_combo.currentText())
+            self.ui.data_file_combo.setCurrentIndex(0)
+            self.ui.data_file_combo.removeItem(i + 1)
+        while self.ui.data_file_combo.count() > LAST_USED_LIMIT:
+            self.ui.data_file_combo.removeItem(self.ui.data_file_combo.count() - 1)
+        if str(self.ui.channel_file_combo.currentText()) != '':
+            i = self.ui.channel_file_combo.findText(self.ui.channel_file_combo.currentText())
+            if i == -1:
+                self.ui.channel_file_combo.addItem(self.ui.channel_file_combo.currentText())
+            else:
+                self.ui.channel_file_combo.insertItem(0, self.ui.channel_file_combo.currentText())
+                self.ui.channel_file_combo.setCurrentIndex(0)
+                self.ui.channel_file_combo.removeItem(i + 1)
+        while self.ui.channel_file_combo.count() > LAST_USED_LIMIT:
+            self.ui.channel_file_combo.removeItem(self.ui.channel_file_combo.count() - 1)
+        # Only write the last-used lists when the dialog is accepted (not when
+        # cancelled or just closed)
+        self.settings.beginGroup('last_used')
+        try:
+            self.settings.beginWriteArray('data_files', self.ui.data_file_combo.count())
+            try:
+                for i in range(self.ui.data_file_combo.count()):
+                    self.settings.setArrayIndex(i)
+                    self.settings.setValue('path', self.ui.data_file_combo.itemText(i))
+            finally:
+                self.settings.endArray()
+            self.settings.beginWriteArray('channel_files', self.ui.channel_file_combo.count())
+            try:
+                for i in range(self.ui.channel_file_combo.count()):
+                    self.settings.setArrayIndex(i)
+                    self.settings.setValue('path', self.ui.channel_file_combo.itemText(i))
+            finally:
+                self.settings.endArray()
+        finally:
+            self.settings.endGroup()
 
     @property
     def data_file(self):
@@ -326,6 +411,10 @@ def main(args=None):
     if args is None:
         args = sys.argv
     APPLICATION = QtGui.QApplication(args)
+    APPLICATION.setApplicationName('rasviewer')
+    APPLICATION.setApplicationVersion(__version__)
+    APPLICATION.setOrganizationName('Waveform')
+    APPLICATION.setOrganizationDomain('waveform.org.uk')
     win = MainWindow()
     win.show()
     return APPLICATION.exec_()
