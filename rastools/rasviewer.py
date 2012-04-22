@@ -103,6 +103,11 @@ class MDIWindow(QtGui.QWidget):
                 default = self.ui.interpolation_combo.count()
             self.ui.interpolation_combo.addItem(interpolation)
         self.ui.interpolation_combo.setCurrentIndex(default)
+        # Set up the limits of the crop spinners
+        self.ui.crop_left_spinbox.setRange(0, self._file.x_size - 1)
+        self.ui.crop_right_spinbox.setRange(0, self._file.x_size - 1)
+        self.ui.crop_top_spinbox.setRange(0, self._file.y_size - 1)
+        self.ui.crop_bottom_spinbox.setRange(0, self._file.y_size - 1)
         # Set up the event connections and a timer to handle delayed redrawing
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
@@ -110,6 +115,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.channel_combo.currentIndexChanged.connect(self.invalidate_data)
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
+        self.ui.crop_top_spinbox.valueChanged.connect(self.invalidate_data)
+        self.ui.crop_left_spinbox.valueChanged.connect(self.invalidate_data)
+        self.ui.crop_right_spinbox.valueChanged.connect(self.invalidate_data)
+        self.ui.crop_bottom_spinbox.valueChanged.connect(self.invalidate_data)
         APPLICATION.focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
         self.invalidate_data()
