@@ -18,6 +18,7 @@ __version__ = '0.1'
 FIGURE_DPI = 72.0
 DEFAULT_INTERPOLATION = 'nearest'
 DEFAULT_COLORMAP = 'gray'
+APPLICATION = None
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -109,16 +110,103 @@ class MDIWindow(QtGui.QWidget):
         self.ui.channel_combo.currentIndexChanged.connect(self.invalidate_data)
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
+        APPLICATION.focusChanged.connect(self.focus_changed)
+        self.setWindowTitle(os.path.basename(data_file))
+        self.invalidate_data()
+
+    def focus_changed(self, old_widget, new_widget):
+        percentile_controls = (
+            self.ui.percentile_from_slider,
+            self.ui.percentile_from_spinbox,
+            self.ui.percentile_to_slider,
+            self.ui.percentile_to_spinbox,
+        )
+        range_controls = (
+            self.ui.range_from_slider,
+            self.ui.range_from_spinbox,
+            self.ui.range_to_slider,
+            self.ui.range_to_spinbox,
+        )
+        if (old_widget not in percentile_controls) and (new_widget in percentile_controls):
+            self.percentile_connect()
+        elif (old_widget in percentile_controls) and (new_widget not in percentile_controls):
+            self.percentile_disconnect()
+        if (old_widget not in range_controls) and (new_widget in range_controls):
+            self.range_connect()
+        elif (old_widget in range_controls) and (new_widget not in range_controls):
+            self.range_disconnect()
+
+    def percentile_connect(self):
         self.ui.percentile_from_slider.valueChanged.connect(self.percentile_from_slider_changed)
         self.ui.percentile_from_spinbox.valueChanged.connect(self.percentile_from_spinbox_changed)
         self.ui.percentile_to_slider.valueChanged.connect(self.percentile_to_slider_changed)
         self.ui.percentile_to_spinbox.valueChanged.connect(self.percentile_to_spinbox_changed)
-        #self.ui.range_from_slider.valueChanged.connect(self.range_from_slider_changed)
-        #self.ui.range_from_spinbox.valueChanged.connect(self.range_from_spinbox_changed)
-        #self.ui.range_to_slider.valueChanged.connect(self.range_to_slider_changed)
-        #self.ui.range_to_spinbox.valueChanged.connect(self.range_to_spinbox_changed)
-        self.setWindowTitle(os.path.basename(data_file))
-        self.invalidate_data()
+
+    def percentile_disconnect(self):
+        self.ui.percentile_from_slider.valueChanged.disconnect(self.percentile_from_slider_changed)
+        self.ui.percentile_from_spinbox.valueChanged.disconnect(self.percentile_from_spinbox_changed)
+        self.ui.percentile_to_slider.valueChanged.disconnect(self.percentile_to_slider_changed)
+        self.ui.percentile_to_spinbox.valueChanged.disconnect(self.percentile_to_spinbox_changed)
+
+    def range_connect(self):
+        self.ui.range_from_slider.valueChanged.connect(self.range_from_slider_changed)
+        self.ui.range_from_spinbox.valueChanged.connect(self.range_from_spinbox_changed)
+        self.ui.range_to_slider.valueChanged.connect(self.range_to_slider_changed)
+        self.ui.range_to_spinbox.valueChanged.connect(self.range_to_spinbox_changed)
+
+    def range_disconnect(self):
+        self.ui.range_from_slider.valueChanged.disconnect(self.range_from_slider_changed)
+        self.ui.range_from_spinbox.valueChanged.disconnect(self.range_from_spinbox_changed)
+        self.ui.range_to_slider.valueChanged.disconnect(self.range_to_slider_changed)
+        self.ui.range_to_spinbox.valueChanged.disconnect(self.range_to_spinbox_changed)
+
+    def percentile_from_slider_changed(self, value):
+        self.ui.percentile_to_spinbox.setMinimum(value / 100.0)
+        self.ui.percentile_from_spinbox.setValue(value / 100.0)
+        self.invalidate_image()
+
+    def percentile_to_slider_changed(self, value):
+        self.ui.percentile_from_spinbox.setMaximum(value / 100.0)
+        self.ui.percentile_to_spinbox.setValue(value / 100.0)
+        self.invalidate_image()
+
+    def percentile_from_spinbox_changed(self, value):
+        self.ui.percentile_to_spinbox.setMinimum(value)
+        self.ui.percentile_from_slider.setValue(int(value * 100.0))
+        self.ui.range_from_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+        self.ui.range_from_slider.setValue(int(self.ui.range_from_spinbox.value() * 100.0))
+        self.invalidate_image()
+
+    def percentile_to_spinbox_changed(self, value):
+        self.ui.percentile_from_spinbox.setMaximum(value)
+        self.ui.percentile_to_slider.setValue(int(value * 100.0))
+        self.ui.range_to_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+        self.ui.range_to_slider.setValue(int(self.ui.range_to_spinbox.value() * 100.0))
+        self.invalidate_image()
+
+    def range_from_slider_changed(self, value):
+        self.ui.range_to_spinbox.setMinimum(value / 100.0)
+        self.ui.range_from_spinbox.setValue(value / 100.0)
+        self.invalidate_image()
+
+    def range_to_slider_changed(self, value):
+        self.ui.range_from_spinbox.setMaximum(value / 100.0)
+        self.ui.range_to_spinbox.setValue(value / 100.0)
+        self.invalidate_image()
+
+    def range_from_spinbox_changed(self, value):
+        self.ui.range_to_spinbox.setMinimum(value)
+        self.ui.range_from_slider.setValue(int(value * 100.0))
+        self.ui.percentile_from_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
+        self.ui.percentile_from_slider.setValue(int(self.ui.percentile_from_spinbox.value() * 100.0))
+        self.invalidate_image()
+
+    def range_to_spinbox_changed(self, value):
+        self.ui.range_from_spinbox.setMaximum(value)
+        self.ui.range_to_slider.setValue(int(value * 100.0))
+        self.ui.percentile_to_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
+        self.ui.percentile_to_slider.setValue(int(self.ui.percentile_to_spinbox.value() * 100.0))
+        self.invalidate_image()
 
     @property
     def channel(self):
@@ -173,52 +261,6 @@ class MDIWindow(QtGui.QWidget):
                 interpolation=str(self.ui.interpolation_combo.currentText()))
             self.canvas.draw()
 
-    def percentile_from_slider_changed(self, value):
-        self.ui.percentile_to_spinbox.setMinimum(value / 100.0)
-        self.ui.percentile_from_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
-
-    def percentile_to_slider_changed(self, value):
-        self.ui.percentile_from_spinbox.setMaximum(value / 100.0)
-        self.ui.percentile_to_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
-
-    def percentile_from_spinbox_changed(self, value):
-        self.ui.percentile_to_spinbox.setMinimum(value)
-        self.ui.percentile_from_slider.setValue(int(value * 100.0))
-        self.ui.range_from_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.range_from_slider.setValue(int(self.ui.range_from_spinbox.value() * 100.0))
-        self.invalidate_image()
-
-    def percentile_to_spinbox_changed(self, value):
-        self.ui.percentile_from_spinbox.setMaximum(value)
-        self.ui.percentile_to_slider.setValue(int(value * 100.0))
-        self.ui.range_to_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.range_to_slider.setValue(int(self.ui.range_to_spinbox.value() * 100.0))
-        self.invalidate_image()
-
-    def range_from_slider_changed(self, value):
-        self.ui.range_to_spinbox.setMinimum(value / 100.0)
-        self.ui.range_from_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
-
-    def range_to_slider_changed(self, value):
-        self.ui.range_from_spinbox.setMaximum(value / 100.0)
-        self.ui.range_to_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
-
-    def range_from_spinbox_changed(self, value):
-        self.ui.range_to_spinbox.setMinimum(value)
-        self.ui.range_from_slider.setValue(int(value * 100.0))
-        self.ui.percentile_from_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
-        self.invalidate_image()
-
-    def range_to_spinbox_changed(self, value):
-        self.ui.range_from_spinbox.setMaximum(value)
-        self.ui.range_to_slider.setValue(int(value * 100.0))
-        self.ui.percentile_to_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
-        self.invalidate_image()
-
 
 class OpenDialog(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -271,12 +313,13 @@ class OpenDialog(QtGui.QDialog):
 
 
 def main(args=None):
+    global APPLICATION
     if args is None:
         args = sys.argv
-    app = QtGui.QApplication(args)
+    APPLICATION = QtGui.QApplication(args)
     win = MainWindow()
     win.show()
-    return app.exec_()
+    return APPLICATION.exec_()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

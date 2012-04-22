@@ -265,6 +265,24 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>channel_combo</tabstop>
+  <tabstop>colormap_combo</tabstop>
+  <tabstop>percentile_from_slider</tabstop>
+  <tabstop>percentile_from_spinbox</tabstop>
+  <tabstop>percentile_to_slider</tabstop>
+  <tabstop>percentile_to_spinbox</tabstop>
+  <tabstop>range_from_slider</tabstop>
+  <tabstop>range_from_spinbox</tabstop>
+  <tabstop>range_to_slider</tabstop>
+  <tabstop>range_to_spinbox</tabstop>
+  <tabstop>interpolation_combo</tabstop>
+  <tabstop>crop_top_spinbox</tabstop>
+  <tabstop>crop_left_spinbox</tabstop>
+  <tabstop>crop_right_spinbox</tabstop>
+  <tabstop>crop_bottom_spinbox</tabstop>
+  <tabstop>zoom_slider</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

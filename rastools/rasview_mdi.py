@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_mdi.ui'
 #
-# Created: Sat Apr 21 22:33:48 2012
+# Created: Sun Apr 22 15:55:45 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -164,6 +164,21 @@ class Ui_MDIWindow(object):
 
         self.retranslateUi(MDIWindow)
         QtCore.QMetaObject.connectSlotsByName(MDIWindow)
+        MDIWindow.setTabOrder(self.channel_combo, self.colormap_combo)
+        MDIWindow.setTabOrder(self.colormap_combo, self.percentile_from_slider)
+        MDIWindow.setTabOrder(self.percentile_from_slider, self.percentile_from_spinbox)
+        MDIWindow.setTabOrder(self.percentile_from_spinbox, self.percentile_to_slider)
+        MDIWindow.setTabOrder(self.percentile_to_slider, self.percentile_to_spinbox)
+        MDIWindow.setTabOrder(self.percentile_to_spinbox, self.range_from_slider)
+        MDIWindow.setTabOrder(self.range_from_slider, self.range_from_spinbox)
+        MDIWindow.setTabOrder(self.range_from_spinbox, self.range_to_slider)
+        MDIWindow.setTabOrder(self.range_to_slider, self.range_to_spinbox)
+        MDIWindow.setTabOrder(self.range_to_spinbox, self.interpolation_combo)
+        MDIWindow.setTabOrder(self.interpolation_combo, self.crop_top_spinbox)
+        MDIWindow.setTabOrder(self.crop_top_spinbox, self.crop_left_spinbox)
+        MDIWindow.setTabOrder(self.crop_left_spinbox, self.crop_right_spinbox)
+        MDIWindow.setTabOrder(self.crop_right_spinbox, self.crop_bottom_spinbox)
+        MDIWindow.setTabOrder(self.crop_bottom_spinbox, self.zoom_slider)
 
     def retranslateUi(self, MDIWindow):
         pass
