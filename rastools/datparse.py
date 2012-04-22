@@ -62,7 +62,7 @@ class DatFileReader(object):
         'ABS_COUNT':          (re.compile(r'^\* *Abscissa points *: *(\d+)$'),   ('ORD_COUNT',)),
         'ORD_COUNT':          (re.compile(r'^\* *Ordinate points *: *(\d+)$'),   ('CHAN_COUNT',)),
         'CHAN_COUNT':         (re.compile(r'^\* *Data Channels *: *(\d+)$'),     ('CHAN_LABELS',)),
-        'CHAN_LABELS':        (re.compile(r'^[*#] *Data Labels *: *(.*)$'),        ('COMMENTS',)),
+        'CHAN_LABELS':        (re.compile(r'^[*#] *Data Labels *: *(.*)$'),      ('COMMENTS',)),
         'COMMENTS':           (re.compile(r'^\* *Comments *:'),                  ('COMMENT_CONTENT',)),
         'COMMENT_CONTENT':    (re.compile(r'^\* *(.*)$'),                        ('ABS_POINTS_HEAD', 'COMMENT_CONTENT')),
         'ABS_POINTS_HEAD':    (re.compile(r'^\* *Abscissa points requested *:'), ('ABS_POINTS',)),
