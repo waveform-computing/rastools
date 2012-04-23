@@ -196,6 +196,7 @@ class MDIWindow(QtGui.QWidget):
         self.window().statusBar().showMessage('Loading channel data')
 
     def progress_update(self, progress):
+        APPLICATION.processEvents()
         if progress != self._progress:
             self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
             self._progress = progress
@@ -359,6 +360,13 @@ class OpenDialog(QtGui.QDialog):
         self.ui.data_file_button.clicked.connect(self.data_file_select)
         self.ui.channel_file_button.clicked.connect(self.channel_file_select)
         self.data_file_changed()
+        # Make sure we're not wider than the screen
+        screen_g = APPLICATION.desktop().screenGeometry(APPLICATION.desktop().screenNumber(self))
+        self_g = self.geometry()
+        if screen_g.width() < self_g.width():
+            print self_g
+            self.setGeometry(self_g.x(), self_g.y(), screen_g.width() - 100, self_g.height())
+            print self.geometry()
 
     def accept(self):
         super(OpenDialog, self).accept()
