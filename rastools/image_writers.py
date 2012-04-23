@@ -5,7 +5,7 @@ __all__ = ['IMAGE_WRITERS']
 
 IMAGE_WRITERS = []
 
-logging.info('Loading standard graphics renderer')
+logging.info('Loading PNG support')
 try:
     from matplotlib.backends.backend_agg import FigureCanvasAgg
 except ImportError:
@@ -29,17 +29,7 @@ else:
         (FigureCanvasSVG.print_svgz, ('.svgz', '.SVGZ'), 'Compressed SVG image', 'lanczos',     None),
     ])
 
-logging.info('Loading JPEG support')
-try:
-    from matplotlib.backends.backend_gdk import FigureCanvasGDK
-except ImportError:
-    logging.warning('Failed to load JPEG support')
-else:
-    IMAGE_WRITERS.extend([
-        (FigureCanvasGDK.print_jpg, ('.jpg', '.jpeg', '.JPG', '.JPEG'), 'JPEG image', 'lanczos', None),
-    ])
-
-logging.info('Loading TIFF support')
+logging.info('Loading TIFF, GIF, JPEG support')
 try:
     from rastools.tiffwrite import FigureCanvasPIL
 except ImportError:
@@ -48,6 +38,7 @@ else:
     IMAGE_WRITERS.extend([
         (FigureCanvasPIL.print_tif, ('.tif', '.tiff', '.TIF', '.TIFF'), 'TIFF image', 'nearest', None),
         (FigureCanvasPIL.print_gif, ('.gif', '.GIF'),                   'GIF image',  'nearest', None),
+        (FigureCanvasPIL.print_jpg, ('.jpg', '.jpeg', '.JPG', '.JPEG'), 'JPEG image', 'lanczos', None),
     ])
 
 logging.info('Loading PostScript support')

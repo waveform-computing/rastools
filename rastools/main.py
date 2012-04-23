@@ -26,6 +26,8 @@ class OptionParser(optparse.OptionParser):
 class Utility(object):
     # Get the default output encoding from the default locale
     encoding = locale.getdefaultlocale()[1]
+    status = ''
+    progress = 0
 
     # This class is the abstract base class for each of the command line
     # utility classes defined. It provides some basic facilities like an option
@@ -145,6 +147,22 @@ class Utility(object):
                 for s in line.rstrip().split('\n'):
                     logging.critical(s)
             return 1
+
+    def progress_start(self):
+        self.progress = 0
+        self.status = 'Reading channel data %d%%' % self.progress
+        sys.stderr.write(self.status)
+
+    def progress_update(self, new_progress):
+        if new_progress != self.progress:
+            self.progress = new_progress
+            new_status = 'Reading channel data %d%%' % self.progress
+            sys.stderr.write('\b' * len(self.status))
+            sys.stderr.write(new_status)
+            self.status = new_status
+
+    def progress_finish(self):
+        sys.stderr.write('\n')
 
     def main(self, options, args):
         pass

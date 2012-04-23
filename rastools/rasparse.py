@@ -161,7 +161,11 @@ class RasFileReader(object):
     def __init__(self, *args, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(RasFileReader, self).__init__()
-        self.verbose = kwargs.get('verbose', False)
+        (
+            self.progress_start,
+            self.progress_update,
+            self.progress_finish,
+        ) = kwargs.get('progress', (None, None, None))
         if len(args) == 1:
             ras_file, channels_file = args[0], None
         elif len(args) == 2:
@@ -334,24 +338,16 @@ class RasChannels(object):
                 channel._data = np.zeros((self.parent.y_size, self.parent.x_size), np.uint32)
             # Read a line at a time and extract the specified channel
             input_struct = struct.Struct('I' * self.parent.x_size * self.parent.channel_count)
-            if self.parent.verbose:
-                progress = 0
-                status = 'Reading channel data %d%%' % progress
-                sys.stderr.write(status)
+            if self.parent.progress_start:
+                self.parent.progress_start()
             for y in xrange(self.parent.y_size):
                 data = input_struct.unpack(self.parent._file.read(input_struct.size))
                 for channel in self:
                     channel._data[y] = data[channel.index::self.parent.channel_count]
-                if self.parent.verbose:
-                    new_progress = round(y * 100.0 / self.parent.y_size)
-                    if new_progress != progress:
-                        progress = new_progress
-                        new_status = 'Reading channel data %d%%' % progress
-                        sys.stderr.write('\b' * len(status))
-                        sys.stderr.write(new_status)
-                        status = new_status
-            if self.parent.verbose:
-                sys.stderr.write('\n')
+                if self.parent.progress_update:
+                    self.parent.progress_update(round(y * 100.0 / self.parent.y_size))
+            if self.parent.progress_finish:
+                self.parent.progress_finish()
 
     def __len__(self):
         return self.parent.channel_count

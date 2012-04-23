@@ -19,7 +19,6 @@ import numpy as np
 
 __version__ = '0.1'
 FIGURE_DPI = 72.0
-LAST_USED_LIMIT = 20
 DEFAULT_INTERPOLATION = 'nearest'
 DEFAULT_COLORMAP = 'gray'
 APPLICATION = None
@@ -345,9 +344,9 @@ class OpenDialog(QtGui.QDialog):
 
     def accept(self):
         super(OpenDialog, self).accept()
-        # When the dialog is accepted append the current filenames to the
-        # combos or, if the entry already exists, move it to the top of the
-        # combo list
+        # When the dialog is accepted insert the current filenames at the top
+        # of the combos or, if the entry already exists, move it to the top of
+        # the combo list
         i = self.ui.data_file_combo.findText(self.ui.data_file_combo.currentText())
         if i == -1:
             self.ui.data_file_combo.addItem(self.ui.data_file_combo.currentText())
@@ -355,7 +354,7 @@ class OpenDialog(QtGui.QDialog):
             self.ui.data_file_combo.insertItem(0, self.ui.data_file_combo.currentText())
             self.ui.data_file_combo.setCurrentIndex(0)
             self.ui.data_file_combo.removeItem(i + 1)
-        while self.ui.data_file_combo.count() > LAST_USED_LIMIT:
+        while self.ui.data_file_combo.count() > self.ui.data_file_combo.maxCount():
             self.ui.data_file_combo.removeItem(self.ui.data_file_combo.count() - 1)
         if str(self.ui.channel_file_combo.currentText()) != '':
             i = self.ui.channel_file_combo.findText(self.ui.channel_file_combo.currentText())
@@ -365,7 +364,7 @@ class OpenDialog(QtGui.QDialog):
                 self.ui.channel_file_combo.insertItem(0, self.ui.channel_file_combo.currentText())
                 self.ui.channel_file_combo.setCurrentIndex(0)
                 self.ui.channel_file_combo.removeItem(i + 1)
-        while self.ui.channel_file_combo.count() > LAST_USED_LIMIT:
+        while self.ui.channel_file_combo.count() > self.ui.channel_file_combo.maxCount():
             self.ui.channel_file_combo.removeItem(self.ui.channel_file_combo.count() - 1)
         # Only write the last-used lists when the dialog is accepted (not when
         # cancelled or just closed)

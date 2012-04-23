@@ -77,7 +77,11 @@ class DatFileReader(object):
     def __init__(self, *args, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(DatFileReader, self).__init__()
-        self.verbose = kwargs.get('verbose', False)
+        (
+            self.progress_start,
+            self.progress_update,
+            self.progress_finish,
+        ) = kwargs.get('progress', (None, None, None))
         dat_file, = args
         if isinstance(dat_file, basestring):
             logging.debug('Opening DAT file %s' % dat_file)
@@ -188,10 +192,8 @@ class DatChannels(object):
             self._read_channels = True
             logging.debug('Allocating channel array')
             data = np.zeros((self.parent.y_size, self.parent.x_size, self.parent.channel_count), np.float)
-            if self.parent.verbose:
-                progress = 0
-                status = 'Reading channel data %d%%' % progress
-                sys.stderr.write(status)
+            if self.parent.progress_start:
+                self.parent.progress_start()
             for line_num, line in enumerate(self.parent._file):
                 try:
                     line = [float(n) for n in line.split()]
@@ -210,16 +212,10 @@ class DatChannels(object):
                 if len(line) != len(self):
                     raise DatFileError('incorrect number of channel values (%d) found on line %d' % (len(line), line_num + self._data_line))
                 data[y, x] = line
-                if self.parent.verbose:
-                    new_progress = round(line_num * 100.0 / (self.parent.x_size * self.parent.y_size))
-                    if new_progress != progress:
-                        progress = new_progress
-                        new_status = 'Reading channel data %d%%' % progress
-                        sys.stderr.write('\b' * len(status))
-                        sys.stderr.write(new_status)
-                        status = new_status
-            if self.parent.verbose:
-                sys.stderr.write('\n')
+                if self.parent.progress_update:
+                    self.parent.progress_update(round(line_num * 100.0 / (self.parent.x_size * self.parent.y_size)))
+            if self.parent.progress_finish:
+                self.parent.progress_finish()
             logging.debug('Slicing channel array into channels')
             for channel in self:
                 channel._data = data[..., channel.index]

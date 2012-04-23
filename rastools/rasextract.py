@@ -10,9 +10,9 @@ import matplotlib as mpl
 import matplotlib.cm
 import matplotlib.image
 from collections import namedtuple
-from rastools.parsers import PARSERS
 
 DPI = 72.0
+PARSERS = []
 IMAGE_WRITERS = {}
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
@@ -108,8 +108,12 @@ class RasExtractUtility(rastools.main.Utility):
         # Parse the input file(s)
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
+        if options.loglevel<logging.WARNING:
+            progress = (self.progress_start, self.progress_update, self.progress_finish)
+        else:
+            progress = (None, None, None)
         try:
-            f = PARSERS[ext](*files, verbose=options.loglevel<logging.WARNING)
+            f = PARSERS[ext](*files, progress=progress)
         except KeyError:
             self.parser.error('unrecognized file extension %s' % ext)
         # Check the percentile range is valid
