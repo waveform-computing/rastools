@@ -8,15 +8,15 @@ from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
-from rastools.parsers import PARSERS
-from rastools.image_writers import IMAGE_WRITERS
-from rastools.data_writers import DATA_WRITERS
 import numpy as np
 
 __version__ = '0.1'
 FIGURE_DPI = 72.0
 DEFAULT_INTERPOLATION = 'nearest'
 DEFAULT_COLORMAP = 'gray'
+PARSERS = {}
+IMAGE_WRITERS = {}
+DATA_WRITERS = {}
 
 APP = WIN = None
 
@@ -32,6 +32,11 @@ class MainWindow(QtGui.QMainWindow):
             self.move(self.settings.value('position', QtCore.QPoint(100, 100)).toPoint())
         finally:
             self.settings.endGroup()
+        # Load backends (this is done here as it takes a while)
+        global PARSERS, IMAGE_WRITERS, DATA_WRITERS
+        from rastools.parsers import PARSERS
+        from rastools.image_writers import IMAGE_WRITERS
+        from rastools.data_writers import DATA_WRITERS
         # Connect up signals to methods
         self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
         self.ui.about_action.triggered.connect(self.about)
@@ -40,7 +45,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.close_action.triggered.connect(self.close_file)
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
-        self.figure_dpi = 72.0
 
     def close(self):
         super(MainWindow, self).close()
@@ -55,7 +59,7 @@ class MainWindow(QtGui.QMainWindow):
             w.show()
 
     def close_file(self):
-        self.ui.mdi_area.activeSubWindow().close()
+        self.ui.mdi_area.currentSubWindow().close()
 
     def about(self):
         QtGui.QMessageBox.about(self,
@@ -73,9 +77,29 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMessageBox.aboutQt(self, self.tr('About QT'))
 
     def export_image(self):
-        pass
+        filters = ';;'.join([
+            '%s (%s)' % (label, ' '.join('*' + ext for ext in exts))
+            for (method, exts, label, _, _) in IMAGE_WRITERS
+        ])
+        f = QtGui.QFileDialog.getSaveFileName(self, self.tr('Export image'), os.getcwd(), filters)
+        if f:
+            f = str(f)
+            os.chdir(os.path.dirname(f))
+            ext = os.path.splitext(f)[1]
+            writers = dict(
+                (ext, method)
+                for (method, exts, _, _, _) in IMAGE_WRITERS
+                for ext in exts
+            )
+            try:
+                method = writers[ext]
+            except KeyError:
+                QtGui.QMessageBox.warning(self, self.tr('Warning'), str(self.tr('Unknown file extension "%s"')) % ext)
+            canvas = method.im_class(self.ui.mdi_area.currentSubWindow().widget().figure)
+            method(canvas, f, dpi=FIGURE_DPI)
 
     def export_channel(self):
+        # XXX Add export channel implementation
         pass
 
     def window_changed(self, window):
@@ -525,6 +549,8 @@ class OpenDialog(QtGui.QDialog):
 
 
 def excepthook(type, value, tb):
+    # XXX Need to expand this to display a complete stack trace and add an
+    # e-mail option for bug reports
     QtGui.QMessageBox.critical(WIN, WIN.tr('Error'), str(value))
 
 def main(args=None):
