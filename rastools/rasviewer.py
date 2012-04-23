@@ -3,15 +3,11 @@
 import os
 import sys
 import matplotlib
-matplotlib.use('Qt4Agg')
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
-from PyQt4 import QtCore, QtGui
-from rastools.rasview_main import Ui_MainWindow
-from rastools.rasview_open import Ui_OpenDialog
-from rastools.rasview_mdi import Ui_MDIWindow
+from PyQt4 import QtCore, QtGui, uic
 from rastools.parsers import PARSERS
 from rastools.image_writers import IMAGE_WRITERS
 from rastools.data_writers import DATA_WRITERS
@@ -21,14 +17,13 @@ __version__ = '0.1'
 FIGURE_DPI = 72.0
 DEFAULT_INTERPOLATION = 'nearest'
 DEFAULT_COLORMAP = 'gray'
-APPLICATION = None
 
+APP = WIN = None
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'rasview_main.ui')), self)
         # Read configuration
         self.settings = QtCore.QSettings()
         self.settings.beginGroup('main_window')
@@ -64,14 +59,14 @@ class MainWindow(QtGui.QMainWindow):
 
     def about(self):
         QtGui.QMessageBox.about(self,
-            str(self.tr('About %s')) % APPLICATION.applicationName(),
+            str(self.tr('About %s')) % APP.applicationName(),
             str(self.tr("""<b>%(application)s</b>
             <p>Version %(version)s</p>
             <p>%(application)s is a visual previewer for the content of .RAS and
             .DAT files from the SSRL facility</p>
             <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""")) % {
-                'application': APPLICATION.applicationName(),
-                'version':     APPLICATION.applicationVersion(),
+                'application': APP.applicationName(),
+                'version':     APP.applicationVersion(),
             })
 
     def about_qt(self):
@@ -93,8 +88,7 @@ class MainWindow(QtGui.QMainWindow):
 class MDIWindow(QtGui.QWidget):
     def __init__(self, data_file, channel_file):
         super(MDIWindow, self).__init__(None)
-        self.ui = Ui_MDIWindow()
-        self.ui.setupUi(self)
+        self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'rasview_mdi.ui')), self)
         self._data = None
         self._data_sorted = None
         self._file = None
@@ -124,9 +118,12 @@ class MDIWindow(QtGui.QWidget):
             self.close()
             return
         # Create a figure in a tab for the file
-        self.figure = Figure(figsize=(5.0, 4.0), dpi=FIGURE_DPI)
+        self.figure = Figure(figsize=(5.0, 4.0), dpi=FIGURE_DPI,
+            facecolor='w', edgecolor='w')
         self.canvas = FigureCanvas(self.figure)
-        self.axes = self.figure.add_axes((0.1, 0.1, 0.8, 0.8))
+        self.image_axes = self.figure.add_axes((0.1, 0.1, 0.8, 0.8))
+        self.histogram_axes = None
+        self.colorbar_axes = None
         self.ui.splitter.addWidget(self.canvas)
         # Fill out the combos
         for channel in self._file.channels:
@@ -165,7 +162,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.valueChanged.connect(self.invalidate_data)
         self.ui.crop_right_spinbox.valueChanged.connect(self.invalidate_data)
         self.ui.crop_bottom_spinbox.valueChanged.connect(self.invalidate_data)
-        APPLICATION.focusChanged.connect(self.focus_changed)
+        self.ui.axes_check.toggled.connect(self.invalidate_image)
+        self.ui.histogram_check.toggled.connect(self.invalidate_image)
+        self.ui.colorbar_check.toggled.connect(self.invalidate_image)
+        APP.focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
         self.invalidate_data()
 
@@ -196,7 +196,7 @@ class MDIWindow(QtGui.QWidget):
         self.window().statusBar().showMessage('Loading channel data')
 
     def progress_update(self, progress):
-        APPLICATION.processEvents()
+        APP.processEvents()
         if progress != self._progress:
             self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
             self._progress = progress
@@ -303,6 +303,7 @@ class MDIWindow(QtGui.QWidget):
 
     @property
     def data_sorted(self):
+        self.data
         return self._data_sorted
 
     def invalidate_data(self):
@@ -321,20 +322,90 @@ class MDIWindow(QtGui.QWidget):
 
     def redraw_image(self):
         if self.channel is not None:
-            self.axes.clear()
-            self.axes.imshow(self.data,
-                vmin=self.ui.range_from_spinbox.value(),
-                vmax=self.ui.range_to_spinbox.value(),
-                cmap=matplotlib.cm.get_cmap(str(self.ui.colormap_combo.currentText()) + ('_r' if self.ui.reverse_check.isChecked() else '')),
+            vmin = self.data_sorted[0]
+            vmax = self.data_sorted[-1]
+            pmin = self.ui.range_from_spinbox.value()
+            pmax = self.ui.range_to_spinbox.value()
+            # Calculate the figure dimensions and margins, and construct the
+            # necessary objects
+            (img_width, img_height) = (
+                (self.channel.parent.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value()) / FIGURE_DPI,
+                (self.channel.parent.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value()) / FIGURE_DPI
+            )
+            (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[self.ui.histogram_check.isChecked()]
+            (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
+            (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[False] # XXX Add title editor
+            margin = (0.0, 0.5)[
+                self.ui.axes_check.isChecked()
+                or self.ui.colorbar_check.isChecked()
+                or self.ui.histogram_check.isChecked()
+                or bool(False)] # XXX Add title
+            fig_width = img_width + margin * 2
+            fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
+            # Position the axes in which to draw the channel data and draw it.
+            # The imshow() call takes care of clamping values with vmin and
+            # vmax and color-mapping
+            self.image_axes.clear()
+            self.image_axes.set_position((
+                margin / fig_width,      # left
+                (margin + hist_height + cbar_height) / fig_height, # bottom
+                img_width / fig_width,   # width
+                img_height / fig_height, # height
+            ))
+            self.image_axes.set_frame_on(self.ui.axes_check.isChecked())
+            if self.ui.axes_check.isChecked():
+                self.image_axes.set_axis_on()
+            else:
+                self.image_axes.set_axis_off()
+            img = self.image_axes.imshow(self.data, vmin=pmin, vmax=pmax,
+                cmap=matplotlib.cm.get_cmap(
+                    str(self.ui.colormap_combo.currentText()) +
+                    ('_r' if self.ui.reverse_check.isChecked() else '')
+                ),
                 interpolation=str(self.ui.interpolation_combo.currentText()))
+            # Construct an axis for the histogram, if requested
+            if self.ui.histogram_check.isChecked():
+                if self.histogram_axes is None:
+                    self.histogram_axes = self.figure.add_axes((0, 0, 0, 0))
+                self.histogram_axes.clear()
+                self.histogram_axes.set_position((
+                    margin / fig_width,               # left
+                    (margin + cbar_height) / fig_height, # bottom
+                    hist_width / fig_width,           # width
+                    (hist_height * 0.8) / fig_height, # height
+                ))
+                self.histogram_axes.hist(self.data.flat, bins=32, range=(pmin, pmax))
+            elif self.histogram_axes:
+                self.figure.delaxes(self.histogram_axes)
+                self.histogram_axes = None
+            # Construct an axis for the colorbar, if requested
+            if self.ui.colorbar_check.isChecked():
+                if self.colorbar_axes is None:
+                    self.colorbar_axes = self.figure.add_axes((0, 0, 0, 0))
+                self.colorbar_axes.clear()
+                self.colorbar_axes.set_position((
+                    margin / fig_width,               # left
+                    margin / fig_height,              # bottom
+                    cbar_width / fig_width,           # width
+                    (cbar_height * 0.3) / fig_height, # height
+                ))
+                self.figure.colorbar(img, cax=self.colorbar_axes,
+                    orientation='horizontal',
+                    extend=
+                    'both' if pmin > vmin and pmax < vmax else
+                    'max' if pmax < vmax else
+                    'min' if pmin > vmin else
+                    'neither')
+            elif self.colorbar_axes:
+                self.figure.delaxes(self.colorbar_axes)
+                self.colorbar_axes = None
             self.canvas.draw()
 
 
 class OpenDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         super(OpenDialog, self).__init__(parent)
-        self.ui = Ui_OpenDialog()
-        self.ui.setupUi(self)
+        self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'rasview_open.ui')), self)
         # Read the last-used lists
         self.settings = self.parent().settings
         self.settings.beginGroup('last_used')
@@ -360,13 +431,6 @@ class OpenDialog(QtGui.QDialog):
         self.ui.data_file_button.clicked.connect(self.data_file_select)
         self.ui.channel_file_button.clicked.connect(self.channel_file_select)
         self.data_file_changed()
-        # Make sure we're not wider than the screen
-        screen_g = APPLICATION.desktop().screenGeometry(APPLICATION.desktop().screenNumber(self))
-        self_g = self.geometry()
-        if screen_g.width() < self_g.width():
-            print self_g
-            self.setGeometry(self_g.x(), self_g.y(), screen_g.width() - 100, self_g.height())
-            print self.geometry()
 
     def accept(self):
         super(OpenDialog, self).accept()
@@ -456,18 +520,22 @@ class OpenDialog(QtGui.QDialog):
             self.ui.channel_file_combo.setEditText(f)
 
 
+def excepthook(type, value, tb):
+    QtGui.QMessageBox.critical(WIN, WIN.tr('Error'), str(value))
+
 def main(args=None):
-    global APPLICATION
+    sys.excepthook = excepthook
+    global APP, WIN
     if args is None:
         args = sys.argv
-    APPLICATION = QtGui.QApplication(args)
-    APPLICATION.setApplicationName('rasviewer')
-    APPLICATION.setApplicationVersion(__version__)
-    APPLICATION.setOrganizationName('Waveform')
-    APPLICATION.setOrganizationDomain('waveform.org.uk')
-    win = MainWindow()
-    win.show()
-    return APPLICATION.exec_()
+    APP = QtGui.QApplication(args)
+    APP.setApplicationName('rasviewer')
+    APP.setApplicationVersion(__version__)
+    APP.setOrganizationName('Waveform')
+    APP.setOrganizationDomain('waveform.org.uk')
+    WIN = MainWindow()
+    WIN.show()
+    return APP.exec_()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

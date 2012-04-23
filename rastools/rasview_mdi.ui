@@ -21,6 +21,9 @@
      </property>
      <widget class="QWidget" name="">
       <layout class="QFormLayout" name="form_layout">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
        <item row="0" column="0">
         <widget class="QLabel" name="channel_label">
          <property name="text">
@@ -45,7 +48,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="colormap_layout">
          <item>
           <widget class="QComboBox" name="colormap_combo"/>
          </item>
@@ -260,21 +263,36 @@
         </layout>
        </item>
        <item row="8" column="0">
-        <widget class="QLabel" name="zoom_label">
+        <widget class="QLabel" name="display_label">
          <property name="text">
-          <string>Zoom</string>
-         </property>
-         <property name="buddy">
-          <cstring>zoom_slider</cstring>
+          <string>Display</string>
          </property>
         </widget>
        </item>
        <item row="8" column="1">
-        <widget class="QSlider" name="zoom_slider">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="display_layout">
+         <item>
+          <widget class="QCheckBox" name="axes_check">
+           <property name="text">
+            <string>Axes</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="histogram_check">
+           <property name="text">
+            <string>Histogram</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="colorbar_check">
+           <property name="text">
+            <string>Color-bar</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -299,7 +317,6 @@
   <tabstop>crop_left_spinbox</tabstop>
   <tabstop>crop_right_spinbox</tabstop>
   <tabstop>crop_bottom_spinbox</tabstop>
-  <tabstop>zoom_slider</tabstop>
  </tabstops>
  <resources/>
  <connections/>

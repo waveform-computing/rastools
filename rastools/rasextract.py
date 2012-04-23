@@ -301,9 +301,9 @@ class RasExtractUtility(rastools.main.Utility):
         # Construct an axis for the colorbar, if requested
         if options.show_colorbar:
             cax = fig.add_axes((
-                margin / fig_width,                # left
-                margin / fig_height,               # bottom
-                cbar_width / fig_width,            # width
+                margin / fig_width,               # left
+                margin / fig_height,              # bottom
+                cbar_width / fig_width,           # width
                 (cbar_height * 0.3) / fig_height, # height
             ))
             cb = fig.colorbar(img, cax=cax, orientation='horizontal',
