@@ -365,30 +365,34 @@ class MDIWindow(QtGui.QWidget):
                 interpolation=str(self.ui.interpolation_combo.currentText()))
             # Construct an axis for the histogram, if requested
             if self.ui.histogram_check.isChecked():
-                if self.histogram_axes is None:
-                    self.histogram_axes = self.figure.add_axes((0, 0, 0, 0))
-                self.histogram_axes.clear()
-                self.histogram_axes.set_position((
+                r = (
                     margin / fig_width,               # left
                     (margin + cbar_height) / fig_height, # bottom
                     hist_width / fig_width,           # width
                     (hist_height * 0.8) / fig_height, # height
-                ))
+                )
+                if self.histogram_axes is None:
+                    self.histogram_axes = self.figure.add_axes(r)
+                else:
+                    self.histogram_axes.clear()
+                    self.histogram_axes.set_position(r)
                 self.histogram_axes.hist(self.data.flat, bins=32, range=(pmin, pmax))
             elif self.histogram_axes:
                 self.figure.delaxes(self.histogram_axes)
                 self.histogram_axes = None
             # Construct an axis for the colorbar, if requested
             if self.ui.colorbar_check.isChecked():
-                if self.colorbar_axes is None:
-                    self.colorbar_axes = self.figure.add_axes((0, 0, 0, 0))
-                self.colorbar_axes.clear()
-                self.colorbar_axes.set_position((
+                r = (
                     margin / fig_width,               # left
                     margin / fig_height,              # bottom
                     cbar_width / fig_width,           # width
                     (cbar_height * 0.3) / fig_height, # height
-                ))
+                )
+                if self.colorbar_axes is None:
+                    self.colorbar_axes = self.figure.add_axes(r)
+                else:
+                    self.colorbar_axes.clear()
+                    self.colorbar_axes.set_position(r)
                 self.figure.colorbar(img, cax=self.colorbar_axes,
                     orientation='horizontal',
                     extend=
