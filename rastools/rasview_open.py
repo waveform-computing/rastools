@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_open.ui'
 #
-# Created: Mon Apr 23 10:22:46 2012
+# Created: Mon Apr 23 11:33:08 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -85,6 +85,7 @@ class Ui_OpenDialog(object):
         QtCore.QObject.connect(self.button_box, QtCore.SIGNAL(_fromUtf8("accepted()")), OpenDialog.accept)
         QtCore.QObject.connect(self.button_box, QtCore.SIGNAL(_fromUtf8("rejected()")), OpenDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(OpenDialog)
+        OpenDialog.setTabOrder(self.data_file_combo, self.data_file_button)
         OpenDialog.setTabOrder(self.data_file_button, self.channel_file_combo)
         OpenDialog.setTabOrder(self.channel_file_combo, self.channel_file_button)
         OpenDialog.setTabOrder(self.channel_file_button, self.button_box)

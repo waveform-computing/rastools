@@ -98,6 +98,7 @@ class MDIWindow(QtGui.QWidget):
         self._data = None
         self._data_sorted = None
         self._file = None
+        self._progress = 0
         # Open the selected file
         try:
             ext = os.path.splitext(data_file)[-1]
@@ -111,7 +112,11 @@ class MDIWindow(QtGui.QWidget):
                 for ext in exts
             )
             try:
-                self._file = parsers[ext](*files)
+                self._file = parsers[ext](*files, progress=(
+                    self.progress_start,
+                    self.progress_update,
+                    self.progress_finish,
+                ))
             except KeyError:
                 raise ValueError(self.tr('Unrecognized file extension "%s"') % ext)
         except Exception, e:
@@ -154,6 +159,7 @@ class MDIWindow(QtGui.QWidget):
         self.redraw_timer.timeout.connect(self.redraw_timeout)
         self.ui.channel_combo.currentIndexChanged.connect(self.invalidate_data)
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
+        self.ui.reverse_check.toggled.connect(self.invalidate_image)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.crop_top_spinbox.valueChanged.connect(self.invalidate_data)
         self.ui.crop_left_spinbox.valueChanged.connect(self.invalidate_data)
@@ -184,6 +190,18 @@ class MDIWindow(QtGui.QWidget):
             self.range_connect()
         elif (old_widget in range_controls) and (new_widget not in range_controls):
             self.range_disconnect()
+
+    def progress_start(self):
+        self._progress = 0
+        self.window().statusBar().showMessage('Loading channel data')
+
+    def progress_update(self, progress):
+        if progress != self._progress:
+            self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
+            self._progress = progress
+
+    def progress_finish(self):
+        self.window().statusBar().clearMessage()
 
     def percentile_connect(self):
         self.ui.percentile_from_slider.valueChanged.connect(self.percentile_from_slider_changed)
@@ -306,7 +324,7 @@ class MDIWindow(QtGui.QWidget):
             self.axes.imshow(self.data,
                 vmin=self.ui.range_from_spinbox.value(),
                 vmax=self.ui.range_to_spinbox.value(),
-                cmap=matplotlib.cm.get_cmap(str(self.ui.colormap_combo.currentText())),
+                cmap=matplotlib.cm.get_cmap(str(self.ui.colormap_combo.currentText()) + ('_r' if self.ui.reverse_check.isChecked() else '')),
                 interpolation=str(self.ui.interpolation_combo.currentText()))
             self.canvas.draw()
 

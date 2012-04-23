@@ -126,6 +126,7 @@
   </layout>
  </widget>
  <tabstops>
+  <tabstop>data_file_combo</tabstop>
   <tabstop>data_file_button</tabstop>
   <tabstop>channel_file_combo</tabstop>
   <tabstop>channel_file_button</tabstop>

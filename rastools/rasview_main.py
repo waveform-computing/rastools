@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'rasview_main.ui'
 #
-# Created: Sun Apr 22 23:22:27 2012
+# Created: Mon Apr 23 11:28:44 2012
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -70,12 +70,15 @@ class Ui_MainWindow(object):
         self.quit_action.setToolTip(QtGui.QApplication.translate("MainWindow", "Quit the application", None, QtGui.QApplication.UnicodeUTF8))
         self.quit_action.setStatusTip(QtGui.QApplication.translate("MainWindow", "Quit the application", None, QtGui.QApplication.UnicodeUTF8))
         self.quit_action.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
+        self.quit_action.setMenuRole(QtGui.QAction.QuitRole)
         self.quit_action.setObjectName(_fromUtf8("quit_action"))
         self.about_action = QtGui.QAction(MainWindow)
         self.about_action.setText(QtGui.QApplication.translate("MainWindow", "&About rasViewer", None, QtGui.QApplication.UnicodeUTF8))
+        self.about_action.setMenuRole(QtGui.QAction.AboutRole)
         self.about_action.setObjectName(_fromUtf8("about_action"))
         self.about_qt_action = QtGui.QAction(MainWindow)
         self.about_qt_action.setText(QtGui.QApplication.translate("MainWindow", "About QT", None, QtGui.QApplication.UnicodeUTF8))
+        self.about_qt_action.setMenuRole(QtGui.QAction.AboutQtRole)
         self.about_qt_action.setObjectName(_fromUtf8("about_qt_action"))
         self.export_image_action = QtGui.QAction(MainWindow)
         self.export_image_action.setEnabled(False)
