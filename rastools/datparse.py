@@ -194,28 +194,30 @@ class DatChannels(object):
             data = np.zeros((self.parent.y_size, self.parent.x_size, self.parent.channel_count), np.float)
             if self.parent.progress_start:
                 self.parent.progress_start()
-            for line_num, line in enumerate(self.parent._file):
-                try:
-                    line = [float(n) for n in line.split()]
-                except ValueError:
-                    raise DatFileError('non-float value found on line %d' % (line_num + self._data_line))
-                # XXX if x_coords and y_coords are guaranteed sorted ... bisect?
-                try:
-                    y = self.parent.y_coords.index(line[0])
-                except ValueError:
-                    raise DatFileError('invalid ordinate %f found on line %d' % (line[0], line_num + self._data_line))
-                try:
-                    x = self.parent.x_coords.index(line[1])
-                except ValueError:
-                    raise DatFileError('invalid abscissa %f found on line %d' % (line[1], line_num + self._data_line))
-                line = line[2:]
-                if len(line) != len(self):
-                    raise DatFileError('incorrect number of channel values (%d) found on line %d' % (len(line), line_num + self._data_line))
-                data[y, x] = line
-                if self.parent.progress_update:
-                    self.parent.progress_update(round(line_num * 100.0 / (self.parent.x_size * self.parent.y_size)))
-            if self.parent.progress_finish:
-                self.parent.progress_finish()
+            try:
+                for line_num, line in enumerate(self.parent._file):
+                    try:
+                        line = [float(n) for n in line.split()]
+                    except ValueError:
+                        raise DatFileError('non-float value found on line %d' % (line_num + self._data_line))
+                    # XXX if x_coords and y_coords are guaranteed sorted ... bisect?
+                    try:
+                        y = self.parent.y_coords.index(line[0])
+                    except ValueError:
+                        raise DatFileError('invalid ordinate %f found on line %d' % (line[0], line_num + self._data_line))
+                    try:
+                        x = self.parent.x_coords.index(line[1])
+                    except ValueError:
+                        raise DatFileError('invalid abscissa %f found on line %d' % (line[1], line_num + self._data_line))
+                    line = line[2:]
+                    if len(line) != len(self):
+                        raise DatFileError('incorrect number of channel values (%d) found on line %d' % (len(line), line_num + self._data_line))
+                    data[y, x] = line
+                    if self.parent.progress_update:
+                        self.parent.progress_update(round(line_num * 100.0 / (self.parent.x_size * self.parent.y_size)))
+            finally:
+                if self.parent.progress_finish:
+                    self.parent.progress_finish()
             logging.debug('Slicing channel array into channels')
             for channel in self:
                 channel._data = data[..., channel.index]

@@ -340,14 +340,16 @@ class RasChannels(object):
             input_struct = struct.Struct('I' * self.parent.x_size * self.parent.channel_count)
             if self.parent.progress_start:
                 self.parent.progress_start()
-            for y in xrange(self.parent.y_size):
-                data = input_struct.unpack(self.parent._file.read(input_struct.size))
-                for channel in self:
-                    channel._data[y] = data[channel.index::self.parent.channel_count]
-                if self.parent.progress_update:
-                    self.parent.progress_update(round(y * 100.0 / self.parent.y_size))
-            if self.parent.progress_finish:
-                self.parent.progress_finish()
+            try:
+                for y in xrange(self.parent.y_size):
+                    data = input_struct.unpack(self.parent._file.read(input_struct.size))
+                    for channel in self:
+                        channel._data[y] = data[channel.index::self.parent.channel_count]
+                    if self.parent.progress_update:
+                        self.parent.progress_update(round(y * 100.0 / self.parent.y_size))
+            finally:
+                if self.parent.progress_finish:
+                    self.parent.progress_finish()
 
     def __len__(self):
         return self.parent.channel_count
