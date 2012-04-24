@@ -1,9 +1,5 @@
 import os
 from PyQt4 import QtCore, QtGui, uic
-from rastools.image_writers import IMAGE_WRITERS
-from rastools.data_writers import DATA_WRITERS
-from rastools.rasviewer.mdi_window import MDIWindow
-from rastools.rasviewer.open_dialog import OpenDialog
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -33,8 +29,10 @@ class MainWindow(QtGui.QMainWindow):
         self.settings.setValue('position', self.pos())
 
     def open_file(self):
+        from rastools.rasviewer.open_dialog import OpenDialog
         d = OpenDialog(self)
         if d.exec_():
+            from rastools.rasviewer.mdi_window import MDIWindow
             w = self.ui.mdi_area.addSubWindow(MDIWindow(d.data_file, d.channel_file))
             w.show()
 
@@ -57,10 +55,19 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMessageBox.aboutQt(self, self.tr('About QT'))
 
     def export_image(self):
-        filters = ';;'.join([
-            '%s (%s)' % (label, ' '.join('*' + ext for ext in exts))
-            for (method, exts, label, _, _) in IMAGE_WRITERS
-        ])
+        QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            from rastools.image_writers import IMAGE_WRITERS
+        finally:
+            QtGui.QApplication.instance().restoreOverrideCursor()
+        filters = ';;'.join(
+            [
+                str(self.tr('All images (%s)')) % ' '.join('*' + ext for (_, exts, _, _, _) in IMAGE_WRITERS for ext in exts)
+            ] + [
+                '%s (%s)' % (self.tr(label), ' '.join('*' + ext for ext in exts))
+                for (method, exts, label, _, _) in IMAGE_WRITERS
+            ]
+        )
         f = QtGui.QFileDialog.getSaveFileName(self, self.tr('Export image'), os.getcwd(), filters)
         if f:
             f = str(f)

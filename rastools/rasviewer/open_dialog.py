@@ -16,6 +16,7 @@ class OpenDialog(QtGui.QDialog):
                     self.ui.data_file_combo.addItem(self.settings.value('path').toString())
             finally:
                 self.settings.endArray()
+            self.ui.data_file_combo.setEditText(self.settings.value('data_file', '').toString())
             count = self.settings.beginReadArray('channel_files')
             try:
                 for i in range(count):
@@ -23,6 +24,7 @@ class OpenDialog(QtGui.QDialog):
                     self.ui.channel_file_combo.addItem(self.settings.value('path').toString())
             finally:
                 self.settings.endArray()
+            self.ui.channel_file_combo.setEditText(self.settings.value('channel_file', '').toString())
         finally:
             self.settings.endGroup()
         # Connect up signals
@@ -66,6 +68,7 @@ class OpenDialog(QtGui.QDialog):
                     self.settings.setValue('path', self.ui.data_file_combo.itemText(i))
             finally:
                 self.settings.endArray()
+            self.settings.setValue('data_file', self.ui.data_file_combo.currentText())
             self.settings.beginWriteArray('channel_files', self.ui.channel_file_combo.count())
             try:
                 for i in range(self.ui.channel_file_combo.count()):
@@ -73,6 +76,7 @@ class OpenDialog(QtGui.QDialog):
                     self.settings.setValue('path', self.ui.channel_file_combo.itemText(i))
             finally:
                 self.settings.endArray()
+            self.settings.setValue('channel_file', self.ui.channel_file_combo.currentText())
         finally:
             self.settings.endGroup()
 
@@ -98,11 +102,16 @@ class OpenDialog(QtGui.QDialog):
         self.ui.button_box.button(QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
 
     def data_file_select(self):
+        QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            from rastools.parsers import PARSERS
+        finally:
+            QtGui.QApplication.instance().restoreOverrideCursor()
         filters = ';;'.join(
             [
-                'All data files (%s)' % ' '.join('*' + ext for (_, exts, _) in PARSERS for ext in exts)
+                str(self.tr('All data files (%s)')) % ' '.join('*' + ext for (_, exts, _) in PARSERS for ext in exts)
             ] + [
-                '%s (%s)' % (label, ' '.join('*' + ext for ext in exts))
+                '%s (%s)' % (self.tr(label), ' '.join('*' + ext for ext in exts))
                 for (klass, exts, label) in PARSERS
             ]
         )

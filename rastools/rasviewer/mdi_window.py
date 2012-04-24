@@ -7,7 +7,6 @@ import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 import numpy as np
 import time
-from rastools.parsers import PARSERS
 
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
@@ -22,6 +21,11 @@ class MDIWindow(QtGui.QWidget):
         self._file = None
         self._progress = 0
         self._progress_update = None
+        QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            from rastools.parsers import PARSERS
+        finally:
+            QtGui.QApplication.instance().restoreOverrideCursor()
         # Open the selected file
         try:
             ext = os.path.splitext(data_file)[-1]
@@ -81,7 +85,7 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_bottom_spinbox.setRange(0, self._file.y_size - 1)
         # Set up the event connections and a timer to handle delayed redrawing
         self.redraw_timer = QtCore.QTimer()
-        self.redraw_timer.setInterval(100)
+        self.redraw_timer.setInterval(200)
         self.redraw_timer.timeout.connect(self.redraw_timeout)
         self.ui.channel_combo.currentIndexChanged.connect(self.invalidate_data)
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
@@ -129,7 +133,6 @@ class MDIWindow(QtGui.QWidget):
         now = time.time()
         if (self._progress_update is None) or (now - self._progress_update) > 0.2:
             self._progress_update = now
-            #QtGui.QApplication.instance().processEvents()
             if progress != self._progress:
                 self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
                 self._progress = progress

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import logging
 from PyQt4 import QtCore, QtGui, uic
 from rastools.rasviewer.main_window import MainWindow
 
@@ -13,7 +14,8 @@ def excepthook(type, value, tb):
     # e-mail option for bug reports
     QtGui.QMessageBox.critical(
         QtGui.QApplication.instance().activeWindow(),
-        QtGui.QApplication.instance().desktop().tr('Error'), str(value))
+        QtGui.QApplication.instance().desktop().tr('Error'),
+        str(value))
 
 def main(args=None):
     sys.excepthook = excepthook
