@@ -83,10 +83,6 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_right_spinbox.setRange(0, self._file.x_size - 1)
         self.ui.crop_top_spinbox.setRange(0, self._file.y_size - 1)
         self.ui.crop_bottom_spinbox.setRange(0, self._file.y_size - 1)
-        self.ui.x_scale_from_spinbox.setValue(0.0)
-        self.ui.x_scale_to_spinbox.setValue(self._file.x_size - 1)
-        self.ui.y_scale_from_spinbox.setValue(self._file.y_size - 1)
-        self.ui.y_scale_to_spinbox.setValue(0.0)
         # Set up the event connections and a timer to handle delayed redrawing
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
@@ -95,24 +91,24 @@ class MDIWindow(QtGui.QWidget):
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.reverse_check.toggled.connect(self.invalidate_image)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
-        self.ui.crop_top_spinbox.valueChanged.connect(self.invalidate_data)
-        self.ui.crop_left_spinbox.valueChanged.connect(self.invalidate_data)
-        self.ui.crop_right_spinbox.valueChanged.connect(self.invalidate_data)
-        self.ui.crop_bottom_spinbox.valueChanged.connect(self.invalidate_data)
-        self.ui.x_visible_check.toggled.connect(self.invalidate_image)
+        self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.axes_check.toggled.connect(self.invalidate_image)
         self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
-        self.ui.x_scale_from_spinbox.valueChanged.connect(self.invalidate_image)
-        self.ui.x_scale_to_spinbox.valueChanged.connect(self.invalidate_image)
-        self.ui.y_visible_check.toggled.connect(self.invalidate_image)
         self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
-        self.ui.y_scale_from_spinbox.valueChanged.connect(self.invalidate_image)
-        self.ui.y_scale_to_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.x_scale_spinbox.valueChanged.connect(self.x_scale_changed)
+        self.ui.y_scale_spinbox.valueChanged.connect(self.y_scale_changed)
+        self.ui.x_offset_spinbox.valueChanged.connect(self.x_offset_changed)
+        self.ui.y_offset_spinbox.valueChanged.connect(self.y_offset_changed)
         self.ui.grid_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
         self.ui.colorbar_check.toggled.connect(self.invalidate_image)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
+        self.crop_changed()
         self.invalidate_data()
 
     def focus_changed(self, old_widget, new_widget):
@@ -226,6 +222,31 @@ class MDIWindow(QtGui.QWidget):
         self.ui.percentile_to_slider.setValue(int(self.ui.percentile_to_spinbox.value() * 100.0))
         self.invalidate_image()
 
+    def crop_changed(self, value=None):
+        self.ui.x_size_label.setText(str(self._file.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value()))
+        self.ui.y_size_label.setText(str(self._file.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value()))
+        self.invalidate_data()
+
+    def x_scale_changed(self, value):
+        if self.ui.scale_locked_check.isChecked():
+            self.ui.y_scale_spinbox.setValue(value)
+        self.invalidate_image()
+
+    def y_scale_changed(self, value):
+        if self.ui.scale_locked_check.isChecked():
+            self.ui.x_scale_spinbox.setValue(value)
+        self.invalidate_image()
+
+    def x_offset_changed(self, value):
+        if self.ui.offset_locked_check.isChecked():
+            self.ui.y_offset_spinbox.setValue(value)
+        self.invalidate_image()
+
+    def y_offset_changed(self, value):
+        if self.ui.offset_locked_check.isChecked():
+            self.ui.x_offset_spinbox.setValue(value)
+        self.invalidate_image()
+
     @property
     def channel(self):
         if self.ui.channel_combo.currentIndex() != -1:
@@ -300,8 +321,7 @@ class MDIWindow(QtGui.QWidget):
             (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
             (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[False] # XXX Add title editor
             margin = (0.0, 0.5)[
-                self.ui.x_visible_check.isChecked()
-                or self.ui.y_visible_check.isChecked()
+                self.ui.axes_check.isChecked()
                 or self.ui.colorbar_check.isChecked()
                 or self.ui.histogram_check.isChecked()
                 or bool(False)] # XXX Add title
@@ -317,31 +337,30 @@ class MDIWindow(QtGui.QWidget):
             ))
             # Configure the x and y axes appearance
             self.image_axes.set_frame_on(
-                self.ui.x_visible_check.isChecked()
-                or self.ui.y_visible_check.isChecked()
+                self.ui.axes_check.isChecked()
                 or self.ui.grid_check.isChecked()
             )
             self.image_axes.set_axis_on()
-            if not self.ui.x_visible_check.isChecked():
-                self.image_axes.set_xticklabels(())
-            if not self.ui.y_visible_check.isChecked():
-                self.image_axes.set_yticklabels(())
-            if str(self.ui.x_label_edit.text()):
-                self.image_axes.set_xlabel(self.ui.x_label_edit.text())
-            if str(self.ui.y_label_edit.text()):
-                self.image_axes.set_ylabel(self.ui.y_label_edit.text())
             if self.ui.grid_check.isChecked():
                 self.image_axes.grid(color='k', linestyle='-')
             else:
                 self.image_axes.grid(False)
+            if self.ui.axes_check.isChecked():
+                if unicode(self.ui.x_label_edit.text()):
+                    self.image_axes.set_xlabel(self.ui.x_label_edit.text())
+                if unicode(self.ui.y_label_edit.text()):
+                    self.image_axes.set_ylabel(self.ui.y_label_edit.text())
+            else:
+                self.image_axes.set_xticklabels([])
+                self.image_axes.set_yticklabels([])
             # Draw the image. This call takes care of clamping values with vmin
             # and vmax, as well as color-mapping
             img = self.image_axes.imshow(self.data, vmin=pmin, vmax=pmax,
                 extent=(
-                    self.ui.x_scale_from_spinbox.value() + self.ui.crop_left_spinbox.value(),
-                    self.ui.x_scale_to_spinbox.value() - self.ui.crop_right_spinbox.value(),
-                    self.ui.y_scale_from_spinbox.value() - self.ui.crop_bottom_spinbox.value(),
-                    self.ui.y_scale_to_spinbox.value() + self.ui.crop_top_spinbox.value(),
+                    self.ui.x_offset_spinbox.value(),
+                    self.ui.x_offset_spinbox.value() + (self.ui.x_scale_spinbox.value() * (self._file.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value())),
+                    self.ui.y_offset_spinbox.value() + (self.ui.y_scale_spinbox.value() * (self._file.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value())),
+                    self.ui.y_offset_spinbox.value(),
                 ),
                 origin='upper',
                 cmap=matplotlib.cm.get_cmap(
