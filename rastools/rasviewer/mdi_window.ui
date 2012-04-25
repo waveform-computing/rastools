@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>658</width>
-    <height>525</height>
+    <width>747</width>
+    <height>928</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,288 +19,584 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="QWidget" name="">
-      <layout class="QFormLayout" name="form_layout">
-       <property name="fieldGrowthPolicy">
-        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+     <widget class="QScrollArea" name="scroll_area">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>381</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>727</width>
+         <height>908</height>
+        </rect>
        </property>
-       <item row="0" column="0">
-        <widget class="QLabel" name="channel_label">
-         <property name="text">
-          <string>Channel</string>
-         </property>
-         <property name="buddy">
-          <cstring>channel_combo</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="channel_combo"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="colormap_label">
-         <property name="text">
-          <string>Color map</string>
-         </property>
-         <property name="buddy">
-          <cstring>colormap_combo</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <layout class="QHBoxLayout" name="colormap_layout">
-         <item>
-          <widget class="QComboBox" name="colormap_combo"/>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="reverse_check">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Reverse</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="percentile_from_label">
-         <property name="text">
-          <string>Percentile from</string>
-         </property>
-         <property name="buddy">
-          <cstring>percentile_from_slider</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <layout class="QHBoxLayout" name="percentile_from_layout">
-         <item>
-          <widget class="QSlider" name="percentile_from_slider">
-           <property name="maximum">
-            <number>10000</number>
-           </property>
-           <property name="singleStep">
-            <number>10</number>
-           </property>
-           <property name="pageStep">
-            <number>100</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="percentile_from_spinbox">
-           <property name="maximum">
-            <double>100.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="percentile_to_label">
-         <property name="text">
-          <string>Percentile to</string>
-         </property>
-         <property name="buddy">
-          <cstring>percentile_to_slider</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <layout class="QHBoxLayout" name="percentile_to_layout">
-         <item>
-          <widget class="QSlider" name="percentile_to_slider">
-           <property name="maximum">
-            <number>10000</number>
-           </property>
-           <property name="singleStep">
-            <number>10</number>
-           </property>
-           <property name="pageStep">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>10000</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="percentile_to_spinbox">
-           <property name="maximum">
-            <double>100.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-           <property name="value">
-            <double>100.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="range_from_label">
-         <property name="text">
-          <string>Range from</string>
-         </property>
-         <property name="buddy">
-          <cstring>range_from_slider</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <layout class="QHBoxLayout" name="range_from_layout">
-         <item>
-          <widget class="QSlider" name="range_from_slider">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="range_from_spinbox"/>
-         </item>
-        </layout>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="range_to_label">
-         <property name="text">
-          <string>Range to</string>
-         </property>
-         <property name="buddy">
-          <cstring>range_to_slider</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <layout class="QHBoxLayout" name="range_to_layout">
-         <item>
-          <widget class="QSlider" name="range_to_slider">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="range_to_spinbox"/>
-         </item>
-        </layout>
-       </item>
-       <item row="6" column="0">
-        <widget class="QLabel" name="interpolation_label">
-         <property name="text">
-          <string>Interpolation</string>
-         </property>
-         <property name="buddy">
-          <cstring>interpolation_combo</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QComboBox" name="interpolation_combo"/>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="crop_label">
-         <property name="text">
-          <string>Crop</string>
-         </property>
-         <property name="buddy">
-          <cstring>crop_top_spinbox</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <layout class="QGridLayout" name="crop_layout">
-         <item row="0" column="1">
-          <widget class="QSpinBox" name="crop_top_spinbox">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QSpinBox" name="crop_bottom_spinbox">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QSpinBox" name="crop_right_spinbox">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QSpinBox" name="crop_left_spinbox">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="8" column="0">
-        <widget class="QLabel" name="display_label">
-         <property name="text">
-          <string>Display</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="1">
-        <layout class="QVBoxLayout" name="display_layout">
-         <item>
-          <widget class="QCheckBox" name="axes_check">
-           <property name="text">
-            <string>Axes</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="histogram_check">
-           <property name="text">
-            <string>Histogram</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="colorbar_check">
-           <property name="text">
-            <string>Color-bar</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
+       <layout class="QFormLayout" name="formLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="channel_label">
+          <property name="text">
+           <string>Channel</string>
+          </property>
+          <property name="buddy">
+           <cstring>channel_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="channel_combo"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="colormap_label">
+          <property name="text">
+           <string>Color map</string>
+          </property>
+          <property name="buddy">
+           <cstring>colormap_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="colormap_layout">
+          <item>
+           <widget class="QComboBox" name="colormap_combo"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="reverse_check">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Reverse</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="percentile_from_label">
+          <property name="text">
+           <string>Percentile from</string>
+          </property>
+          <property name="buddy">
+           <cstring>percentile_from_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <layout class="QHBoxLayout" name="percentile_from_layout">
+          <item>
+           <widget class="QSlider" name="percentile_from_slider">
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="pageStep">
+             <number>100</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="percentile_from_spinbox">
+            <property name="maximum">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="percentile_to_label">
+          <property name="text">
+           <string>Percentile to</string>
+          </property>
+          <property name="buddy">
+           <cstring>percentile_to_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <layout class="QHBoxLayout" name="percentile_to_layout">
+          <item>
+           <widget class="QSlider" name="percentile_to_slider">
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="pageStep">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>10000</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="percentile_to_spinbox">
+            <property name="maximum">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="range_from_label">
+          <property name="text">
+           <string>Range from</string>
+          </property>
+          <property name="buddy">
+           <cstring>range_from_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <layout class="QHBoxLayout" name="range_from_layout">
+          <item>
+           <widget class="QSlider" name="range_from_slider">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="range_from_spinbox"/>
+          </item>
+         </layout>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="range_to_label">
+          <property name="text">
+           <string>Range to</string>
+          </property>
+          <property name="buddy">
+           <cstring>range_to_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <layout class="QHBoxLayout" name="range_to_layout">
+          <item>
+           <widget class="QSlider" name="range_to_slider">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="range_to_spinbox"/>
+          </item>
+         </layout>
+        </item>
+        <item row="7" column="0" colspan="2">
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QLabel" name="interpolation_label">
+          <property name="text">
+           <string>Interpolation</string>
+          </property>
+          <property name="buddy">
+           <cstring>interpolation_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="1">
+         <widget class="QComboBox" name="interpolation_combo"/>
+        </item>
+        <item row="9" column="0">
+         <widget class="QLabel" name="crop_label">
+          <property name="text">
+           <string>Crop</string>
+          </property>
+          <property name="buddy">
+           <cstring>crop_top_spinbox</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="1">
+         <layout class="QGridLayout" name="crop_layout">
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="crop_top_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="crop_bottom_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QSpinBox" name="crop_right_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QSpinBox" name="crop_left_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="11" column="0">
+         <widget class="QLabel" name="display_label">
+          <property name="text">
+           <string>Display</string>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="1">
+         <layout class="QVBoxLayout" name="display_layout">
+          <item>
+           <layout class="QHBoxLayout" name="grid_layout">
+            <item>
+             <widget class="QCheckBox" name="grid_check">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Grid</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="grid_style_combo"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="histogram_layout">
+            <item>
+             <widget class="QCheckBox" name="histogram_check">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Histogram</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="histogram_bins_spinbox">
+              <property name="minimum">
+               <number>2</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>32</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="bins_label">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>bins</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="colorbar_check">
+            <property name="text">
+             <string>Color-bar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="12" column="0">
+         <widget class="QLabel" name="title_label">
+          <property name="text">
+           <string>Title</string>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="1">
+         <layout class="QHBoxLayout" name="title_layout_1">
+          <item>
+           <widget class="QPlainTextEdit" name="title_edit">
+            <property name="tabChangesFocus">
+             <bool>true</bool>
+            </property>
+            <property name="lineWrapMode">
+             <enum>QPlainTextEdit::NoWrap</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="title_layout_2">
+            <item>
+             <widget class="QPushButton" name="standard_button">
+              <property name="text">
+               <string>Standard</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="clear_button">
+              <property name="text">
+               <string>Clear</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="info_button">
+              <property name="text">
+               <string>Info...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item row="13" column="0" colspan="2">
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="0">
+         <widget class="QLabel" name="x_axis_label">
+          <property name="text">
+           <string>X-Axis</string>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="1">
+         <widget class="QCheckBox" name="x_visible_check">
+          <property name="text">
+           <string>Visible</string>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="0">
+         <widget class="QLabel" name="x_label_label">
+          <property name="text">
+           <string>Label</string>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="1">
+         <widget class="QLineEdit" name="x_label_edit"/>
+        </item>
+        <item row="16" column="0">
+         <widget class="QLabel" name="x_scale_label">
+          <property name="text">
+           <string>Scale</string>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="1">
+         <layout class="QHBoxLayout" name="x_scale_layout">
+          <item>
+           <widget class="QDoubleSpinBox" name="x_scale_from_spinbox">
+            <property name="maximum">
+             <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="x_scale_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>to</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="x_scale_to_spinbox">
+            <property name="maximum">
+             <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="18" column="0">
+         <widget class="QLabel" name="y_axis_label">
+          <property name="text">
+           <string>Y-Axis</string>
+          </property>
+         </widget>
+        </item>
+        <item row="18" column="1">
+         <widget class="QCheckBox" name="y_visible_check">
+          <property name="text">
+           <string>Visible</string>
+          </property>
+         </widget>
+        </item>
+        <item row="19" column="0">
+         <widget class="QLabel" name="y_label_label">
+          <property name="text">
+           <string>Label</string>
+          </property>
+         </widget>
+        </item>
+        <item row="19" column="1">
+         <widget class="QLineEdit" name="y_label_edit"/>
+        </item>
+        <item row="20" column="0">
+         <widget class="QLabel" name="y_scale_label">
+          <property name="text">
+           <string>Scale</string>
+          </property>
+         </widget>
+        </item>
+        <item row="20" column="1">
+         <layout class="QHBoxLayout" name="y_scale_layout">
+          <item>
+           <widget class="QDoubleSpinBox" name="y_scale_to_spinbox">
+            <property name="maximum">
+             <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="y_scale_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>to</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="y_scale_from_spinbox">
+            <property name="maximum">
+             <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="17" column="0" colspan="2">
+         <widget class="Line" name="line_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0" colspan="2">
+         <widget class="Line" name="line_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </widget>
    </item>
   </layout>
  </widget>
  <tabstops>
+  <tabstop>scroll_area</tabstop>
   <tabstop>channel_combo</tabstop>
   <tabstop>colormap_combo</tabstop>
   <tabstop>reverse_check</tabstop>
@@ -317,6 +613,23 @@
   <tabstop>crop_left_spinbox</tabstop>
   <tabstop>crop_right_spinbox</tabstop>
   <tabstop>crop_bottom_spinbox</tabstop>
+  <tabstop>grid_check</tabstop>
+  <tabstop>grid_style_combo</tabstop>
+  <tabstop>histogram_check</tabstop>
+  <tabstop>histogram_bins_spinbox</tabstop>
+  <tabstop>colorbar_check</tabstop>
+  <tabstop>title_edit</tabstop>
+  <tabstop>standard_button</tabstop>
+  <tabstop>clear_button</tabstop>
+  <tabstop>info_button</tabstop>
+  <tabstop>x_visible_check</tabstop>
+  <tabstop>x_label_edit</tabstop>
+  <tabstop>x_scale_from_spinbox</tabstop>
+  <tabstop>x_scale_to_spinbox</tabstop>
+  <tabstop>y_visible_check</tabstop>
+  <tabstop>y_label_edit</tabstop>
+  <tabstop>y_scale_to_spinbox</tabstop>
+  <tabstop>y_scale_from_spinbox</tabstop>
  </tabstops>
  <resources/>
  <connections/>

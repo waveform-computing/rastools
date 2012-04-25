@@ -83,6 +83,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_right_spinbox.setRange(0, self._file.x_size - 1)
         self.ui.crop_top_spinbox.setRange(0, self._file.y_size - 1)
         self.ui.crop_bottom_spinbox.setRange(0, self._file.y_size - 1)
+        self.ui.x_scale_from_spinbox.setValue(0.0)
+        self.ui.x_scale_to_spinbox.setValue(self._file.x_size - 1)
+        self.ui.y_scale_from_spinbox.setValue(self._file.y_size - 1)
+        self.ui.y_scale_to_spinbox.setValue(0.0)
         # Set up the event connections and a timer to handle delayed redrawing
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
@@ -95,8 +99,17 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.valueChanged.connect(self.invalidate_data)
         self.ui.crop_right_spinbox.valueChanged.connect(self.invalidate_data)
         self.ui.crop_bottom_spinbox.valueChanged.connect(self.invalidate_data)
-        self.ui.axes_check.toggled.connect(self.invalidate_image)
+        self.ui.x_visible_check.toggled.connect(self.invalidate_image)
+        self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
+        self.ui.x_scale_from_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.x_scale_to_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.y_visible_check.toggled.connect(self.invalidate_image)
+        self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
+        self.ui.y_scale_from_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.y_scale_to_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.grid_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_check.toggled.connect(self.invalidate_image)
+        self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
         self.ui.colorbar_check.toggled.connect(self.invalidate_image)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
@@ -287,15 +300,14 @@ class MDIWindow(QtGui.QWidget):
             (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
             (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[False] # XXX Add title editor
             margin = (0.0, 0.5)[
-                self.ui.axes_check.isChecked()
+                self.ui.x_visible_check.isChecked()
+                or self.ui.y_visible_check.isChecked()
                 or self.ui.colorbar_check.isChecked()
                 or self.ui.histogram_check.isChecked()
                 or bool(False)] # XXX Add title
             fig_width = img_width + margin * 2
             fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
-            # Position the axes in which to draw the channel data and draw it.
-            # The imshow() call takes care of clamping values with vmin and
-            # vmax and color-mapping
+            # Position the axes in which to draw the channel data
             self.image_axes.clear()
             self.image_axes.set_position((
                 margin / fig_width,      # left
@@ -303,17 +315,41 @@ class MDIWindow(QtGui.QWidget):
                 img_width / fig_width,   # width
                 img_height / fig_height, # height
             ))
-            self.image_axes.set_frame_on(self.ui.axes_check.isChecked())
-            if self.ui.axes_check.isChecked():
-                self.image_axes.set_axis_on()
+            # Configure the x and y axes appearance
+            self.image_axes.set_frame_on(
+                self.ui.x_visible_check.isChecked()
+                or self.ui.y_visible_check.isChecked()
+                or self.ui.grid_check.isChecked()
+            )
+            self.image_axes.set_axis_on()
+            if not self.ui.x_visible_check.isChecked():
+                self.image_axes.set_xticklabels(())
+            if not self.ui.y_visible_check.isChecked():
+                self.image_axes.set_yticklabels(())
+            if str(self.ui.x_label_edit.text()):
+                self.image_axes.set_xlabel(self.ui.x_label_edit.text())
+            if str(self.ui.y_label_edit.text()):
+                self.image_axes.set_ylabel(self.ui.y_label_edit.text())
+            if self.ui.grid_check.isChecked():
+                self.image_axes.grid(color='k', linestyle='-')
             else:
-                self.image_axes.set_axis_off()
+                self.image_axes.grid(False)
+            # Draw the image. This call takes care of clamping values with vmin
+            # and vmax, as well as color-mapping
             img = self.image_axes.imshow(self.data, vmin=pmin, vmax=pmax,
+                extent=(
+                    self.ui.x_scale_from_spinbox.value() + self.ui.crop_left_spinbox.value(),
+                    self.ui.x_scale_to_spinbox.value() - self.ui.crop_right_spinbox.value(),
+                    self.ui.y_scale_from_spinbox.value() - self.ui.crop_bottom_spinbox.value(),
+                    self.ui.y_scale_to_spinbox.value() + self.ui.crop_top_spinbox.value(),
+                ),
+                origin='upper',
                 cmap=matplotlib.cm.get_cmap(
                     str(self.ui.colormap_combo.currentText()) +
                     ('_r' if self.ui.reverse_check.isChecked() else '')
                 ),
-                interpolation=str(self.ui.interpolation_combo.currentText()))
+                interpolation=str(self.ui.interpolation_combo.currentText())
+            )
             # Construct an axis for the histogram, if requested
             if self.ui.histogram_check.isChecked():
                 r = (
@@ -327,7 +363,9 @@ class MDIWindow(QtGui.QWidget):
                 else:
                     self.histogram_axes.clear()
                     self.histogram_axes.set_position(r)
-                self.histogram_axes.hist(self.data.flat, bins=32, range=(pmin, pmax))
+                self.histogram_axes.hist(self.data.flat,
+                    bins=self.ui.histogram_bins_spinbox.value(),
+                    range=(pmin, pmax))
             elif self.histogram_axes:
                 self.figure.delaxes(self.histogram_axes)
                 self.histogram_axes = None
