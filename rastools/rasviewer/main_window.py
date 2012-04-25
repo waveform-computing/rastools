@@ -65,14 +65,14 @@ class MainWindow(QtGui.QMainWindow):
                 str(self.tr('All images (%s)')) % ' '.join('*' + ext for (_, exts, _, _, _) in IMAGE_WRITERS for ext in exts)
             ] + [
                 '%s (%s)' % (self.tr(label), ' '.join('*' + ext for ext in exts))
-                for (method, exts, label, _, _) in IMAGE_WRITERS
+                for (_, exts, label, _, _) in IMAGE_WRITERS
             ]
         )
-        f = QtGui.QFileDialog.getSaveFileName(self, self.tr('Export image'), os.getcwd(), filters)
-        if f:
-            f = str(f)
-            os.chdir(os.path.dirname(f))
-            ext = os.path.splitext(f)[1]
+        filename = QtGui.QFileDialog.getSaveFileName(self, self.tr('Export image'), os.getcwd(), filters)
+        if filename:
+            filename = str(filename)
+            os.chdir(os.path.dirname(filename))
+            ext = os.path.splitext(filename)[1]
             writers = dict(
                 (ext, method)
                 for (method, exts, _, _, _) in IMAGE_WRITERS
@@ -82,12 +82,48 @@ class MainWindow(QtGui.QMainWindow):
                 method = writers[ext]
             except KeyError:
                 QtGui.QMessageBox.warning(self, self.tr('Warning'), str(self.tr('Unknown file extension "%s"')) % ext)
-            canvas = method.im_class(self.ui.mdi_area.currentSubWindow().widget().figure)
-            method(canvas, f, dpi=FIGURE_DPI)
+            fig = self.ui.mdi_area.currentSubWindow().widget().figure
+            QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+            try:
+                canvas = method.im_class(fig)
+                method(canvas, filename, dpi=fig.dpi)
+            finally:
+                QtGui.QApplication.instance().restoreOverrideCursor()
 
     def export_channel(self):
-        # XXX Add export channel implementation
-        pass
+        QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            from rastools.data_writers import DATA_WRITERS
+        finally:
+            QtGui.QApplication.instance().restoreOverrideCursor()
+        filters = ';;'.join(
+            [
+                str(self.tr('All data files (%s)')) % ' '.join('*' + ext for (_, exts, _, _) in DATA_WRITERS for ext in exts)
+            ] + [
+                '%s (%s)' % (self.tr(label), ' '.join('*' + ext for ext in exts))
+                for (_, exts, label, _) in DATA_WRITERS
+            ]
+        )
+        filename = QtGui.QFileDialog.getSaveFileName(self, self.tr('Export channel'), os.getcwd(), filters)
+        if filename:
+            filename = str(filename)
+            os.chdir(os.path.dirname(filename))
+            ext = os.path.splitext(filename)[1]
+            writers = dict(
+                (ext, klass)
+                for (klass, exts, _, _) in DATA_WRITERS
+                for ext in exts
+            )
+            try:
+                klass = writers[ext]
+            except KeyError:
+                QtGui.QMessageBox.warning(self, self.tr('Warning'), str(self.tr('Unknown file extension "%s"')) % ext)
+            mdi_window = self.ui.mdi_area.currentSubWindow().widget()
+            QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
+            try:
+                klass(filename, mdi_window.channel).write(mdi_window.data_export)
+            finally:
+                QtGui.QApplication.instance().restoreOverrideCursor()
 
     def window_changed(self, window):
         self.ui.close_action.setEnabled(window is not None)

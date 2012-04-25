@@ -227,7 +227,7 @@ class MDIWindow(QtGui.QWidget):
                 self.ui.crop_top_spinbox.value():self._data.shape[0] - self.ui.crop_bottom_spinbox.value(),
                 self.ui.crop_left_spinbox.value():self._data.shape[1] - self.ui.crop_right_spinbox.value()
             ]
-            self._data_sorted = np.sort(self.data, None)
+            self._data_sorted = np.sort(self._data, None)
             self.ui.range_from_spinbox.setRange(self._data_sorted[0], self._data_sorted[-1])
             self.ui.range_from_spinbox.setValue(self._data_sorted[(len(self._data_sorted) - 1) * self.ui.percentile_from_spinbox.value() / 100.0])
             self.ui.range_to_spinbox.setRange(self._data_sorted[0], self._data_sorted[-1])
@@ -237,6 +237,20 @@ class MDIWindow(QtGui.QWidget):
             self.ui.range_to_slider.setRange(int(self._data_sorted[0] * 100.0), int(self._data_sorted[-1] * 100.0))
             self.ui.range_to_slider.setValue(int(self.ui.range_to_spinbox.value() * 100.0))
         return self._data
+
+    @property
+    def data_export(self):
+        result = np.array(self.channel.data, np.float)
+        result = result[
+            self.ui.crop_top_spinbox.value():self._data.shape[0] - self.ui.crop_bottom_spinbox.value(),
+            self.ui.crop_left_spinbox.value():self._data.shape[1] - self.ui.crop_right_spinbox.value()
+        ]
+        s = np.sort(result, None)
+        pmin = s[(len(s) - 1) * self.ui.percentile_from_spinbox.value() / 100.0]
+        pmax = s[(len(s) - 1) * self.ui.percentile_to_spinbox.value() / 100.0]
+        result[result < pmin] = pmin
+        result[result > pmax] = pmax
+        return result
 
     @property
     def data_sorted(self):

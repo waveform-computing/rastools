@@ -3,11 +3,8 @@
 import sys
 import logging
 from PyQt4 import QtCore, QtGui, uic
-from rastools.rasviewer.main_window import MainWindow
 
 __version__ = '0.1'
-
-WIN = None
 
 def excepthook(type, value, tb):
     # XXX Need to expand this to display a complete stack trace and add an
@@ -19,7 +16,6 @@ def excepthook(type, value, tb):
 
 def main(args=None):
     sys.excepthook = excepthook
-    global WIN
     if args is None:
         args = sys.argv
     app = QtGui.QApplication(args)
@@ -27,8 +23,13 @@ def main(args=None):
     app.setApplicationVersion(__version__)
     app.setOrganizationName('Waveform')
     app.setOrganizationDomain('waveform.org.uk')
-    WIN = MainWindow()
-    WIN.show()
+    app.setOverrideCursor(QtCore.Qt.WaitCursor)
+    try:
+        from rastools.rasviewer.main_window import MainWindow
+    finally:
+        app.restoreOverrideCursor()
+    win = MainWindow()
+    win.show()
     return app.exec_()
 
 if __name__ == '__main__':
