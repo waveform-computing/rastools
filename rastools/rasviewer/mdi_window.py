@@ -114,9 +114,22 @@ class MDIWindow(QtGui.QWidget):
         self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
         self.ui.title_info_button.clicked.connect(self.title_info_clicked)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
+        self.canvas.mpl_connect('motion_notify_event', self.canvas_motion)
         self.setWindowTitle(os.path.basename(data_file))
         self.crop_changed()
         self.invalidate_data()
+
+    def canvas_motion(self, event):
+        if self.image_axes and (event.inaxes == self.image_axes) and (event.xdata is not None):
+            self.window().ui.x_label.setText('X: %.2f' % event.xdata)
+            self.window().ui.y_label.setText('Y: %.2f' % event.ydata)
+            self.window().ui.value_label.setText('Value: %.2f' % self.data[event.ydata, event.xdata])
+            self.canvas.setCursor(QtCore.Qt.CrossCursor)
+        else:
+            self.window().ui.x_label.setText('')
+            self.window().ui.y_label.setText('')
+            self.window().ui.value_label.setText('')
+            self.canvas.setCursor(QtCore.Qt.ArrowCursor)
 
     def focus_changed(self, old_widget, new_widget):
         percentile_controls = (

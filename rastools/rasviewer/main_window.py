@@ -13,6 +13,13 @@ class MainWindow(QtGui.QMainWindow):
             self.move(self.settings.value('position', QtCore.QPoint(100, 100)).toPoint())
         finally:
             self.settings.endGroup()
+        # Configure status bar elements
+        self.ui.x_label = QtGui.QLabel('')
+        self.statusBar().addWidget(self.ui.x_label)
+        self.ui.y_label = QtGui.QLabel('')
+        self.statusBar().addWidget(self.ui.y_label)
+        self.ui.value_label = QtGui.QLabel('')
+        self.statusBar().addWidget(self.ui.value_label)
         # Connect up signals to methods
         self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
         self.ui.about_action.triggered.connect(self.about)
