@@ -106,6 +106,8 @@ class MDIWindow(QtGui.QWidget):
         self.ui.histogram_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
         self.ui.colorbar_check.toggled.connect(self.invalidate_image)
+        self.ui.standard_title_button.pressed.connect(self.standard_title_pressed)
+        self.ui.clear_title_button.pressed.connect(self.clear_title_pressed)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
         self.crop_changed()
@@ -246,6 +248,15 @@ class MDIWindow(QtGui.QWidget):
         if self.ui.offset_locked_check.isChecked():
             self.ui.x_offset_spinbox.setValue(value)
         self.invalidate_image()
+
+    def standard_title_pressed(self):
+        pass
+
+    def clear_title_pressed(self):
+        self.ui.title_edit.clear()
+
+    def title_info_pressed(self):
+        pass
 
     @property
     def channel(self):
@@ -411,5 +422,52 @@ class MDIWindow(QtGui.QWidget):
             elif self.colorbar_axes:
                 self.figure.delaxes(self.colorbar_axes)
                 self.colorbar_axes = None
+            # Construct an axis for the title, if requested
+            if unicode(self.ui.title_edit.text()):
+                r = (
+                    0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
+                    1, head_height / fig_height, # width, height
+                ))
+                if self.title_axes is None:
+                    self.title_axes = self.figure.add_axes(r)
+                else:
+                    self.title_axes.clear()
+                    self.title_axes.set_position(r)
+                self.title_axes.set_axis_off()
+                # Render the title. The string_escape codec is used to
+                # permit new-line escapes, and various options are
+                # passed-thru to the channel formatter so things like
+                # percentile can be included in the title
+                title = self.channel.format(unicode(self.ui.title_edit.text()),
+                    **self.format_options(options))
+                hd = hax.text(0.5, 0.5, title,
+                    horizontalalignment='center', verticalalignment='baseline',
+                    multialignment='center', size='medium', family='sans-serif',
+                    transform=hax.transAxes)
+            return fig
             self.canvas.draw()
+
+    def format_options(self, options):
+        """Utility routine which converts the options array for use in format substitutions"""
+        return dict(
+            percentile_from=self.ui.percentile_from_spinbox.value(),
+            percentile_to=self.ui.percentile_to_spinbox.value(),
+            percentile=(self.ui.percentile_from_spinbox.value(), self.ui.percentile_to_spinbox.value()),
+            range_from=self.ui.range_from_spinbox.value(),
+            range_to=self.ui.range_to_spinbox.value(),
+            range=(self.ui.range_from_spinbox.value(), self.ui.range_to_spinbox.value()),
+            interpolation=self.interpolation_combo.currentText(),
+            colormap=self.ui.colormap_combo.currentText() +
+                ('_r' if self.ui.reverse_check.isChecked() else ''),
+            crop_left=self.ui.crop_left_spinbox.value(),
+            crop_top=self.ui.crop_top_spinbox.value(),
+            crop_right=self.ui.crop_right_spinbox.value(),
+            crop_bottom=self.ui.crop_bottom_spinbox.value(),
+            crop=','.join(str(i) for i in (
+                self.ui.crop_left_spinbox.value(),
+                self.ui.crop_top_spinbox.value(),
+                self.ui.crop_right_spinbox.value(),
+                self.ui.crop_bottom_spinbox.value(),
+            )),
+        )
 

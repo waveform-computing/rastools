@@ -67,7 +67,7 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.add_option('-r', '--range', dest='range', action='store',
             help="""clip values in the output image to the specified low,high count range (mutually exclusive with --percentile)""")
         self.parser.add_option('-C', '--crop', dest='crop', action='store',
-            help="""crop the input data by top,left,bottom,right points""")
+            help="""crop the input data by left,top,right,bottom points""")
         self.parser.add_option('-i', '--interpolation', dest='interpolation', action='store',
             help="""force the use of the specified interpolation algorithm; see --help-interpolation for listing""")
         self.parser.add_option('-t', '--title', dest='title', action='store',
@@ -150,11 +150,11 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('color-map %s is unknown' % options.cmap)
         # Check the crop values
         try:
-            top, left, bottom, right = options.crop.split(',', 4)
+            left, top, right, bottom = options.crop.split(',', 4)
         except ValueError:
             self.parser.error('you must specify 4 integer values for the --crop option')
         try:
-            options.crop = Crop(int(top), int(left), int(bottom), int(right))
+            options.crop = Crop(int(left), int(top), int(right), int(bottom))
         except ValueError:
             self.parser.error('non-integer values found in --crop value %s' % options.crop)
         # Check the requested file format is known
@@ -323,6 +323,7 @@ class RasExtractUtility(rastools.main.Utility):
             # permit new-line escapes, and various options are
             # passed-thru to the channel formatter so things like
             # percentile can be included in the title
+            # XXX Include calculated range_from, range_to, and range here
             title = channel.format(options.title.decode('string_escape'),
                 output=filename, **self.format_options(options))
             hd = hax.text(0.5, 0.5, title,
@@ -334,10 +335,15 @@ class RasExtractUtility(rastools.main.Utility):
     def format_options(self, options):
         """Utility routine which converts the options array for use in format substitutions"""
         return dict(
+            percentile_from=options.percentile[0]
+            percentile_to=options.percentile[1],
             percentile=options.percentile,
-            range=options.range,
             interpolation=options.interpolation,
             colormap=options.cmap,
+            crop_left=options.crop.left,
+            crop_top=options.crop.top,
+            crop_right=options.crop.right,
+            crop_bottom=option.crop.bottom,
             crop=','.join(str(i) for i in options.crop),
         )
 
