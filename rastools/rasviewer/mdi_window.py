@@ -6,6 +6,7 @@ import matplotlib.cm
 import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 import numpy as np
+import datetime as dt
 import time
 
 DEFAULT_COLORMAP = 'gray'
@@ -21,6 +22,7 @@ class MDIWindow(QtGui.QWidget):
         self._file = None
         self._progress = 0
         self._progress_update = None
+        self._info_dialog = None
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             from rastools.parsers import PARSERS
@@ -57,6 +59,7 @@ class MDIWindow(QtGui.QWidget):
         self.image_axes = self.figure.add_axes((0.1, 0.1, 0.8, 0.8))
         self.histogram_axes = None
         self.colorbar_axes = None
+        self.title_axes = None
         self.ui.splitter.addWidget(self.canvas)
         # Fill out the combos
         for channel in self._file.channels:
@@ -106,8 +109,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.histogram_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
         self.ui.colorbar_check.toggled.connect(self.invalidate_image)
-        self.ui.standard_title_button.pressed.connect(self.standard_title_pressed)
-        self.ui.clear_title_button.pressed.connect(self.clear_title_pressed)
+        self.ui.title_edit.textChanged.connect(self.invalidate_image)
+        self.ui.default_title_button.clicked.connect(self.default_title_clicked)
+        self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
+        self.ui.title_info_button.clicked.connect(self.title_info_clicked)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         self.setWindowTitle(os.path.basename(data_file))
         self.crop_changed()
@@ -249,14 +254,42 @@ class MDIWindow(QtGui.QWidget):
             self.ui.x_offset_spinbox.setValue(value)
         self.invalidate_image()
 
-    def standard_title_pressed(self):
-        pass
+    def default_title_clicked(self):
+        self.ui.title_edit.setPlainText(u"""\
+Channel {channel:02d} - {channel_name}
+{start_time:%A, %d %b %Y %H:%M:%S}
+Percentile range: {percentile_from} to {percentile_to}
+Value range: {range_from} to {range_to}""")
 
-    def clear_title_pressed(self):
+    def clear_title_clicked(self):
         self.ui.title_edit.clear()
 
-    def title_info_pressed(self):
-        pass
+    def title_info_clicked(self):
+        from rastools.rasviewer.title_info_dialog import TitleInfoDialog
+        if not self._info_dialog:
+            self._info_dialog = TitleInfoDialog(self)
+            self._info_dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self._info_dialog.ui.template_list.clear()
+        for key, value in sorted(self.format_dict(self.channel).iteritems()):
+            if isinstance(value, basestring):
+                if '\n' in value:
+                    value = value.splitlines()[0].rstrip()
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s}' % key, value])))
+            elif isinstance(value, (int, long)):
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s}' % key, '{}'.format(value)])))
+                if 0 < value < 10:
+                    self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s:02d}' % key, '{:02d}'.format(value)])))
+            elif isinstance(value, float):
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s}' % key, '{}'.format(value)])))
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s:.2f}' % key, '{:.2f}'.format(value)])))
+            elif isinstance(value, dt.datetime):
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s}' % key, '%s' % value])))
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s:%%Y-%%m-%%d}' % key, '{:%Y-%m-%d}'.format(value)])))
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s:%%H:%%M:%%S}' % key, '{:%H:%M:%S}'.format(value)])))
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s:%%A, %%d %%b %%Y, %%H:%%M:%%S}' % key, '{:%A, %d %b %Y, %H:%M:%S}'.format(value)])))
+            else:
+                self._info_dialog.ui.template_list.addTopLevelItem(QtGui.QTreeWidgetItem(QtCore.QStringList(['{%s}' % key, '{}'.format(value)])))
+        self._info_dialog.show()
 
     @property
     def channel(self):
@@ -322,6 +355,21 @@ class MDIWindow(QtGui.QWidget):
             vmax = self.data_sorted[-1]
             pmin = self.ui.range_from_spinbox.value()
             pmax = self.ui.range_to_spinbox.value()
+            # Generate the title text. This is done up here as we need to know
+            # if there's going to be anything to render, and whether or not to
+            # reserve space for it
+            title = None
+            try:
+                if unicode(self.ui.title_edit.toPlainText()):
+                    title = unicode(self.ui.title_edit.toPlainText()).format(**self.format_dict(self.channel))
+            except KeyError, e:
+                self.ui.title_error_label.setText(u'Unknown template "%s"' % e)
+                self.ui.title_error_label.show()
+            except Exception, e:
+                self.ui.title_error_label.setText(str(e))
+                self.ui.title_error_label.show()
+            else:
+                self.ui.title_error_label.hide()
             # Calculate the figure dimensions and margins, and construct the
             # necessary objects
             (img_width, img_height) = (
@@ -330,12 +378,12 @@ class MDIWindow(QtGui.QWidget):
             )
             (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[self.ui.histogram_check.isChecked()]
             (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
-            (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[False] # XXX Add title editor
+            (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(title)]
             margin = (0.0, 0.5)[
                 self.ui.axes_check.isChecked()
                 or self.ui.colorbar_check.isChecked()
                 or self.ui.histogram_check.isChecked()
-                or bool(False)] # XXX Add title
+                or bool(title)]
             fig_width = img_width + margin * 2
             fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
             # Position the axes in which to draw the channel data
@@ -393,6 +441,7 @@ class MDIWindow(QtGui.QWidget):
                 else:
                     self.histogram_axes.clear()
                     self.histogram_axes.set_position(r)
+                self.histogram_axes.grid(True)
                 self.histogram_axes.hist(self.data.flat,
                     bins=self.ui.histogram_bins_spinbox.value(),
                     range=(pmin, pmax))
@@ -423,33 +472,30 @@ class MDIWindow(QtGui.QWidget):
                 self.figure.delaxes(self.colorbar_axes)
                 self.colorbar_axes = None
             # Construct an axis for the title, if requested
-            if unicode(self.ui.title_edit.text()):
+            if title:
                 r = (
                     0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
                     1, head_height / fig_height, # width, height
-                ))
+                )
                 if self.title_axes is None:
                     self.title_axes = self.figure.add_axes(r)
                 else:
                     self.title_axes.clear()
                     self.title_axes.set_position(r)
                 self.title_axes.set_axis_off()
-                # Render the title. The string_escape codec is used to
-                # permit new-line escapes, and various options are
-                # passed-thru to the channel formatter so things like
-                # percentile can be included in the title
-                title = self.channel.format(unicode(self.ui.title_edit.text()),
-                    **self.format_options(options))
-                hd = hax.text(0.5, 0.5, title,
+                # Render the title
+                self.title_axes.text(0.5, 0.5, title,
                     horizontalalignment='center', verticalalignment='baseline',
                     multialignment='center', size='medium', family='sans-serif',
-                    transform=hax.transAxes)
-            return fig
+                    transform=self.title_axes.transAxes)
+            elif self.title_axes:
+                self.figure.delaxes(self.title_axes)
+                self.title_axes = None
             self.canvas.draw()
 
-    def format_options(self, options):
+    def format_dict(self, source, **kwargs):
         """Utility routine which converts the options array for use in format substitutions"""
-        return dict(
+        return source.format_dict(
             percentile_from=self.ui.percentile_from_spinbox.value(),
             percentile_to=self.ui.percentile_to_spinbox.value(),
             percentile=(self.ui.percentile_from_spinbox.value(), self.ui.percentile_to_spinbox.value()),
@@ -469,5 +515,6 @@ class MDIWindow(QtGui.QWidget):
                 self.ui.crop_right_spinbox.value(),
                 self.ui.crop_bottom_spinbox.value(),
             )),
+            **kwargs
         )
 

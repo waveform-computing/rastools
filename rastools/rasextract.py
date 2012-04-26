@@ -56,10 +56,13 @@ class RasExtractUtility(rastools.main.Utility):
             help="""list the available interpolation algorithms""")
         self.parser.add_option('-a', '--axes', dest='show_axes', action='store_true',
             help="""draw the coordinate axes in the output""")
+        # XXX Add --xlabel and --ylabel options
+        # XXX Add a --grid option
         self.parser.add_option('-b', '--color-bar', dest='show_colorbar', action='store_true',
             help="""draw a color-bar showing the range of the colormap to the right of the output""")
         self.parser.add_option('-H', '--histogram', dest='show_histogram', action='store_true',
             help="""draw a histogram of the channel values below the output""")
+        # XXX Add a --bins option
         self.parser.add_option('-c', '--colormap', dest='cmap', action='store',
             help="""the colormap to use in output (e.g. gray, jet, hot); see --help-colormaps for listing""")
         self.parser.add_option('-p', '--percentile', dest='percentile', action='store',
@@ -192,7 +195,7 @@ class RasExtractUtility(rastools.main.Utility):
             ','.join(str(channel.index) for channel in f.channels if channel.enabled)
         ))
         if options.multi:
-            filename = f.format(options.output, **self.format_options(options))
+            filename = options.output.format(**self.format_dict(f, options))
             logging.warning('Writing all channels to %s' % filename)
             output = multi_class(filename)
         try:
@@ -201,7 +204,7 @@ class RasExtractUtility(rastools.main.Utility):
                     if options.multi:
                         logging.warning('Writing channel %d (%s) to new page/layer' % (channel.index, channel.name))
                     else:
-                        filename = channel.format(options.output, **self.format_options(options))
+                        filename = options.output.format(**self.format_dict(channel, options))
                         logging.warning('Writing channel %d (%s) to %s' % (channel.index, channel.name, filename))
                     figure = self.draw_channel(channel, options, filename)
                     if figure is not None:
@@ -323,18 +326,22 @@ class RasExtractUtility(rastools.main.Utility):
             # permit new-line escapes, and various options are
             # passed-thru to the channel formatter so things like
             # percentile can be included in the title
-            # XXX Include calculated range_from, range_to, and range here
-            title = channel.format(options.title.decode('string_escape'),
-                output=filename, **self.format_options(options))
+            title = options.title.decode('string_escape').format(**self.format_dict(
+                channel, options,
+                output=filename,
+                range_from=pmin,
+                range_to=pmax,
+                range=(pmin, pmax),
+            ))
             hd = hax.text(0.5, 0.5, title,
                 horizontalalignment='center', verticalalignment='baseline',
                 multialignment='center', size='medium', family='sans-serif',
                 transform=hax.transAxes)
         return fig
 
-    def format_options(self, options):
+    def format_dict(self, source, options, **kwargs):
         """Utility routine which converts the options array for use in format substitutions"""
-        return dict(
+        return source.format_dict(
             percentile_from=options.percentile[0]
             percentile_to=options.percentile[1],
             percentile=options.percentile,
@@ -345,6 +352,7 @@ class RasExtractUtility(rastools.main.Utility):
             crop_right=options.crop.right,
             crop_bottom=option.crop.bottom,
             crop=','.join(str(i) for i in options.crop),
+            **kwargs
         )
 
     def load_backends(self):

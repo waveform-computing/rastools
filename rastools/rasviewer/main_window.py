@@ -25,8 +25,11 @@ class MainWindow(QtGui.QMainWindow):
     def close(self):
         super(MainWindow, self).close()
         self.settings.beginGroup('main_window')
-        self.settings.setValue('size', self.size())
-        self.settings.setValue('position', self.pos())
+        try:
+            self.settings.setValue('size', self.size())
+            self.settings.setValue('position', self.pos())
+        finally:
+            self.settings.endGroup()
 
     def open_file(self):
         from rastools.rasviewer.open_dialog import OpenDialog

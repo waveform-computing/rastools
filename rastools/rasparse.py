@@ -256,8 +256,8 @@ class RasFileReader(object):
             self.stop_time.rstrip(strip_chars), self.datetime_format)
         self.channels = RasChannels(self, channels_file)
 
-    def format(self, template, **kwargs):
-        return template.format(
+    def format_dict(self, **kwargs):
+        return dict(
             filename           = self._file.name,
             filename_original  = self.file_name,
             filename_root      = self.file_head,
@@ -386,9 +386,8 @@ class RasChannel(object):
     def parent(self):
         return self._channels.parent
 
-    def format(self, template, **kwargs):
-        return self.parent.format(
-            template,
+    def format_dict(self, **kwargs):
+        return self.parent.format_dict(
             channel         = self.index,
             channel_name    = self.name,
             channel_enabled = self.enabled,

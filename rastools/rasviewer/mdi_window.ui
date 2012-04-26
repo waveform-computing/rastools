@@ -56,6 +56,9 @@
           <property name="text">
            <string>Channel</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
           <property name="buddy">
            <cstring>channel_combo</cstring>
           </property>
@@ -68,6 +71,9 @@
          <widget class="QLabel" name="colormap_label">
           <property name="text">
            <string>Color map</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
           <property name="buddy">
            <cstring>colormap_combo</cstring>
@@ -99,6 +105,9 @@
           <property name="text">
            <string>Interpolation</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
           <property name="buddy">
            <cstring>interpolation_combo</cstring>
           </property>
@@ -118,6 +127,9 @@
          <widget class="QLabel" name="percentile_from_label">
           <property name="text">
            <string>Percentile from</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
           <property name="buddy">
            <cstring>percentile_from_slider</cstring>
@@ -158,6 +170,9 @@
          <widget class="QLabel" name="percentile_to_label">
           <property name="text">
            <string>Percentile to</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
           <property name="buddy">
            <cstring>percentile_to_slider</cstring>
@@ -205,6 +220,9 @@
           <property name="text">
            <string>Range from</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
           <property name="buddy">
            <cstring>range_from_slider</cstring>
           </property>
@@ -231,6 +249,9 @@
          <widget class="QLabel" name="range_to_label">
           <property name="text">
            <string>Range to</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
           <property name="buddy">
            <cstring>range_to_slider</cstring>
@@ -265,6 +286,9 @@
          <widget class="QLabel" name="crop_label">
           <property name="text">
            <string>Crop</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
           <property name="buddy">
            <cstring>crop_top_spinbox</cstring>
@@ -315,6 +339,9 @@
           <property name="text">
            <string>Title</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
         <item row="11" column="1">
@@ -332,7 +359,7 @@
           <item>
            <layout class="QVBoxLayout" name="title_layout_2">
             <item>
-             <widget class="QPushButton" name="standard_button">
+             <widget class="QPushButton" name="default_title_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -340,12 +367,12 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Standard</string>
+               <string>Default</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="clear_button">
+             <widget class="QPushButton" name="clear_title_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -358,7 +385,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="info_button">
+             <widget class="QPushButton" name="title_info_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -387,55 +414,67 @@
           </item>
          </layout>
         </item>
-        <item row="12" column="0" colspan="2">
+        <item row="14" column="0" colspan="2">
          <widget class="Line" name="axes_line">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
-        <item row="13" column="0">
+        <item row="16" column="0">
          <widget class="QLabel" name="axes_label">
           <property name="text">
            <string>Axes</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="13" column="1">
+        <item row="16" column="1">
          <widget class="QCheckBox" name="axes_check">
           <property name="text">
            <string>Visible</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="0">
+        <item row="17" column="0">
          <widget class="QLabel" name="x_label_label">
           <property name="text">
            <string>X label</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="14" column="1">
+        <item row="17" column="1">
          <widget class="QLineEdit" name="x_label_edit"/>
         </item>
-        <item row="15" column="0">
+        <item row="18" column="0">
          <widget class="QLabel" name="y_label_label">
           <property name="text">
            <string>Y label</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="18" column="1">
          <widget class="QLineEdit" name="y_label_edit"/>
         </item>
-        <item row="16" column="0">
+        <item row="19" column="0">
          <widget class="QLabel" name="size_label">
           <property name="text">
            <string>Size</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="16" column="1">
+        <item row="19" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QLabel" name="x_size_label_2">
@@ -447,6 +486,9 @@
             </property>
             <property name="text">
              <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
             </property>
            </widget>
           </item>
@@ -468,6 +510,9 @@
             <property name="text">
              <string>Y:</string>
             </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
            </widget>
           </item>
           <item>
@@ -479,14 +524,17 @@
           </item>
          </layout>
         </item>
-        <item row="17" column="0">
+        <item row="20" column="0">
          <widget class="QLabel" name="scale_label">
           <property name="text">
            <string>Scale</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="17" column="1">
+        <item row="20" column="1">
          <layout class="QHBoxLayout" name="scale_layout">
           <item>
            <widget class="QLabel" name="x_scale_label">
@@ -498,6 +546,9 @@
             </property>
             <property name="text">
              <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
             </property>
            </widget>
           </item>
@@ -530,6 +581,9 @@
             </property>
             <property name="text">
              <string>Y:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
             </property>
            </widget>
           </item>
@@ -570,14 +624,17 @@
           </item>
          </layout>
         </item>
-        <item row="19" column="0">
+        <item row="22" column="0">
          <widget class="QLabel" name="offset_label">
           <property name="text">
            <string>Offset</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="19" column="1">
+        <item row="22" column="1">
          <layout class="QHBoxLayout" name="offset_layout">
           <item>
            <widget class="QLabel" name="x_offset_label">
@@ -589,6 +646,9 @@
             </property>
             <property name="text">
              <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
             </property>
            </widget>
           </item>
@@ -615,6 +675,9 @@
             </property>
             <property name="text">
              <string>Y:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
             </property>
            </widget>
           </item>
@@ -649,14 +712,17 @@
           </item>
          </layout>
         </item>
-        <item row="21" column="0">
+        <item row="24" column="0">
          <widget class="QLabel" name="display_label">
           <property name="text">
            <string>Display</string>
           </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
          </widget>
         </item>
-        <item row="21" column="1">
+        <item row="24" column="1">
          <layout class="QVBoxLayout" name="display_layout">
           <item>
            <layout class="QHBoxLayout" name="grid_layout">
@@ -717,6 +783,9 @@
               <property name="text">
                <string>bins</string>
               </property>
+              <property name="textFormat">
+               <enum>Qt::PlainText</enum>
+              </property>
              </widget>
             </item>
            </layout>
@@ -730,10 +799,23 @@
           </item>
          </layout>
         </item>
-        <item row="20" column="0" colspan="2">
+        <item row="23" column="0" colspan="2">
          <widget class="Line" name="axes_line_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="1">
+         <widget class="QLabel" name="title_error_label">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Title Error</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
           </property>
          </widget>
         </item>
@@ -763,9 +845,9 @@
   <tabstop>crop_right_spinbox</tabstop>
   <tabstop>crop_bottom_spinbox</tabstop>
   <tabstop>title_edit</tabstop>
-  <tabstop>standard_button</tabstop>
-  <tabstop>clear_button</tabstop>
-  <tabstop>info_button</tabstop>
+  <tabstop>default_title_button</tabstop>
+  <tabstop>clear_title_button</tabstop>
+  <tabstop>title_info_button</tabstop>
   <tabstop>axes_check</tabstop>
   <tabstop>x_label_edit</tabstop>
   <tabstop>y_label_edit</tabstop>

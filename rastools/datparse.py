@@ -89,7 +89,9 @@ class DatFileReader(object):
         else:
             logging.debug('Opening DAT file %s' % dat_file.name)
             self._file = dat_file
-        self.filename_root = re.sub(r'^(.*?)[0-9_-]+\.dat$', r'\1', self._file.name)
+        self.filename_root = re.sub(r'^(.*?)[0-9_-]+\.(dat|DAT)$', r'\1', os.path.split(self._file.name)[1])
+        self.start_time = dt.datetime.fromtimestamp(os.stat(self._file.name).st_ctime)
+        self.stop_time = self.start_time
         # Parse the header
         logging.debug('Reading DAT header')
         self.version_number = self.header_version
@@ -162,15 +164,16 @@ class DatFileReader(object):
         logging.debug('Reached end of DAT header on line %d' % line_num)
         self.channels = DatChannels(self, line_num, labels)
 
-
-    def format(self, template, **kwargs):
-        return template.format(
+    def format_dict(self, **kwargs):
+        return dict(
             filename           = self._file.name,
             filename_root      = self.filename_root,
             version_number     = self.version_number,
             channel_count      = self.channel_count,
             x_size             = self.x_size,
             y_size             = self.y_size,
+            start_time         = self.start_time,
+            stop_time          = self.stop_time,
             comments           = self.comments,
             **kwargs
         )
@@ -257,9 +260,8 @@ class DatChannel(object):
         self._channels.read_channels()
         return self._data
 
-    def format(self, template, **kwargs):
-        return self.parent.format(
-            template,
+    def format_dict(self, **kwargs):
+        return self.parent.format_dict(
             channel         = self.index,
             channel_name    = self.name,
             channel_enabled = self.enabled,
