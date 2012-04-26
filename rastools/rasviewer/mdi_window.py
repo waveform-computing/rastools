@@ -65,9 +65,9 @@ class MDIWindow(QtGui.QWidget):
         for channel in self._file.channels:
             if channel.enabled:
                 if channel.name:
-                    self.ui.channel_combo.addItem(str(self.tr('Channel %d - %s')) % (channel.index, channel.name), channel)
+                    self.ui.channel_combo.addItem(unicode(self.tr('Channel %d - %s')) % (channel.index, channel.name), channel)
                 else:
-                    self.ui.channel_combo.addItem(str(self.tr('Channel %d')) % channel.index, channel)
+                    self.ui.channel_combo.addItem(unicode(self.tr('Channel %d')) % channel.index, channel)
         default = -1
         for color in sorted(matplotlib.cm.datad):
             if not color.endswith('_r'):
@@ -366,7 +366,7 @@ Value range: {range_from} to {range_to}""")
                 self.ui.title_error_label.setText(u'Unknown template "%s"' % e)
                 self.ui.title_error_label.show()
             except Exception, e:
-                self.ui.title_error_label.setText(str(e))
+                self.ui.title_error_label.setText(unicode(e))
                 self.ui.title_error_label.show()
             else:
                 self.ui.title_error_label.hide()
@@ -423,10 +423,10 @@ Value range: {range_from} to {range_to}""")
                 ),
                 origin='upper',
                 cmap=matplotlib.cm.get_cmap(
-                    str(self.ui.colormap_combo.currentText()) +
+                    unicode(self.ui.colormap_combo.currentText()) +
                     ('_r' if self.ui.reverse_check.isChecked() else '')
                 ),
-                interpolation=str(self.ui.interpolation_combo.currentText())
+                interpolation=unicode(self.ui.interpolation_combo.currentText())
             )
             # Construct an axis for the histogram, if requested
             if self.ui.histogram_check.isChecked():
