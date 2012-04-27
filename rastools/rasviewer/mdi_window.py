@@ -1,6 +1,6 @@
 import os
 import matplotlib
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
@@ -8,10 +8,26 @@ from PyQt4 import QtCore, QtGui, uic
 import numpy as np
 import datetime as dt
 import time
+from collections import namedtuple
 
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
+
+Coord = namedtuple('Coord', ('x', 'y'))
+
+class FigureCanvas(FigureCanvasQTAgg):
+    def paintEvent(self, e):
+        if self.drawRect:
+            self.drawRect = False
+            super(FigureCanvas, self).paintEvent(e)
+            p = QtGui.QPainter(self)
+            p.setPen(QtGui.QPen(QtCore.Qt.white, 1, QtCore.Qt.SolidLine))
+            p.setCompositionMode(QtGui.QPainter.CompositionMode_Difference)
+            p.drawRect(self.rect[0], self.rect[1], self.rect[2], self.rect[3])
+            p.end()
+        else:
+            super(FigureCanvas, self).paintEvent(e)
 
 class MDIWindow(QtGui.QWidget):
     def __init__(self, data_file, channel_file):
@@ -114,7 +130,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
         self.ui.title_info_button.clicked.connect(self.title_info_clicked)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
-        self.canvas.mpl_connect('motion_notify_event', self.canvas_motion)
+        self.press_id = self.canvas.mpl_connect('button_press_event', self.canvas_press)
+        self.release_id = self.canvas.mpl_connect('button_release_event', self.canvas_release)
+        self.motion_id = self.canvas.mpl_connect('motion_notify_event', self.canvas_motion)
+        self.zoom_id = None
         self.setWindowTitle(os.path.basename(data_file))
         self.crop_changed()
         self.invalidate_data()
@@ -123,13 +142,45 @@ class MDIWindow(QtGui.QWidget):
         if self.image_axes and (event.inaxes == self.image_axes) and (event.xdata is not None):
             self.window().ui.x_label.setText('X: %.2f' % event.xdata)
             self.window().ui.y_label.setText('Y: %.2f' % event.ydata)
-            self.window().ui.value_label.setText('Value: %.2f' % self.data[event.ydata, event.xdata])
+            try:
+                self.window().ui.value_label.setText('Value: %.2f' % self.data[event.ydata, event.xdata])
+            except IndexError:
+                self.window().ui.value_label.setText('')
             self.canvas.setCursor(QtCore.Qt.CrossCursor)
         else:
             self.window().ui.x_label.setText('')
             self.window().ui.y_label.setText('')
             self.window().ui.value_label.setText('')
             self.canvas.setCursor(QtCore.Qt.ArrowCursor)
+
+    def canvas_press(self, event):
+        if event.button != 1:
+            return
+        if event.inaxes != self.image_axes:
+            return
+        self.zoom_start = Coord(event.x, event.y)
+        self.zoom_data_start = Coord(event.xdata, event.ydata)
+        self.zoom_id = self.canvas.mpl_connect('motion_notify_event', self.canvas_zoom_motion)
+
+    def canvas_zoom_motion(self, event):
+        box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
+        height      = self.figure.bbox.height
+        band_left   = int(max(min(self.zoom_start.x, event.x), box_left))
+        band_right  = int(min(max(self.zoom_start.x, event.x), box_right))
+        band_top    = int(height - max(min(self.zoom_start.y, event.y), box_top))
+        band_bottom = int(height - min(max(self.zoom_start.y, event.y), box_bottom))
+        self.canvas.drawRectangle((
+            band_left,
+            band_top,
+            band_right - band_left,
+            band_bottom - band_top,
+        ))
+
+    def canvas_release(self, event):
+        if self.zoom_id:
+            self.canvas.mpl_disconnect(self.zoom_id)
+            self.zoom_id = None
+            self.canvas.draw()
 
     def focus_changed(self, old_widget, new_widget):
         percentile_controls = (

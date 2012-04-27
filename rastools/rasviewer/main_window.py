@@ -28,6 +28,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.close_action.triggered.connect(self.close_file)
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
+        self.ui.export_document_action.triggered.connect(self.export_document)
 
     def close(self):
         super(MainWindow, self).close()
@@ -135,9 +136,14 @@ class MainWindow(QtGui.QMainWindow):
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
 
+    def export_document(self):
+        # XXX Placeholder
+        pass
+
     def window_changed(self, window):
         self.ui.close_action.setEnabled(window is not None)
         self.ui.export_menu.setEnabled(window is not None)
         self.ui.export_image_action.setEnabled(window is not None)
         self.ui.export_channel_action.setEnabled(window is not None)
+        self.ui.export_document_action.setEnabled(window is not None)
 
