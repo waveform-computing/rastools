@@ -169,7 +169,7 @@ class MDIWindow(QtGui.QWidget):
     def canvas_zoom_motion(self, event):
         # Calculate the display coordinates of the selection
         box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
-        height      = self.figure.bbox.height
+        height = self.figure.bbox.height
         band_left   = max(min(self.zoom_start.x, event.x), box_left)
         band_right  = min(max(self.zoom_start.x, event.x), box_right)
         band_top    = max(min(self.zoom_start.y, event.y), box_top)
@@ -180,19 +180,19 @@ class MDIWindow(QtGui.QWidget):
             band_right - band_left,
             band_top - band_bottom,
         ))
-        # Calculate the data coordinates of the selection (these need to be
-        # offset by the crop left and top values)
+        # Calculate the data coordinates of the selection. Note that top and
+        # bottom and reversed by this conversion
         inverse = self.image_axes.transData.inverted()
         height = self._file.y_size
-        data_left, data_top = inverse.transform_point((band_left, band_top))
-        data_right, data_bottom = inverse.transform_point((band_right, band_bottom))
+        data_left, data_bottom = inverse.transform_point((band_left, band_top))
+        data_right, data_top = inverse.transform_point((band_right, band_bottom))
         self.zoom_coords = (data_left, data_top, data_right, data_bottom)
         self.window().statusBar().showMessage(
             self.tr('Crop from (%d, %d) to (%d, %d)' % (
                 data_left,
-                height - data_bottom,
+                data_top,
                 data_right,
-                height - data_top,
+                data_bottom,
             ))
         )
 
@@ -207,9 +207,9 @@ class MDIWindow(QtGui.QWidget):
                 data_bottom,
             ) = self.zoom_coords
             self.ui.crop_left_spinbox.setValue(data_left)
-            self.ui.crop_top_spinbox.setValue(self._file.y_size - data_bottom)
+            self.ui.crop_top_spinbox.setValue(data_top)
             self.ui.crop_right_spinbox.setValue(self._file.x_size - data_right)
-            self.ui.crop_bottom_spinbox.setValue(data_top)
+            self.ui.crop_bottom_spinbox.setValue(self._file.y_size - data_bottom)
             self.window().statusBar().clearMessage()
             self.canvas.draw()
 
