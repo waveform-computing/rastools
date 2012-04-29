@@ -15,7 +15,6 @@ def excepthook(type, value, tb):
         str(value))
 
 def main(args=None):
-    sys.excepthook = excepthook
     if args is None:
         args = sys.argv
     app = QtGui.QApplication(args)

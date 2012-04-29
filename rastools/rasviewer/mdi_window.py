@@ -10,6 +10,9 @@ import datetime as dt
 import time
 from collections import namedtuple
 
+import sys
+import traceback as tb
+
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
@@ -33,9 +36,10 @@ class MDIWindow(QtGui.QWidget):
     def __init__(self, data_file, channel_file):
         super(MDIWindow, self).__init__(None)
         self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'mdi_window.ui')), self)
-        self._data = None
-        self._data_sorted = None
         self._file = None
+        self._data = None
+        self._data_cropped = None
+        self._data_sorted = None
         self._progress = 0
         self._progress_update = None
         self._info_dialog = None
@@ -114,6 +118,7 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_reset_button.clicked.connect(self.crop_reset_clicked)
         self.ui.axes_check.toggled.connect(self.invalidate_image)
         self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
         self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
@@ -159,10 +164,10 @@ class MDIWindow(QtGui.QWidget):
         if event.inaxes != self.image_axes:
             return
         self.zoom_start = Coord(event.x, event.y)
-        self.zoom_data_start = Coord(event.xdata, event.ydata)
         self.zoom_id = self.canvas.mpl_connect('motion_notify_event', self.canvas_zoom_motion)
 
     def canvas_zoom_motion(self, event):
+        # Calculate the display coordinates of the selection
         box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
         height      = self.figure.bbox.height
         band_left   = int(max(min(self.zoom_start.x, event.x), box_left))
@@ -175,11 +180,37 @@ class MDIWindow(QtGui.QWidget):
             band_right - band_left,
             band_bottom - band_top,
         ))
+        # Calculate the data coordinates of the selection (these need to be
+        # offset by the crop left and top values)
+        inverse = self.image_axes.transData.inverted()
+        height = self._file.y_size
+        data_left, data_top = inverse.transform_point((band_left, band_top))
+        data_right, data_bottom = inverse.transform_point((band_right, band_bottom))
+        self.zoom_coords = (data_left, data_top, data_right, data_bottom)
+        self.window().statusBar().showMessage(
+            self.tr('Crop from (%d, %d) to (%d, %d)' % (
+                data_left,
+                height - data_bottom,
+                data_right,
+                height - data_top,
+            ))
+        )
 
     def canvas_release(self, event):
         if self.zoom_id:
             self.canvas.mpl_disconnect(self.zoom_id)
             self.zoom_id = None
+            (
+                data_left,
+                data_top,
+                data_right,
+                data_bottom,
+            ) = self.zoom_coords
+            self.ui.crop_left_spinbox.setValue(data_left)
+            self.ui.crop_top_spinbox.setValue(data_top)
+            self.ui.crop_right_spinbox.setValue(self._file.x_size - data_right)
+            self.ui.crop_bottom_spinbox.setValue(self._file.y_size - data_bottom)
+            self.window().statusBar().clearMessage()
             self.canvas.draw()
 
     def focus_changed(self, old_widget, new_widget):
@@ -190,10 +221,10 @@ class MDIWindow(QtGui.QWidget):
             self.ui.percentile_to_spinbox,
         )
         range_controls = (
-            self.ui.range_from_slider,
-            self.ui.range_from_spinbox,
-            self.ui.range_to_slider,
-            self.ui.range_to_spinbox,
+            self.ui.value_from_slider,
+            self.ui.value_from_spinbox,
+            self.ui.value_to_slider,
+            self.ui.value_to_spinbox,
         )
         if (old_widget not in percentile_controls) and (new_widget in percentile_controls):
             self.percentile_connect()
@@ -207,18 +238,23 @@ class MDIWindow(QtGui.QWidget):
     def progress_start(self):
         self._progress = 0
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.window().statusBar().showMessage('Loading channel data')
+        # The following test is necessary as the progress update can be called
+        # before the MDI widget is attached to the main window
+        if hasattr(self.window(), 'statusBar'):
+            self.window().statusBar().showMessage('Loading channel data')
 
     def progress_update(self, progress):
         now = time.time()
         if (self._progress_update is None) or (now - self._progress_update) > 0.2:
             self._progress_update = now
             if progress != self._progress:
-                self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
+                if hasattr(self.window(), 'statusBar'):
+                    self.window().statusBar().showMessage('Loading channel data... %d%%' % progress)
                 self._progress = progress
 
     def progress_finish(self):
-        self.window().statusBar().clearMessage()
+        if hasattr(self.window(), 'statusBar'):
+            self.window().statusBar().clearMessage()
         QtGui.QApplication.instance().restoreOverrideCursor()
 
     def percentile_connect(self):
@@ -234,16 +270,16 @@ class MDIWindow(QtGui.QWidget):
         self.ui.percentile_to_spinbox.valueChanged.disconnect(self.percentile_to_spinbox_changed)
 
     def range_connect(self):
-        self.ui.range_from_slider.valueChanged.connect(self.range_from_slider_changed)
-        self.ui.range_from_spinbox.valueChanged.connect(self.range_from_spinbox_changed)
-        self.ui.range_to_slider.valueChanged.connect(self.range_to_slider_changed)
-        self.ui.range_to_spinbox.valueChanged.connect(self.range_to_spinbox_changed)
+        self.ui.value_from_slider.valueChanged.connect(self.value_from_slider_changed)
+        self.ui.value_from_spinbox.valueChanged.connect(self.value_from_spinbox_changed)
+        self.ui.value_to_slider.valueChanged.connect(self.value_to_slider_changed)
+        self.ui.value_to_spinbox.valueChanged.connect(self.value_to_spinbox_changed)
 
     def range_disconnect(self):
-        self.ui.range_from_slider.valueChanged.disconnect(self.range_from_slider_changed)
-        self.ui.range_from_spinbox.valueChanged.disconnect(self.range_from_spinbox_changed)
-        self.ui.range_to_slider.valueChanged.disconnect(self.range_to_slider_changed)
-        self.ui.range_to_spinbox.valueChanged.disconnect(self.range_to_spinbox_changed)
+        self.ui.value_from_slider.valueChanged.disconnect(self.value_from_slider_changed)
+        self.ui.value_from_spinbox.valueChanged.disconnect(self.value_from_spinbox_changed)
+        self.ui.value_to_slider.valueChanged.disconnect(self.value_to_slider_changed)
+        self.ui.value_to_spinbox.valueChanged.disconnect(self.value_to_spinbox_changed)
 
     def percentile_from_slider_changed(self, value):
         self.ui.percentile_to_spinbox.setMinimum(value / 100.0)
@@ -258,45 +294,62 @@ class MDIWindow(QtGui.QWidget):
     def percentile_from_spinbox_changed(self, value):
         self.ui.percentile_to_spinbox.setMinimum(value)
         self.ui.percentile_from_slider.setValue(int(value * 100.0))
-        self.ui.range_from_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.range_from_slider.setValue(int(self.ui.range_from_spinbox.value() * 100.0))
+        self.ui.value_from_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+        self.ui.value_from_slider.setValue(int(self.ui.value_from_spinbox.value() * 100.0))
         self.invalidate_image()
 
     def percentile_to_spinbox_changed(self, value):
         self.ui.percentile_from_spinbox.setMaximum(value)
         self.ui.percentile_to_slider.setValue(int(value * 100.0))
-        self.ui.range_to_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.range_to_slider.setValue(int(self.ui.range_to_spinbox.value() * 100.0))
+        self.ui.value_to_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+        self.ui.value_to_slider.setValue(int(self.ui.value_to_spinbox.value() * 100.0))
         self.invalidate_image()
 
-    def range_from_slider_changed(self, value):
-        self.ui.range_to_spinbox.setMinimum(value / 100.0)
-        self.ui.range_from_spinbox.setValue(value / 100.0)
+    def value_from_slider_changed(self, value):
+        self.ui.value_to_spinbox.setMinimum(value / 100.0)
+        self.ui.value_from_spinbox.setValue(value / 100.0)
         self.invalidate_image()
 
-    def range_to_slider_changed(self, value):
-        self.ui.range_from_spinbox.setMaximum(value / 100.0)
-        self.ui.range_to_spinbox.setValue(value / 100.0)
+    def value_to_slider_changed(self, value):
+        self.ui.value_from_spinbox.setMaximum(value / 100.0)
+        self.ui.value_to_spinbox.setValue(value / 100.0)
         self.invalidate_image()
 
-    def range_from_spinbox_changed(self, value):
-        self.ui.range_to_spinbox.setMinimum(value)
-        self.ui.range_from_slider.setValue(int(value * 100.0))
+    def value_from_spinbox_changed(self, value):
+        self.ui.value_to_spinbox.setMinimum(value)
+        self.ui.value_from_slider.setValue(int(value * 100.0))
         self.ui.percentile_from_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
         self.ui.percentile_from_slider.setValue(int(self.ui.percentile_from_spinbox.value() * 100.0))
         self.invalidate_image()
 
-    def range_to_spinbox_changed(self, value):
-        self.ui.range_from_spinbox.setMaximum(value)
-        self.ui.range_to_slider.setValue(int(value * 100.0))
+    def value_to_spinbox_changed(self, value):
+        self.ui.value_from_spinbox.setMaximum(value)
+        self.ui.value_to_slider.setValue(int(value * 100.0))
         self.ui.percentile_to_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
         self.ui.percentile_to_slider.setValue(int(self.ui.percentile_to_spinbox.value() * 100.0))
         self.invalidate_image()
 
     def crop_changed(self, value=None):
-        self.ui.x_size_label.setText(str(self._file.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value()))
-        self.ui.y_size_label.setText(str(self._file.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value()))
-        self.invalidate_data()
+        self.ui.value_from_label.setText(str(self.data_sorted[0]))
+        self.ui.value_to_label.setText(str(self.data_sorted[-1]))
+        self.ui.value_from_spinbox.setRange(self.data_sorted[0], self.data_sorted[-1])
+        self.ui.value_from_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * self.ui.percentile_from_spinbox.value() / 100.0])
+        self.ui.value_to_spinbox.setRange(self.data_sorted[0], self.data_sorted[-1])
+        self.ui.value_to_spinbox.setValue(self.data_sorted[(len(self.data_sorted) - 1) * self.ui.percentile_to_spinbox.value() / 100.0])
+        self.ui.value_from_slider.setRange(int(self.data_sorted[0] * 100.0), int(self.data_sorted[-1] * 100.0))
+        self.ui.value_from_slider.setValue(int(self.ui.value_from_spinbox.value() * 100.0))
+        self.ui.value_to_slider.setRange(int(self.data_sorted[0] * 100.0), int(self.data_sorted[-1] * 100.0))
+        self.ui.value_to_slider.setValue(int(self.ui.value_to_spinbox.value() * 100.0))
+        self.invalidate_data_cropped()
+        y_size, x_size = self.data_cropped.shape
+        self.ui.x_size_label.setText(str(x_size))
+        self.ui.y_size_label.setText(str(y_size))
+
+    def crop_reset_clicked(self):
+        self.ui.crop_left_spinbox.setValue(0)
+        self.ui.crop_right_spinbox.setValue(0)
+        self.ui.crop_top_spinbox.setValue(0)
+        self.ui.crop_bottom_spinbox.setValue(0)
 
     def x_scale_changed(self, value):
         if self.ui.scale_locked_check.isChecked():
@@ -323,7 +376,7 @@ class MDIWindow(QtGui.QWidget):
 Channel {channel:02d} - {channel_name}
 {start_time:%A, %d %b %Y %H:%M:%S}
 Percentile range: {percentile_from} to {percentile_to}
-Value range: {range_from} to {range_to}""")
+Value range: {value_from} to {value_to}""")
 
     def clear_title_clicked(self):
         self.ui.title_edit.clear()
@@ -365,20 +418,29 @@ Value range: {range_from} to {range_to}""")
     def data(self):
         if self._data is None:
             self._data = np.array(self.channel.data, np.float)
-            self._data = self._data[
-                self.ui.crop_top_spinbox.value():self._data.shape[0] - self.ui.crop_bottom_spinbox.value(),
-                self.ui.crop_left_spinbox.value():self._data.shape[1] - self.ui.crop_right_spinbox.value()
-            ]
-            self._data_sorted = np.sort(self._data, None)
-            self.ui.range_from_spinbox.setRange(self._data_sorted[0], self._data_sorted[-1])
-            self.ui.range_from_spinbox.setValue(self._data_sorted[(len(self._data_sorted) - 1) * self.ui.percentile_from_spinbox.value() / 100.0])
-            self.ui.range_to_spinbox.setRange(self._data_sorted[0], self._data_sorted[-1])
-            self.ui.range_to_spinbox.setValue(self._data_sorted[(len(self._data_sorted) - 1) * self.ui.percentile_to_spinbox.value() / 100.0])
-            self.ui.range_from_slider.setRange(int(self._data_sorted[0] * 100.0), int(self._data_sorted[-1] * 100.0))
-            self.ui.range_from_slider.setValue(int(self.ui.range_from_spinbox.value() * 100.0))
-            self.ui.range_to_slider.setRange(int(self._data_sorted[0] * 100.0), int(self._data_sorted[-1] * 100.0))
-            self.ui.range_to_slider.setValue(int(self.ui.range_to_spinbox.value() * 100.0))
         return self._data
+
+    @property
+    def data_cropped(self):
+        if self._data_cropped is None:
+            self._data_cropped = self.data[
+                self.ui.crop_top_spinbox.value():self.data.shape[0] - self.ui.crop_bottom_spinbox.value(),
+                self.ui.crop_left_spinbox.value():self.data.shape[1] - self.ui.crop_right_spinbox.value()
+            ]
+        return self._data_cropped
+
+    @property
+    def data_sorted(self):
+        if self._data_sorted is None:
+            self._data_sorted = np.sort(self.data_cropped, None)
+        return self._data_sorted
+
+    @property
+    def percentile_range(self):
+        return (
+            self.data_sorted[(len(self.data_sorted) - 1) * self.ui.percentile_from_spinbox.value() / 100.0],
+            self.data_sorted[(len(self.data_sorted) - 1) * self.ui.percentile_to_spinbox.value() / 100.0],
+        )
 
     @property
     def data_export(self):
@@ -394,13 +456,15 @@ Value range: {range_from} to {range_to}""")
         result[result > pmax] = pmax
         return result
 
-    @property
-    def data_sorted(self):
-        self.data
-        return self._data_sorted
-
     def invalidate_data(self):
         self._data = None
+        self.invalidate_data_cropped()
+
+    def invalidate_data_cropped(self):
+        self._data_cropped = None
+        self.invalidate_data_sorted()
+
+    def invalidate_data_sorted(self):
         self._data_sorted = None
         self.invalidate_image()
 
@@ -417,8 +481,20 @@ Value range: {range_from} to {range_to}""")
         if self.channel is not None:
             vmin = self.data_sorted[0]
             vmax = self.data_sorted[-1]
-            pmin = self.ui.range_from_spinbox.value()
-            pmax = self.ui.range_to_spinbox.value()
+            pmin = self.ui.value_from_spinbox.value()
+            pmax = self.ui.value_to_spinbox.value()
+            crop_l = self.ui.crop_left_spinbox.value()
+            crop_r = self.ui.crop_right_spinbox.value()
+            crop_t = self.ui.crop_top_spinbox.value()
+            crop_b = self.ui.crop_bottom_spinbox.value()
+            offset_x = self.ui.x_offset_spinbox.value()
+            offset_y = self.ui.y_offset_spinbox.value()
+            scale_x = self.ui.x_scale_spinbox.value()
+            scale_y = self.ui.y_scale_spinbox.value()
+            label_x = unicode(self.ui.x_label_edit.text())
+            label_y = unicode(self.ui.y_label_edit.text())
+            img_w = self._file.x_size
+            img_h = self._file.y_size
             # Generate the title text. This is done up here as we need to know
             # if there's going to be anything to render, and whether or not to
             # reserve space for it
@@ -437,8 +513,8 @@ Value range: {range_from} to {range_to}""")
             # Calculate the figure dimensions and margins, and construct the
             # necessary objects
             (img_width, img_height) = (
-                (self.channel.parent.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value()) / FIGURE_DPI,
-                (self.channel.parent.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value()) / FIGURE_DPI
+                (img_w - (crop_l + crop_r)) / FIGURE_DPI,
+                (img_h - (crop_t + crop_b)) / FIGURE_DPI,
             )
             (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[self.ui.histogram_check.isChecked()]
             (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
@@ -469,23 +545,25 @@ Value range: {range_from} to {range_to}""")
             else:
                 self.image_axes.grid(False)
             if self.ui.axes_check.isChecked():
-                if unicode(self.ui.x_label_edit.text()):
-                    self.image_axes.set_xlabel(self.ui.x_label_edit.text())
-                if unicode(self.ui.y_label_edit.text()):
-                    self.image_axes.set_ylabel(self.ui.y_label_edit.text())
+                if label_x:
+                    self.image_axes.set_xlabel(label_x)
+                if label_y:
+                    self.image_axes.set_ylabel(label_y)
             else:
                 self.image_axes.set_xticklabels([])
                 self.image_axes.set_yticklabels([])
             # Draw the image. This call takes care of clamping values with vmin
             # and vmax, as well as color-mapping
-            img = self.image_axes.imshow(self.data, vmin=pmin, vmax=pmax,
-                extent=(
-                    self.ui.x_offset_spinbox.value(),
-                    self.ui.x_offset_spinbox.value() + (self.ui.x_scale_spinbox.value() * (self._file.x_size - self.ui.crop_left_spinbox.value() - self.ui.crop_right_spinbox.value())),
-                    self.ui.y_offset_spinbox.value() + (self.ui.y_scale_spinbox.value() * (self._file.y_size - self.ui.crop_top_spinbox.value() - self.ui.crop_bottom_spinbox.value())),
-                    self.ui.y_offset_spinbox.value(),
-                ),
+            img = self.image_axes.imshow(
+                self.data_cropped,
+                vmin=pmin, vmax=pmax,
                 origin='upper',
+                extent=(
+                    scale_x * (offset_x + crop_l),
+                    scale_x * (offset_x + img_w - crop_r),
+                    scale_y * (offset_y + img_h - crop_b),
+                    scale_y * (offset_y + crop_t),
+                ),
                 cmap=matplotlib.cm.get_cmap(
                     unicode(self.ui.colormap_combo.currentText()) +
                     ('_r' if self.ui.reverse_check.isChecked() else '')
@@ -506,7 +584,7 @@ Value range: {range_from} to {range_to}""")
                     self.histogram_axes.clear()
                     self.histogram_axes.set_position(r)
                 self.histogram_axes.grid(True)
-                self.histogram_axes.hist(self.data.flat,
+                self.histogram_axes.hist(self.data_cropped.flat,
                     bins=self.ui.histogram_bins_spinbox.value(),
                     range=(pmin, pmax))
             elif self.histogram_axes:
@@ -563,9 +641,9 @@ Value range: {range_from} to {range_to}""")
             percentile_from=self.ui.percentile_from_spinbox.value(),
             percentile_to=self.ui.percentile_to_spinbox.value(),
             percentile=(self.ui.percentile_from_spinbox.value(), self.ui.percentile_to_spinbox.value()),
-            range_from=self.ui.range_from_spinbox.value(),
-            range_to=self.ui.range_to_spinbox.value(),
-            range=(self.ui.range_from_spinbox.value(), self.ui.range_to_spinbox.value()),
+            value_from=self.ui.value_from_spinbox.value(),
+            value_to=self.ui.value_to_spinbox.value(),
+            range=(self.ui.value_from_spinbox.value(), self.ui.value_to_spinbox.value()),
             interpolation=self.interpolation_combo.currentText(),
             colormap=self.ui.colormap_combo.currentText() +
                 ('_r' if self.ui.reverse_check.isChecked() else ''),

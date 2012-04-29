@@ -132,7 +132,11 @@ class MainWindow(QtGui.QMainWindow):
             mdi_window = self.ui.mdi_area.currentSubWindow().widget()
             QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
             try:
-                klass(filename, mdi_window.channel).write(mdi_window.data_export)
+                data = mdi_window.data_cropped
+                start, finish = mdi_window.percentile_range
+                data[data < start] = start
+                data[data > finish] = finish
+                klass(filename, mdi_window.channel).write(data)
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
 
