@@ -170,15 +170,15 @@ class MDIWindow(QtGui.QWidget):
         # Calculate the display coordinates of the selection
         box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
         height      = self.figure.bbox.height
-        band_left   = int(max(min(self.zoom_start.x, event.x), box_left))
-        band_right  = int(min(max(self.zoom_start.x, event.x), box_right))
-        band_top    = int(height - max(min(self.zoom_start.y, event.y), box_top))
-        band_bottom = int(height - min(max(self.zoom_start.y, event.y), box_bottom))
+        band_left   = max(min(self.zoom_start.x, event.x), box_left)
+        band_right  = min(max(self.zoom_start.x, event.x), box_right)
+        band_top    = max(min(self.zoom_start.y, event.y), box_top)
+        band_bottom = min(max(self.zoom_start.y, event.y), box_bottom)
         self.canvas.drawRectangle((
             band_left,
-            band_top,
+            height - band_top,
             band_right - band_left,
-            band_bottom - band_top,
+            band_top - band_bottom,
         ))
         # Calculate the data coordinates of the selection (these need to be
         # offset by the crop left and top values)
@@ -207,9 +207,9 @@ class MDIWindow(QtGui.QWidget):
                 data_bottom,
             ) = self.zoom_coords
             self.ui.crop_left_spinbox.setValue(data_left)
-            self.ui.crop_top_spinbox.setValue(data_top)
+            self.ui.crop_top_spinbox.setValue(self._file.y_size - data_bottom)
             self.ui.crop_right_spinbox.setValue(self._file.x_size - data_right)
-            self.ui.crop_bottom_spinbox.setValue(self._file.y_size - data_bottom)
+            self.ui.crop_bottom_spinbox.setValue(data_top)
             self.window().statusBar().clearMessage()
             self.canvas.draw()
 
