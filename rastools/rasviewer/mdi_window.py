@@ -330,6 +330,7 @@ class MDIWindow(QtGui.QWidget):
         self.invalidate_image()
 
     def crop_changed(self, value=None):
+        self.invalidate_data_cropped()
         self.ui.value_from_label.setText(str(self.data_sorted[0]))
         self.ui.value_to_label.setText(str(self.data_sorted[-1]))
         self.ui.value_from_spinbox.setRange(self.data_sorted[0], self.data_sorted[-1])
@@ -340,7 +341,6 @@ class MDIWindow(QtGui.QWidget):
         self.ui.value_from_slider.setValue(int(self.ui.value_from_spinbox.value() * 100.0))
         self.ui.value_to_slider.setRange(int(self.data_sorted[0] * 100.0), int(self.data_sorted[-1] * 100.0))
         self.ui.value_to_slider.setValue(int(self.ui.value_to_spinbox.value() * 100.0))
-        self.invalidate_data_cropped()
         y_size, x_size = self.data_cropped.shape
         self.ui.x_size_label.setText(str(x_size))
         self.ui.y_size_label.setText(str(y_size))
