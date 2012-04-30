@@ -17,7 +17,7 @@ SCRIPTS:=$(shell $(PYTHON) $(PYFLAGS) -c "import setup; setup.get_console_script
 SOURCE:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
-DOCS:=README.txt TODO.txt
+DOCS:=README.txt CHANGES.txt LICENSE.txt
 WIKI:="http://www.waveform.org.uk/trac/rastools/wiki"
 
 # Calculate the name of all distribution archives / installers
@@ -28,13 +28,13 @@ DIST_TAR=dist/$(BASE).tar.gz
 DIST_ZIP=dist/$(BASE).zip
 
 # Default target
-build: $(DOCS)
+build:
 	$(PYTHON) $(PYFLAGS) setup.py build
 
-install: $(DOCS)
+install:
 	$(PYTHON) $(PYFLAGS) setup.py install
 
-develop: $(DOCS) tags
+develop: tags
 	$(PYTHON) $(PYFLAGS) setup.py develop
 	@echo
 	@echo "Please run the following to remove any redundant hash entries:"
@@ -65,41 +65,19 @@ bdist: $(DIST_WININST) $(DIST_EGG)
 
 sdist: $(DIST_TAR) $(DIST_ZIP)
 
-$(DIST_EGG): $(SOURCE) $(DOCS)
+$(DIST_EGG): $(SOURCE)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
-$(DIST_WININST): $(SOURCE) $(DOCS)
+$(DIST_WININST): $(SOURCE)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_wininst
 
-$(DIST_TAR): $(SOURCE) $(DOCS)
+$(DIST_TAR): $(SOURCE)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats=gztar
 
-$(DIST_ZIP): $(SOURCE) $(DOCS)
+$(DIST_ZIP): $(SOURCE)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats=zip
 
 tags: $(SOURCE)
 	ctags -R --exclude="build/*" --languages="Python"
-
-README.txt: FORCE
-	echo "Generated from the rastools wiki at:" > $@
-	echo "$(WIKI)" >> $@
-	for page in Requirements Install Tutorial; do \
-		$(LYNX) $(LYNXFLAGS) -dump $(WIKI)/$$page | awk '\
-			BEGIN {printing=0;} \
-			/^ *Last modified / {printing=1; next;} \
-			/^ *Copyright / {printing=0;} \
-			{if (printing) print;}' >> $@; \
-	done
-
-TODO.txt: FORCE
-	echo "Generated from the rastools wiki at:" > $@
-	echo "$(WIKI)" >> $@
-	for page in KnownIssues; do \
-		$(LYNX) $(LYNXFLAGS) -dump $(WIKI)/$$page | awk '\
-			BEGIN {printing=0;} \
-			/^ *Last modified / {printing=1; next;} \
-			/^ *Copyright / {printing=0;} \
-			{if (printing) print;}' >> $@; \
-	done
 
 FORCE:
