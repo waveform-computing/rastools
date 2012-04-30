@@ -358,7 +358,7 @@ class RasExtractUtility(rastools.main.Utility):
     def format_dict(self, source, options, **kwargs):
         """Utility routine which converts the options array for use in format substitutions"""
         return source.format_dict(
-            percentile_from=options.percentile[0]
+            percentile_from=options.percentile[0],
             percentile_to=options.percentile[1],
             percentile=options.percentile,
             interpolation=options.interpolation,
