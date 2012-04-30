@@ -510,12 +510,10 @@ Value range: {value_from} to {value_to}""")
                 self.ui.title_error_label.show()
             else:
                 self.ui.title_error_label.hide()
-            # Calculate the figure dimensions and margins, and construct the
+            # Calculate the figure dimensions and margins (in inches unlike the
+            # values above which are all pixel based), and construct the
             # necessary objects
-            (img_width, img_height) = (
-                (img_w - (crop_l + crop_r)) / FIGURE_DPI,
-                (img_h - (crop_t + crop_b)) / FIGURE_DPI,
-            )
+            (img_width, img_height) = (img_w / FIGURE_DPI, img_h / FIGURE_DPI)
             (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[self.ui.histogram_check.isChecked()]
             (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
             (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(title)]
