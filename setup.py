@@ -65,7 +65,7 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
         packages             = find_packages(exclude=['ez_setup']),
-        install_requires     = ['matplotlib', 'xlwt'],
+        install_requires     = ['matplotlib', 'PyQt'],
         include_package_data = True,
         platforms            = 'ALL',
         zip_safe             = False,

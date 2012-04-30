@@ -53,11 +53,11 @@ test:
 
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
-	rm -f $(DOCS) tags
+	rm -f tags
 	rm -fr build/ $(NAME).egg-info/
 
 cleanall: clean
-	rm -fr dist/
+	rm -fr dist/ deb_dist/
 
 dist: bdist sdist
 
