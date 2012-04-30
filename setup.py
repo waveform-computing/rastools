@@ -1,7 +1,26 @@
 #!/usr/bin/env python
 # vim: set et sw=4 sts=4:
 
-"""Tools for dealing with RAS scans"""
+# Copyright 2012 Dave Hughes.
+#
+# This file is part of rastools.
+#
+# rastools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# rastools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# rastools.  If not, see <http://www.gnu.org/licenses/>.
+
+"""rastools is a small suite of utilities for converting data files obtained
+from SSRL scans (.RAS and .DAT files) into images. Various simple manipulations
+(cropping, percentiles, histograms, color-maps) are supported. Most tools are
+command line, but a Qt-based GUI is also included."""
 
 try:
     from setuptools import setup, find_packages
@@ -41,13 +60,14 @@ def main():
     setup(
         name                 = 'rastools',
         version              = __version__,
-        description          = 'Tools for converting RAS scans to images',
-        long_description     = __doc__,
+        license              = 'LICENSE.txt',
+        description          = 'Tools for converting scans from the SSRL to images',
+        long_description     = open('README.txt').read(),
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
         packages             = find_packages(exclude=['ez_setup']),
-        install_requires     = ['matplotlib'],
+        install_requires     = ['matplotlib', 'xlwt'],
         include_package_data = True,
         platforms            = 'ALL',
         zip_safe             = False,

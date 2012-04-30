@@ -81,25 +81,25 @@ tags: $(SOURCE)
 	ctags -R --exclude="build/*" --languages="Python"
 
 README.txt: FORCE
-	echo "Generated from the rastools wiki at:" > README.txt
-	echo "$(WIKI)" >> README.txt
+	echo "Generated from the rastools wiki at:" > $@
+	echo "$(WIKI)" >> $@
 	for page in Requirements Install Tutorial; do \
 		$(LYNX) $(LYNXFLAGS) -dump $(WIKI)/$$page | awk '\
 			BEGIN {printing=0;} \
 			/^ *Last modified / {printing=1; next;} \
 			/^ *Copyright / {printing=0;} \
-			{if (printing) print;}' >> README.txt; \
+			{if (printing) print;}' >> $@; \
 	done
 
 TODO.txt: FORCE
-	echo "Generated from the rastools wiki at:" > TODO.txt
-	echo "$(WIKI)" >> TODO.txt
+	echo "Generated from the rastools wiki at:" > $@
+	echo "$(WIKI)" >> $@
 	for page in KnownIssues; do \
 		$(LYNX) $(LYNXFLAGS) -dump $(WIKI)/$$page | awk '\
 			BEGIN {printing=0;} \
 			/^ *Last modified / {printing=1; next;} \
 			/^ *Copyright / {printing=0;} \
-			{if (printing) print;}' >> TODO.txt; \
+			{if (printing) print;}' >> $@; \
 	done
 
 FORCE:
