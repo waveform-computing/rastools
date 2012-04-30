@@ -110,7 +110,7 @@ class MDIWindow(QtGui.QWidget):
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
         self.redraw_timer.timeout.connect(self.redraw_timeout)
-        self.ui.channel_combo.currentIndexChanged.connect(self.invalidate_data)
+        self.ui.channel_combo.currentIndexChanged.connect(self.channel_changed)
         self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.reverse_check.toggled.connect(self.invalidate_image)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
@@ -140,8 +140,7 @@ class MDIWindow(QtGui.QWidget):
         self.motion_id = self.canvas.mpl_connect('motion_notify_event', self.canvas_motion)
         self.zoom_id = None
         self.setWindowTitle(os.path.basename(data_file))
-        self.crop_changed()
-        self.invalidate_data()
+        self.channel_changed()
 
     def canvas_motion(self, event):
         if self.image_axes and (event.inaxes == self.image_axes) and (event.xdata is not None):
@@ -328,6 +327,10 @@ class MDIWindow(QtGui.QWidget):
         self.ui.percentile_to_spinbox.setValue(self.data_sorted.searchsorted(value) * 100.0 / (len(self.data_sorted) - 1))
         self.ui.percentile_to_slider.setValue(int(self.ui.percentile_to_spinbox.value() * 100.0))
         self.invalidate_image()
+
+    def channel_changed(self):
+        self.invalidate_data()
+        self.crop_changed()
 
     def crop_changed(self, value=None):
         self.invalidate_data_cropped()
