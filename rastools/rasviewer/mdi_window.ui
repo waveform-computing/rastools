@@ -213,7 +213,7 @@
           <item row="0" column="3">
            <widget class="QDoubleSpinBox" name="value_from_spinbox"/>
           </item>
-          <item row="2" column="3">
+          <item row="1" column="3">
            <widget class="QDoubleSpinBox" name="value_to_spinbox"/>
           </item>
           <item row="0" column="0" colspan="3">
@@ -226,7 +226,7 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" colspan="3">
+          <item row="1" column="0" colspan="3">
            <widget class="QSlider" name="value_to_slider">
             <property name="maximum">
              <number>0</number>
@@ -236,22 +236,22 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="2" column="2">
            <widget class="QLabel" name="value_to_label">
             <property name="text">
              <string>TextLabel</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QLabel" name="value_from_label">
             <property name="text">
              <string>TextLabel</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <spacer name="horizontalSpacer">
+          <item row="2" column="1">
+           <spacer name="horizontalSpacer_2">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -842,9 +842,6 @@
        <zorder></zorder>
        <zorder>scale_label</zorder>
        <zorder>offset_label</zorder>
-       <zorder>gridLayoutWidget</zorder>
-       <zorder>value_from_label</zorder>
-       <zorder>gridLayoutWidget_2</zorder>
        <zorder>display_label</zorder>
        <zorder>axes_line</zorder>
       </widget>
