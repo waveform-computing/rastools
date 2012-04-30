@@ -1,13 +1,13 @@
 import os
+import time
+import numpy as np
+import datetime as dt
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
-import numpy as np
-import datetime as dt
-import time
 from collections import namedtuple
 
 import sys
@@ -16,17 +16,21 @@ import traceback as tb
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
+COMPOSITION_SUPPORTED = True
 
 Coord = namedtuple('Coord', ('x', 'y'))
 
 class FigureCanvas(FigureCanvasQTAgg):
     def paintEvent(self, e):
+        global COMPOSITION_SUPPORTED
         if self.drawRect:
             self.drawRect = False
             super(FigureCanvas, self).paintEvent(e)
             p = QtGui.QPainter(self)
             p.setPen(QtGui.QPen(QtCore.Qt.white, 1, QtCore.Qt.SolidLine))
-            p.setCompositionMode(QtGui.QPainter.CompositionMode_Difference)
+            if COMPOSITION_SUPPORTED:
+                p.setCompositionMode(QtGui.QPainter.CompositionMode_Difference)
+                COMPOSITION_SUPPORTED = (p.compositionMode() == QtGui.QPainter.CompositionMode_Difference)
             p.drawRect(self.rect[0], self.rect[1], self.rect[2], self.rect[3])
             p.end()
         else:
