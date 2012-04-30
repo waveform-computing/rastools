@@ -17,11 +17,6 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""rastools is a small suite of utilities for converting data files obtained
-from SSRL scans (.RAS and .DAT files) into images. Various simple manipulations
-(cropping, percentiles, histograms, color-maps) are supported. Most tools are
-command line, but a Qt-based GUI is also included."""
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
