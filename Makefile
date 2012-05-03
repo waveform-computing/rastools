@@ -13,7 +13,7 @@ LYNXFLAGS=
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 BASE:=$(shell $(PYTHON) $(PYFLAGS) setup.py --fullname)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.version_info[:2]")
-SCRIPTS:=$(shell $(PYTHON) $(PYFLAGS) -c "import setup; setup.get_console_scripts()")
+SCRIPTS:=$(shell $(PYTHON) $(PYFLAGS) -c "import setup; setup.get_scripts()")
 SOURCE:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)

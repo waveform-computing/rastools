@@ -17,12 +17,14 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from ez_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup, find_packages
+from distribute_setup import use_setuptools
+use_setuptools()
+from setup_helpers import (
+    description, get_version, long_description, require_python)
+from setuptools import setup, find_packages
+
+require_python(0x020600f0)
+__version__ = get_version('rastools/main.py')
 
 classifiers = [
     'Development Status :: 4 - Beta',
@@ -41,31 +43,35 @@ classifiers = [
 
 entry_points = {
     'console_scripts': [
-        'rasinfo    = rastools.rasinfo:main',
+        'rasinfo = rastools.rasinfo:main',
         'rasextract = rastools.rasextract:main',
-        'rasdump    = rastools.rasdump:main',
-        'rasviewer  = rastools.rasviewer:main',
+        'rasdump = rastools.rasdump:main',
+    ],
+    'gui_scripts': [
+        'rasviewer = rastools.rasviewer:main',
     ]
 }
 
-def get_console_scripts():
+def get_scripts():
     import re
     for s in entry_points['console_scripts']:
         print re.match(r'^([^= ]*) *=.*$', s).group(1)
+    for s in entry_points['gui_scripts']:
+        print re.match(r'^([^= ]*) *=.*$', s).group(1)
 
 def main():
-    from rastools.main import __version__
     setup(
         name                 = 'rastools',
         version              = __version__,
         license              = 'LICENSE.txt',
-        description          = 'Tools for converting scans from the SSRL to images',
-        long_description     = open('README.txt').read(),
+        description          = description('README.rst'),
+        long_description     = long_description('README.rst'),
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
-        packages             = find_packages(exclude=['ez_setup']),
+        packages             = find_packages(exclude=['distribute_setup']),
         install_requires     = ['matplotlib', 'PyQt'],
+        extras_require       = {'XLS': ['xlwt']},
         include_package_data = True,
         platforms            = 'ALL',
         zip_safe             = False,
