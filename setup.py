@@ -19,7 +19,7 @@
 
 from distribute_setup import use_setuptools
 use_setuptools()
-from setup_helpers import (
+from utils import (
     description, get_version, long_description, require_python)
 from setuptools import setup, find_packages
 
@@ -64,8 +64,8 @@ def main():
         name                 = 'rastools',
         version              = __version__,
         license              = 'LICENSE.txt',
-        description          = description('README.rst'),
-        long_description     = long_description('README.rst'),
+        description          = description('README.txt'),
+        long_description     = long_description('README.txt'),
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
