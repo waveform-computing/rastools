@@ -1,4 +1,4 @@
-rastools (0.1-1ubuntu1) unstable; urgency=low
+rastools (0.1-1~ppa1) oneiric; urgency=low
 
   * Initial source package automatically created by stdeb 0.6.0+git
 
