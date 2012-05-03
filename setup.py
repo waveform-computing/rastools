@@ -52,13 +52,6 @@ entry_points = {
     ]
 }
 
-def get_scripts():
-    import re
-    for s in entry_points['console_scripts']:
-        print re.match(r'^([^= ]*) *=.*$', s).group(1)
-    for s in entry_points['gui_scripts']:
-        print re.match(r'^([^= ]*) *=.*$', s).group(1)
-
 def main():
     setup(
         name                 = 'rastools',
@@ -70,7 +63,7 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
         packages             = find_packages(exclude=['distribute_setup']),
-        install_requires     = ['matplotlib', 'PyQt'],
+        install_requires     = ['matplotlib'],
         extras_require       = {'XLS': ['xlwt']},
         include_package_data = True,
         platforms            = 'ALL',

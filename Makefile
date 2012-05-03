@@ -3,22 +3,15 @@
 # External utilities
 PYTHON=python
 PYFLAGS=
-#LYNX=lynx
-#LYNXFLAGS=-nonumbers -justify
-LYNX=elinks
-LYNXFLAGS=
 
 # Calculate the base names of the distribution, the location of all source,
 # documentation and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 BASE:=$(shell $(PYTHON) $(PYFLAGS) setup.py --fullname)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.version_info[:2]")
-SCRIPTS:=$(shell $(PYTHON) $(PYFLAGS) -c "import setup; setup.get_scripts()")
 SOURCE:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
-DOCS:=README.txt CHANGES.txt LICENSE.txt
-WIKI:="http://www.waveform.org.uk/trac/rastools/wiki"
 
 # Calculate the name of all distribution archives / installers
 DIST_EGG=dist/$(BASE)-$(PYVER).egg
@@ -36,16 +29,9 @@ install:
 
 develop: tags
 	$(PYTHON) $(PYFLAGS) setup.py develop
-	@echo
-	@echo "Please run the following to remove any redundant hash entries:"
-	@echo hash -d $(SCRIPTS)
 
 undevelop:
 	$(PYTHON) $(PYFLAGS) setup.py develop --uninstall
-	for s in $(SCRIPTS); do rm -f $(HOME)/bin/$$s; done
-	@echo
-	@echo "Please run the following to remove any redundant hash entries:"
-	@echo hash -d $(SCRIPTS)
 
 test:
 	@echo "No tests currently implemented"
@@ -57,7 +43,7 @@ clean:
 	rm -fr build/ $(NAME).egg-info/
 
 cleanall: clean
-	rm -fr dist/ deb_dist/
+	rm -fr dist/
 
 dist: bdist sdist
 
