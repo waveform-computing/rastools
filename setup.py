@@ -24,7 +24,6 @@ from utils import (
 from setuptools import setup, find_packages
 
 require_python(0x020600f0)
-__version__ = get_version('rastools/main.py')
 
 classifiers = [
     'Development Status :: 4 - Beta',
@@ -36,7 +35,9 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
     'Operating System :: Unix',
+    'Programming Language :: Python :: 2.5',
     'Programming Language :: Python :: 2.6',
+    'Programming Language :: Python :: 2.7',
     'Topic :: Multimedia :: Graphics',
     'Topic :: Scientific/Engineering',
 ]
@@ -52,11 +53,11 @@ entry_points = {
     ]
 }
 
+
 def main():
     setup(
         name                 = 'rastools',
-        version              = __version__,
-        license              = 'LICENSE.txt',
+        version              = get_version('rastools/main.py'),
         description          = description('README.txt'),
         long_description     = long_description('README.txt'),
         author               = 'Dave Hughes',
