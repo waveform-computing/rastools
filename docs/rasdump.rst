@@ -26,23 +26,28 @@ Options:
 
    show program's version number and exit
 
-.. option:: -h, --help
+.. option:: -h
+.. option:: --help
 
    show this help message and exit
 
-.. option:: -q, --quiet
+.. option:: -q
+.. option:: --quiet
 
    produce less console output
 
-.. option:: -v, --verbose
+.. option:: -v
+.. option:: --verbose
 
    produce more console output
 
-.. option:: -l LOGFILE, --log-file=LOGFILE
+.. option:: -l LOGFILE
+.. option:: --log-file=LOGFILE
 
    log messages to the specified file
 
-.. option:: -D, --debug
+.. option:: -D
+.. option:: --debug
 
    enables debug mode (runs under PDB)
 
@@ -50,26 +55,31 @@ Options:
 
    list the available file output formats
 
-.. option:: -p PERCENTILE, --percentile=PERCENTILE
+.. option:: -p PERCENTILE
+.. option:: --percentile=PERCENTILE
 
    clip values in the output image to the specified percentile
 
-.. option:: -C CROP, --crop=CROP
+.. option:: -C CROP
+.. option:: --crop=CROP
 
    crop the input data by top,left,bottom,right points
 
-.. option:: -o OUTPUT, --output=OUTPUT
+.. option:: -o OUTPUT
+.. option:: --output=OUTPUT
 
    specify the template used to generate the output filenames; supports
    {variables}, see --help-formats for supported file formats. Default:
    {filename_root}_{channel:02d}_{channel_name}.csv
 
-.. option:: -m, --multi
+.. option:: -m
+.. option:: --multi
 
    if specified, produce a single output file with multiple pages or sheets,
    one per channel (only available with certain formats)
 
-.. option:: -e, --empty
+.. option:: -e
+.. option:: --empty
 
    if specified, empty channels in the output (by default empty channels are
    ignored)

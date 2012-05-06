@@ -12,11 +12,12 @@ BUILDIR=$(CURDIR)/debian/$(PROJECT)
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.version_info[:2]")
-SOURCE:=$(shell \
+PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
+MAN_SOURCES:=$(wildcard docs/*.rst)
 
-# Calculate the name of all distribution archives / installers
+# Calculate the name of all outputs
 DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
 DIST_EXE=dist/$(NAME)-$(VER).win32.exe
 DIST_RPM=dist/$(NAME)-$(VER)-1.src.rpm
@@ -65,27 +66,27 @@ clean:
 cleanall: clean
 	rm -fr dist/
 
-tags: $(SOURCE)
-	ctags -R --exclude="build/*" --languages="Python"
+tags: $(PY_SOURCES)
+	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
 
-$(MAN_PAGES):
+$(MAN_PAGES): $(MAN_SOURCES)
 	make -C docs man
 
-$(DIST_TAR): $(SOURCE)
+$(DIST_TAR): $(PY_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE)
 
-$(DIST_EGG): $(SOURCE)
+$(DIST_EGG): $(PY_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg $(COMPILE)
 
-$(DIST_EXE): $(SOURCE)
+$(DIST_EXE): $(PY_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_wininst $(COMPILE)
 
-$(DIST_RPM): $(SOURCE) $(MAN_PAGES)
+$(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_rpm $(COMPILE)
 	# XXX Add man-pages to RPMs ... how?
 	#$(PYTHON) $(PYFLAGS) setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall $(COMPILE)
 
-$(DIST_DEB): $(SOURCE) $(MAN_PAGES)
+$(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../

@@ -22,31 +22,38 @@ Options:
 
    show program's version number and exit
 
-.. option:: -h, --help
+.. option:: -h
+.. option:: --help
 
    show a help message and exit
 
-.. option:: -q, --quiet
+.. option:: -q
+.. option:: --quiet
 
    produce less console output
 
-.. option:: -v, --verbose
+.. option:: -v
+.. option:: --verbose
 
    produce more console output
 
-.. option:: -l LOGFILE, --log-file=LOGFILE
+.. option:: -l LOGFILE
+.. option:: --log-file=LOGFILE
 
    log messages to the specified file
 
-.. option:: -D, --debug
+.. option:: -D
+.. option:: --debug
 
    enables debug mode (runs under PDB)
 
-.. option:: -t, --templates
+.. option:: -t
+.. option:: --templates
 
    output substitution templates use with rasextract ``--title`` and ``--output``
 
-.. option:: -r, --ranges
+.. option:: -r
+.. option:: --ranges
 
    read each channel in the file and output its range of values
 

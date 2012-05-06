@@ -27,23 +27,28 @@ The :program:`rasextract` utility has several options:
 
    show program's version number and exit
 
-.. option:: -h, --help
+.. option:: -h
+.. option:: --help
 
    show this help message and exit
 
-.. option:: -q, --quiet
+.. option:: -q
+.. option:: --quiet
 
    produce less console output
 
-.. option:: -v, --verbose
+.. option:: -v
+.. option:: --verbose
 
    produce more console output
 
-.. option:: -l LOGFILE, --log-file=LOGFILE
+.. option:: -l LOGFILE
+.. option:: --log-file=LOGFILE
 
    log messages to the specified file
 
-.. option:: -D, --debug
+.. option:: -D
+.. option:: --debug
 
    enables debug mode (runs under PDB)
 
@@ -59,49 +64,59 @@ The :program:`rasextract` utility has several options:
 
    list the available interpolation algorithms
 
-.. option:: -a, --axes
+.. option:: -a
+.. option:: --axes
 
    draw the coordinate axes in the output
 
-.. option:: -b, --color-bar
+.. option:: -b
+.. option:: --color-bar
 
    draw a color-bar showing the range of the color-map to the right of the
    output
 
-.. option:: -H, --histogram
+.. option:: -H
+.. option:: --histogram
 
    draw a histogram of the channel values below the output
 
-.. option:: -c CMAP, --colormap=CMAP
+.. option:: -c CMAP
+.. option:: --colormap=CMAP
 
    the colormap to use in output (e.g. gray, jet, hot); see
    :option:`--help-colormaps` for listing
 
-.. option:: -p PERCENTILE, --percentile=PERCENTILE
+.. option:: -p PERCENTILE
+.. option:: --percentile=PERCENTILE
 
    clip values in the output image to the specified percentile
 
-.. option:: -C CROP, --crop=CROP
+.. option:: -C CROP
+.. option:: --crop=CROP
 
    crop the input data by top,left,bottom,right points
 
-.. option:: -i INTERPOLATION, --interpolation=INTERPOLATION
+.. option:: -i INTERPOLATION
+.. option:: --interpolation=INTERPOLATION
 
    force the use of the specified interpolation algorithm; see
    :option:`--help-interpolations` for listing
 
-.. option:: -t TITLE, --title=TITLE
+.. option:: -t TITLE
+.. option:: --title=TITLE
 
    specify the template used to display a title at the top of the output;
    supports ``{variables}`` produced by :option:`rasinfo -p`
 
-.. option:: -o OUTPUT, --output=OUTPUT
+.. option:: -o OUTPUT
+.. option:: --output=OUTPUT
 
    specify the template used to generate the output filenames; supports
    ``{variables}``, see :option:`--help-formats` for supported file formats. Default:
    ``{filename_root}_{channel:02d}_{channel_name}.png``
 
-.. option:: -e, --empty
+.. option:: -e
+.. option:: --empty
 
    if specified, empty channels in the output (by default empty channels are
    ignored)
