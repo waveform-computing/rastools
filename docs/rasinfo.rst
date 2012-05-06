@@ -2,9 +2,6 @@
 rasinfo
 =======
 
-.. toctree::
-   :maxdepth: 2
-
 This utility accepts a source RAS file from QSCAN. It extracts and prints the
 information from the RAS file's header. If the optional channels definition
 file is also specified, then channels will be named in the output as they would
@@ -13,7 +10,9 @@ be with rasextract. The available command line options are listed below.
 Synopsis
 ========
 
-Usage: ``rasinfo [options] ras-file [channels-file]``
+Usage::
+
+  $ rasinfo [options] ras-file [channels-file]
 
 Options:
 

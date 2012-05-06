@@ -2,22 +2,24 @@
 rasextract
 ==========
 
-.. toctree::
-   :maxdepth: 2
-
 This utility accepts a QSCAN RAS file and an optional channel definition file.
 For each channel listed in the latter, an image is produced from the
 corresponding channel in the RAS file. Various options are provided for
 customizing the output including percentile limiting, color-mapping, and
-drawing of axes and titles. The available command line options are listed
-below.
+drawing of axes and titles.
 
 Synopsis
 ========
 
-Usage: ``rasextract [options] ras-file [channel-file]``
+Usage::
 
-Options:
+  $ rasextract [options] data-file [channel-file]
+
+Where *data-file* is the file containing the channel data to extract as images
+and the optional *channel-file* defines the indices and names of the channels
+to extract. If the *channel-file* is omitted all channels are extracted.
+
+The :program:`rasextract` utility has several options:
 
 .. program:: rasextract
 
