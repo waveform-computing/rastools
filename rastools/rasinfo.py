@@ -25,7 +25,7 @@ import rastools.main
 from rastools.parsers import PARSERS
 
 class RasInfoUtility(rastools.main.Utility):
-    """%prog [options] ras-file [channels-file]
+    """%prog [options] data-file [channels-file]
 
     This utility accepts a source RAS file from QSCAN. It extracts and prints
     the information from the RAS file's header. If the optional channels

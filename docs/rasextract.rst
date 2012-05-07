@@ -17,7 +17,8 @@ Usage::
 
 Where *data-file* is the file containing the channel data to extract as images
 and the optional *channel-file* defines the indices and names of the channels
-to extract. If the *channel-file* is omitted all channels are extracted.
+to extract. If the *channel-file* is omitted all channels are extracted and
+channels in .RAS files will be unnamed.
 
 The :program:`rasextract` utility has several options:
 
@@ -89,12 +90,19 @@ The :program:`rasextract` utility has several options:
 .. option:: -p PERCENTILE
 .. option:: --percentile=PERCENTILE
 
-   clip values in the output image to the specified percentile
+   clip values in the output image to the specified low,high percentile range
+   (mutually exclusive with :option:`--range`)
+
+.. option:: -r RANGE
+.. option:: --range=RANGE
+
+   clip values in the output image to the specified low,high count range
+   (mutually exclusive with :option:`--percentile`)
 
 .. option:: -C CROP
 .. option:: --crop=CROP
 
-   crop the input data by top,left,bottom,right points
+   crop the input data by left,top,right,bottom points
 
 .. option:: -i INTERPOLATION
 .. option:: --interpolation=INTERPOLATION
@@ -115,23 +123,17 @@ The :program:`rasextract` utility has several options:
    ``{variables}``, see :option:`--help-formats` for supported file formats. Default:
    ``{filename_root}_{channel:02d}_{channel_name}.png``
 
+.. option:: -m
+.. option:: --multi
+
+   if specified, produce a single output file with multiple layers or pages,
+   one per channel (only available with certain formats)
+
 .. option:: -e
 .. option:: --empty
 
    if specified, empty channels in the output (by default empty channels are
    ignored)
-
-.. option:: --one-pdf
-
-   if specified, a single PDF file will be produced with one page per image;
-   the output template must end with .pdf and must not contain channel variable
-   references
-
-.. option:: --one-xcf
-
-   if specified, a single XCF file will be produced with one layer per image;
-   the output template must end with .xcf and must not contain channel variable
-   references
 
 Examples
 ========
@@ -295,8 +297,13 @@ Quite complex titles can be achieved with this syntax. For example::
 
 Will produce titles like this within the image:
 
+.. centered::
    JAN12_CHINAFISH_LZ - Channel 6 (ES)
+
+.. centered::
    Tuesday, 17 Jan 2012
+
+.. centered::
    99th Percentile
 
 Note that the backslash-n (\n) escape sequence was used to generate line-breaks within the template.

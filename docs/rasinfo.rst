@@ -12,9 +12,13 @@ Synopsis
 
 Usage::
 
-  $ rasinfo [options] ras-file [channels-file]
+  $ rasinfo [options] data-file [channels-file]
 
-Options:
+Where *data-file* is the file you wish to extract header data from and the
+optional *channel-file* defines the indices and names of the channels. If the
+*channel-file* is omitted channels in .RAS files will be unnamed.
+
+The :program:`rasinfo` utility has several options:
 
 .. program:: rasinfo
 
@@ -50,7 +54,8 @@ Options:
 .. option:: -t
 .. option:: --templates
 
-   output substitution templates use with rasextract ``--title`` and ``--output``
+   output substitution templates use with :option:`rasextract --title` and
+   :option:`rasextract --output`
 
 .. option:: -r
 .. option:: --ranges
@@ -117,8 +122,8 @@ Substitution Templates
 ----------------------
 
 The :option:`--templates` option causes rasinfo to output the same data but in
-a form suitable for use as substitution templates in :option:`rasextract
---title` and :option:`rasextract --output` options::
+a form suitable for use as substitution templates in :option:`rasextract --title`
+and :option:`rasextract --output` options::
 
     $ rasinfo --templates JAN12_CHINAFISH_LZ_003.RAS
     {rasfile}=JAN12_CHINAFISH_LZ_003.RAS
