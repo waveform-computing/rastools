@@ -10,6 +10,17 @@ into images. Various simple manipulations (cropping, percentiles, histograms,
 color-maps) are supported. Most tools are command line based, but a Qt-based
 GUI is also included.
 
+
+.. only:: html
+
+   Download
+   ========
+
+   You can find pre-built binary packages for several platforms available from
+   the `rastools development site
+   <http://www.waveform.org.uk/trac/rastools/wiki/Download>`_.
+
+
 Contents
 ========
 

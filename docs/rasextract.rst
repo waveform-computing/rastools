@@ -306,7 +306,7 @@ Will produce titles like this within the image:
 .. centered::
    99th Percentile
 
-Note that the backslash-n (\n) escape sequence was used to generate line-breaks within the template.
+Note that the backslash-n (\\n) escape sequence was used to generate line-breaks within the template.
 
 Advanced Usage
 --------------
