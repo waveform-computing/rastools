@@ -4,31 +4,13 @@
 rastools
 ========
 
-Tools for converting scans from the SSRL to images.
-
 rastools is a small suite of utilities for converting data files obtained from
 SSRL (Stanford Synchrotron Radiation Lightsource) scans (.RAS and .DAT files)
 into images. Various simple manipulations (cropping, percentiles, histograms,
 color-maps) are supported. Most tools are command line based, but a Qt-based
 GUI is also included.
 
-
-License
-=======
-
-This file is part of rastools.
-
-rastools is free software: you can redistribute it and/or modify it under the
-terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
-
-rastools is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-rastools.  If not, see <http://www.gnu.org/licenses/>.
+This package is also available in .deb form from ppa://waveform/ppa
 
 
 Pre-requisites
@@ -73,3 +55,22 @@ The set of tools included is:
 
 Further information on the tools can be found at the `rastools wiki
 <http://www.waveform.org.uk/trac/rastools/wiki>`_.
+
+
+License
+=======
+
+This file is part of rastools.
+
+rastools is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+rastools is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+rastools.  If not, see <http://www.gnu.org/licenses/>.
+

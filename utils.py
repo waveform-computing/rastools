@@ -71,34 +71,3 @@ def description(filename):
                 break
     return ' '.join(line.strip() for line in result)
 
-def long_description(filename):
-    """Returns the second non-heading paragraph from filename"""
-    state = 'before_header'
-    result = []
-    # We use a simple DFA to parse the file which looks for blank, non-blank,
-    # and heading-delimiter lines.
-    with open(filename) as f:
-        for line in f:
-            line = line.rstrip()
-            # Manipulate state based on line content
-            if line == '':
-                if state == 'in_para1':
-                    state = 'before_para2'
-                elif state == 'in_para2':
-                    state = 'after_para'
-            elif line == '=' * len(line):
-                if state == 'before_header':
-                    state = 'in_header'
-                elif state == 'in_header':
-                    state = 'before_para1'
-            else:
-                if state == 'before_para1':
-                    state = 'in_para1'
-                elif state == 'before_para2':
-                    state = 'in_para2'
-            # Carry out state actions
-            if state == 'in_para2':
-                result.append(line)
-            elif state == 'after_para':
-                break
-    return ' '.join(line.strip() for line in result)

@@ -19,8 +19,7 @@
 
 from distribute_setup import use_setuptools
 use_setuptools()
-from utils import (
-    description, get_version, long_description, require_python)
+from utils import description, get_version, require_python
 from setuptools import setup, find_packages
 
 require_python(0x020500f0)
@@ -58,8 +57,8 @@ def main():
     setup(
         name                 = 'rastools',
         version              = get_version('rastools/main.py'),
-        description          = description('README.txt'),
-        long_description     = long_description('README.txt'),
+        description          = 'Tools for converting SSRL scans into images',
+        long_description     = description('README.txt'),
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',

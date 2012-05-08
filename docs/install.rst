@@ -49,7 +49,7 @@ Ubuntu Linux
 
 For Ubuntu Linux it is simplest to install from the PPA as follows::
 
-    $ sudo add-apt-repository ppa://waveform/
+    $ sudo add-apt-repository ppa://waveform/ppa
     $ sudo apt-get update
     $ sudo apt-get install rastools
 
