@@ -1,0 +1,3 @@
+prune debian
+prune docs
+exclude Makefile

@@ -1,0 +1,893 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MDIWindow</class>
+ <widget class="QWidget" name="MDIWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>599</width>
+    <height>951</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QScrollArea" name="scroll_area">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>441</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>579</width>
+         <height>931</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="channel_label">
+          <property name="text">
+           <string>Channel</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>channel_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="channel_combo"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="colormap_label">
+          <property name="text">
+           <string>Color map</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>colormap_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="colormap_layout">
+          <item>
+           <widget class="QComboBox" name="colormap_combo"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="reverse_check">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Reverse</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="interpolation_label">
+          <property name="text">
+           <string>Interpolation</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>interpolation_combo</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QComboBox" name="interpolation_combo"/>
+        </item>
+        <item row="3" column="0" colspan="2">
+         <widget class="Line" name="percentile_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="percentile_from_label">
+          <property name="text">
+           <string>Percentile</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>percentile_from_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <layout class="QGridLayout" name="percentile_layout">
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="percentile_from_spinbox">
+            <property name="maximum">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="percentile_to_spinbox">
+            <property name="maximum">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QSlider" name="percentile_to_slider">
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="pageStep">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>10000</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QSlider" name="percentile_from_slider">
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="pageStep">
+             <number>100</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="range_from_label">
+          <property name="text">
+           <string>Value</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>value_from_slider</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <layout class="QGridLayout" name="value_layout">
+          <item row="0" column="3">
+           <widget class="QDoubleSpinBox" name="value_from_spinbox"/>
+          </item>
+          <item row="1" column="3">
+           <widget class="QDoubleSpinBox" name="value_to_spinbox"/>
+          </item>
+          <item row="0" column="0" colspan="3">
+           <widget class="QSlider" name="value_from_slider">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="QSlider" name="value_to_slider">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="value_to_label">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="value_from_label">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item row="6" column="0" colspan="2">
+         <widget class="Line" name="crop_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="crop_label">
+          <property name="text">
+           <string>Crop</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>crop_top_spinbox</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <layout class="QGridLayout" name="crop_layout">
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="crop_top_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="crop_bottom_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QSpinBox" name="crop_right_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QSpinBox" name="crop_left_spinbox">
+            <property name="maximum">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="crop_reset_button">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="8" column="0" colspan="2">
+         <widget class="Line" name="title_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QLabel" name="title_label">
+          <property name="text">
+           <string>Title</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="1">
+         <layout class="QHBoxLayout" name="title_layout_1">
+          <item>
+           <widget class="QPlainTextEdit" name="title_edit">
+            <property name="tabChangesFocus">
+             <bool>true</bool>
+            </property>
+            <property name="lineWrapMode">
+             <enum>QPlainTextEdit::NoWrap</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="title_layout_2">
+            <item>
+             <widget class="QPushButton" name="default_title_button">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Default</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="clear_title_button">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Clear</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="title_info_button">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Info...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item row="10" column="1">
+         <widget class="QLabel" name="title_error_label">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Title Error</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="0">
+         <widget class="QLabel" name="axes_label">
+          <property name="text">
+           <string>Axes</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="1">
+         <widget class="QCheckBox" name="axes_check">
+          <property name="text">
+           <string>Visible</string>
+          </property>
+         </widget>
+        </item>
+        <item row="13" column="0">
+         <widget class="QLabel" name="x_label_label">
+          <property name="text">
+           <string>X label</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="13" column="1">
+         <widget class="QLineEdit" name="x_label_edit"/>
+        </item>
+        <item row="14" column="0">
+         <widget class="QLabel" name="y_label_label">
+          <property name="text">
+           <string>Y label</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="1">
+         <widget class="QLineEdit" name="y_label_edit"/>
+        </item>
+        <item row="15" column="0">
+         <widget class="QLabel" name="size_label">
+          <property name="text">
+           <string>Size</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="x_size_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="x_size_label">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="y_size_label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Y:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="y_size_label">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="16" column="0">
+         <widget class="QLabel" name="offset_label">
+          <property name="text">
+           <string>Offset</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="1">
+         <layout class="QHBoxLayout" name="offset_layout">
+          <item>
+           <widget class="QLabel" name="x_offset_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="x_offset_spinbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-1000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="y_offset_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Y:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="y_offset_spinbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-1000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="offset_locked_check">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Lock</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="17" column="0">
+         <widget class="QLabel" name="scale_label">
+          <property name="text">
+           <string>Scale</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="17" column="1">
+         <layout class="QHBoxLayout" name="scale_layout">
+          <item>
+           <widget class="QLabel" name="x_scale_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>X:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="x_scale_spinbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>0.001000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="y_scale_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Y:</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="y_scale_spinbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>0.001000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="scale_locked_check">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Lock</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="18" column="0" colspan="2">
+         <widget class="Line" name="display_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="19" column="0">
+         <widget class="QLabel" name="display_label">
+          <property name="text">
+           <string>Display</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="19" column="1">
+         <layout class="QVBoxLayout" name="display_layout">
+          <item>
+           <layout class="QHBoxLayout" name="grid_layout">
+            <item>
+             <widget class="QCheckBox" name="grid_check">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Grid</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="grid_style_combo"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="histogram_layout">
+            <item>
+             <widget class="QCheckBox" name="histogram_check">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Histogram</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="histogram_bins_spinbox">
+              <property name="minimum">
+               <number>2</number>
+              </property>
+              <property name="maximum">
+               <number>10000</number>
+              </property>
+              <property name="value">
+               <number>32</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="bins_label">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>bins</string>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::PlainText</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="colorbar_check">
+            <property name="text">
+             <string>Color-bar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="11" column="0" colspan="2">
+         <widget class="Line" name="axes_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+       <zorder>channel_label</zorder>
+       <zorder>channel_combo</zorder>
+       <zorder>colormap_label</zorder>
+       <zorder>interpolation_label</zorder>
+       <zorder>interpolation_combo</zorder>
+       <zorder>percentile_line</zorder>
+       <zorder>percentile_from_label</zorder>
+       <zorder>range_from_label</zorder>
+       <zorder>crop_line</zorder>
+       <zorder>crop_label</zorder>
+       <zorder>title_line</zorder>
+       <zorder>title_label</zorder>
+       <zorder>axes_label</zorder>
+       <zorder>axes_check</zorder>
+       <zorder>x_label_label</zorder>
+       <zorder>x_label_edit</zorder>
+       <zorder>y_label_label</zorder>
+       <zorder>y_label_edit</zorder>
+       <zorder>size_label</zorder>
+       <zorder>display_line</zorder>
+       <zorder>title_error_label</zorder>
+       <zorder></zorder>
+       <zorder></zorder>
+       <zorder>scale_label</zorder>
+       <zorder>offset_label</zorder>
+       <zorder>display_label</zorder>
+       <zorder>axes_line</zorder>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>scroll_area</tabstop>
+  <tabstop>channel_combo</tabstop>
+  <tabstop>colormap_combo</tabstop>
+  <tabstop>reverse_check</tabstop>
+  <tabstop>interpolation_combo</tabstop>
+  <tabstop>percentile_from_slider</tabstop>
+  <tabstop>percentile_from_spinbox</tabstop>
+  <tabstop>percentile_to_slider</tabstop>
+  <tabstop>percentile_to_spinbox</tabstop>
+  <tabstop>value_from_slider</tabstop>
+  <tabstop>value_from_spinbox</tabstop>
+  <tabstop>value_to_slider</tabstop>
+  <tabstop>value_to_spinbox</tabstop>
+  <tabstop>crop_top_spinbox</tabstop>
+  <tabstop>crop_left_spinbox</tabstop>
+  <tabstop>crop_reset_button</tabstop>
+  <tabstop>crop_right_spinbox</tabstop>
+  <tabstop>crop_bottom_spinbox</tabstop>
+  <tabstop>title_edit</tabstop>
+  <tabstop>default_title_button</tabstop>
+  <tabstop>clear_title_button</tabstop>
+  <tabstop>title_info_button</tabstop>
+  <tabstop>axes_check</tabstop>
+  <tabstop>x_label_edit</tabstop>
+  <tabstop>y_label_edit</tabstop>
+  <tabstop>x_offset_spinbox</tabstop>
+  <tabstop>y_offset_spinbox</tabstop>
+  <tabstop>offset_locked_check</tabstop>
+  <tabstop>x_scale_spinbox</tabstop>
+  <tabstop>y_scale_spinbox</tabstop>
+  <tabstop>scale_locked_check</tabstop>
+  <tabstop>grid_check</tabstop>
+  <tabstop>grid_style_combo</tabstop>
+  <tabstop>histogram_check</tabstop>
+  <tabstop>histogram_bins_spinbox</tabstop>
+  <tabstop>colorbar_check</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

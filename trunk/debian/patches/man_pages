@@ -1,0 +1,845 @@
+Description: Add man-pages to source
+ This patch adds the man-pages generated from the sphinx docs to the
+ original source
+Author: Dave Hughes <dave@waveform.org.uk>
+Last-Update: 2012-05-08
+
+--- /dev/null
++++ rastools-0.1/build/sphinx/man/rasextract.1
+@@ -0,0 +1,428 @@
++.TH "RASEXTRACT" "1" "May 08, 2012" "0.1" "rastools"
++.SH NAME
++rasextract \- rasextract utility
++.
++.nr rst2man-indent-level 0
++.
++.de1 rstReportMargin
++\\$1 \\n[an-margin]
++level \\n[rst2man-indent-level]
++level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
++-
++\\n[rst2man-indent0]
++\\n[rst2man-indent1]
++\\n[rst2man-indent2]
++..
++.de1 INDENT
++.\" .rstReportMargin pre:
++. RS \\$1
++. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
++. nr rst2man-indent-level +1
++.\" .rstReportMargin post:
++..
++.de UNINDENT
++. RE
++.\" indent \\n[an-margin]
++.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.nr rst2man-indent-level -1
++.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
++..
++.\" Man page generated from reStructeredText.
++.
++.sp
++This utility accepts a QSCAN RAS file and an optional channel definition file.
++For each channel listed in the latter, an image is produced from the
++corresponding channel in the RAS file. Various options are provided for
++customizing the output including percentile limiting, color\-mapping, and
++drawing of axes and titles.
++.SH SYNOPSIS
++.sp
++Usage:
++.sp
++.nf
++.ft C
++$ rasextract [options] data\-file [channel\-file]
++.ft P
++.fi
++.sp
++Where \fIdata\-file\fP is the file containing the channel data to extract as images
++and the optional \fIchannel\-file\fP defines the indices and names of the channels
++to extract. If the \fIchannel\-file\fP is omitted all channels are extracted and
++channels in .RAS files will be unnamed.
++.sp
++The \fBrasextract\fP utility has several options:
++.INDENT 0.0
++.TP
++.B \-\-version
++show program\(aqs version number and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-h, \-\-help
++show this help message and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-q, \-\-quiet
++produce less console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-v, \-\-verbose
++produce more console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-l LOGFILE, \-\-log\-file=LOGFILE
++log messages to the specified file
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-P, \-\-pdb
++run under PDB (debug mode)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-\-help\-colormaps
++list the available colormaps
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-\-help\-formats
++list the available file output formats
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-\-help\-interpolations
++list the available interpolation algorithms
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-a, \-\-axes
++draw the coordinate axes in the output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-b, \-\-color\-bar
++draw a color\-bar showing the range of the color\-map to the right of the
++output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-H, \-\-histogram
++draw a histogram of the channel values below the output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-c CMAP, \-\-colormap=CMAP
++the colormap to use in output (e.g. gray, jet, hot); see
++\fI\%--help-colormaps\fP for listing
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-p PERCENTILE, \-\-percentile=PERCENTILE
++clip values in the output image to the specified low,high percentile range
++(mutually exclusive with \fI\%-r\fP)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-r RANGE, \-\-range=RANGE
++clip values in the output image to the specified low,high count range
++(mutually exclusive with \fI\%-p\fP)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-C CROP, \-\-crop=CROP
++crop the input data by left,top,right,bottom points
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-i INTERPOLATION, \-\-interpolation=INTERPOLATION
++force the use of the specified interpolation algorithm; see
++\fI\%--help-interpolations\fP for listing
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-t TITLE, \-\-title=TITLE
++specify the template used to display a title at the top of the output;
++supports \fB{variables}\fP produced by \fIrasinfo \-t\fP
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-o OUTPUT, \-\-output=OUTPUT
++specify the template used to generate the output filenames; supports
++\fB{variables}\fP, see \fI\%--help-formats\fP for supported file formats. Default:
++\fB{filename_root}_{channel:02d}_{channel_name}.png\fP
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-m, \-\-multi
++if specified, produce a single output file with multiple layers or pages,
++one per channel (only available with certain formats)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-e, \-\-empty
++if specified, empty channels in the output (by default empty channels are
++ignored)
++.UNINDENT
++.SH EXAMPLES
++.SS Basic Usage
++.sp
++The most basic usage of rasextract is to specify only the RAS file from which
++to extract images. This will extract the images in the default PNG format, with
++the default \(aqgray\(aq colormap, no cropping, no axes, no histogram, no colorbar,
++and no title. Furthermore all channels (except empty ones) will be extracted,
++and will be anonymous (since no channels file has been specified to name
++them):
++.sp
++.nf
++.ft C
++$ rasextract JAN12_CHINAFISH_LZ_003.RAS
++Writing channel 0 () to JAN12_CHINAFISH_LZ_00_.png
++Channel 0 () is empty, skipping
++Writing channel 1 () to JAN12_CHINAFISH_LZ_01_.png
++Writing channel 2 () to JAN12_CHINAFISH_LZ_02_.png
++Writing channel 3 () to JAN12_CHINAFISH_LZ_03_.png
++Writing channel 4 () to JAN12_CHINAFISH_LZ_04_.png
++Writing channel 5 () to JAN12_CHINAFISH_LZ_05_.png
++Writing channel 6 () to JAN12_CHINAFISH_LZ_06_.png
++Channel 6 () has no values below 30
++Writing channel 7 () to JAN12_CHINAFISH_LZ_07_.png
++Writing channel 8 () to JAN12_CHINAFISH_LZ_08_.png
++Writing channel 9 () to JAN12_CHINAFISH_LZ_09_.png
++Writing channel 10 () to JAN12_CHINAFISH_LZ_10_.png
++Writing channel 11 () to JAN12_CHINAFISH_LZ_11_.png
++Writing channel 12 () to JAN12_CHINAFISH_LZ_12_.png
++Writing channel 13 () to JAN12_CHINAFISH_LZ_13_.png
++Channel 13 () has no values below 62
++Writing channel 14 () to JAN12_CHINAFISH_LZ_14_.png
++Writing channel 15 () to JAN12_CHINAFISH_LZ_15_.png
++Channel 15 () has no values below 1522
++.ft P
++.fi
++.sp
++The following command line was used to extract 14 channels of data from a RAS
++file, crop the channels by 15 elements at the left and right, limit the data to
++the 95th percentile, and generate output images including axes with the
++standard MATLAB "jet" colormap:
++.sp
++.nf
++.ft C
++$ rasextract \-a \-C 0,15,0,15 \-c jet \-p 95 JAN12_CHINAFISH_HZ_001.RAS channels.txt
++File contains 16 channels, extracting channels 1,2,3,4,5,6,7,8,9,10,11,12,13,14
++Writing channel 1 (Cu) to JAN12_CHINAFISH_HZ_01_Cu.png
++Writing channel 2 (Zn) to JAN12_CHINAFISH_HZ_02_Zn.png
++Writing channel 3 (Pbli) to JAN12_CHINAFISH_HZ_03_Pbli.png
++Writing channel 4 (Pbla) to JAN12_CHINAFISH_HZ_04_Pbla.png
++Writing channel 5 (Pblb) to JAN12_CHINAFISH_HZ_05_Pblb.png
++Writing channel 6 (Ca) to JAN12_CHINAFISH_HZ_06_Ca.png
++Writing channel 7 (Br) to JAN12_CHINAFISH_HZ_07_Br.png
++Writing channel 8 (Mn) to JAN12_CHINAFISH_HZ_08_Mn.png
++Writing channel 9 (Fe) to JAN12_CHINAFISH_HZ_09_Fe.png
++Writing channel 10 (Tika) to JAN12_CHINAFISH_HZ_10_Tika.png
++Writing channel 11 (Tikb) to JAN12_CHINAFISH_HZ_11_Tikb.png
++Writing channel 12 (ES) to JAN12_CHINAFISH_HZ_12_ES.png
++Writing channel 13 (ICR) to JAN12_CHINAFISH_HZ_13_ICR.png
++Writing channel 14 (Ni) to JAN12_CHINAFISH_HZ_14_Ni.png
++.ft P
++.fi
++.SS Help Lists
++.sp
++The various color maps available can be listed with the
++\fI\%--help-colormaps\fP option, but a more visually useful listing of the
++maps can be found on the matplotlib site. As can be seen above other help
++options also exist to, for example, list the available image formats:
++.sp
++.nf
++.ft C
++$ rasextract \-\-help\-formats
++The following file formats are available:
++
++\&.bmp
++\&.eps
++\&.gif
++\&.jpeg
++\&.jpg
++\&.pdf
++\&.png
++\&.ps
++\&.svg
++\&.svgz
++\&.tif
++\&.tiff
++\&.xcf
++.ft P
++.fi
++.sp
++Note that, depending on your installation and the availability of certain
++external utilities (like \fI\%GIMP\fP) certain formats may not
++be available.
++.SS Substitution Templates
++.sp
++The \fI\%-o\fP and \fI\%-t\fP options can be used to specify output
++filenames and titles to write into the images, respectively. Both options
++accept a number of "templates" which will be substituted for certain variables
++at runtime. The templates which are available can be discovered by running the
++rasinfo tool against your .RAS file (and optional channels definition) with the
++\fIrasinfo \-t\fP option. For example:
++.sp
++.nf
++.ft C
++$ rasinfo \-t JAN12_CHINAFISH_LZ_003.RAS
++{rasfile}=JAN12_CHINAFISH_LZ_003.RAS
++{filename}=JAN12_CHINAFISH_LZ_003.RAS
++{filename_root}=JAN12_CHINAFISH_LZ
++{version_name}=Raster Scan V.0.1
++{version_number}=1
++{pid}=0
++{x_motor}=HORZ
++{y_motor}=VERT
++{region_filename}=TEST.RGN
++{start_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:34:08
++{stop_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:43:07
++{channel_count}=16
++{point_count}=240
++{raster_count}=301
++{count_time}=0.004690
++{sweep_count}=1
++{ascii_output}=1
++{pixels_per_point}=1
++{scan_direction}=2
++{scan_type}=1
++{current_x_direction}=\-1
++{run_number}=3
++
++{channel:%02d}=00
++{channel_name}=
++{channel_enabled}=True
++
++{channel:%02d}=01
++{channel_name}=
++{channel_enabled}=True
++\&...
++.ft P
++.fi
++.sp
++The text surrounded by curly\-braces represent substitution templates which can
++be used in rasextract\(aqs \fI\%-t\fP and \fI\%-o\fP options. For example, to
++create TIFF output files consisting of the scan date and channel number
++formatted as a two\-digit decimal with leading zeros one could use the following
++command line:
++.sp
++.nf
++.ft C
++$ rasextract \-o "{start_time:%Y\-%m\-%d}_{channel:02d}.tiff" JAN12_CHINAFISH_LZ_003.RAS channels.txt
++Writing channel 1 (Al) to 2012\-01\-17_01.tiff
++Writing channel 2 (Si) to 2012\-01\-17_02.tiff
++Writing channel 3 (P) to 2012\-01\-17_03.tiff
++Writing channel 4 (S) to 2012\-01\-17_04.tiff
++Writing channel 5 (Cl) to 2012\-01\-17_05.tiff
++Writing channel 6 (ES) to 2012\-01\-17_06.tiff
++Writing channel 7 (Ca) to 2012\-01\-17_07.tiff
++Writing channel 9 (HHH) to 2012\-01\-17_09.tiff
++Writing channel 10 (Cr) to 2012\-01\-17_10.tiff
++.ft P
++.fi
++.sp
++In addition to the templates available from the RAS header, other templates are
++available which are derived from the rasextract command line. These are named
++after the command line parameter they represent and include:
++.INDENT 0.0
++.IP \(bu 2
++\fB{percentile}\fP \- The percentile limit applied to the data
++.IP \(bu 2
++\fB{interpolation}\fP \- The interpolation algorithm used when rescaling the image
++.IP \(bu 2
++\fB{crop}\fP \- The crop coordinates specified
++.IP \(bu 2
++\fB{colormap}\fP \- The colormap selected for the image
++.IP \(bu 2
++\fB{output}\fP \- The output filename for the image (only available for use with \fB\-\-title\fP)
++.UNINDENT
++.sp
++Quite complex titles can be achieved with this syntax. For example:
++.sp
++.nf
++.ft C
++{filename_root} \- Channel {channel} ({channel_name})\en{start_time:%A, %d %b %Y}\en{percentile:g}th Percentile
++.ft P
++.fi
++.sp
++Will produce titles like this within the image:
++.nf
++JAN12_CHINAFISH_LZ \- Channel 6 (ES)
++Tuesday, 17 Jan 2012
++99th Percentile
++.fi
++.sp
++.sp
++Note that the backslash\-n (\en) escape sequence was used to generate line\-breaks within the template.
++.SS Advanced Usage
++.sp
++When combined with some simplistic bash scripting (under Linux) quite complex
++sequences can be achieved. For example, if one wished to extract a set of
++channels from a RAS file into TIFF files, rendering each at a range of
++different percentiles, with axes and a title reflecting the channel and the
++percentile, one could use the following command line:
++.sp
++.nf
++.ft C
++$ for pct in 100 99.9 99 95 90
++> do rasextract \-p $pct \-a \-o "fish_C{channel:02d}_P{percentile}.tiff" \-t "Channel {channel} \- {channel_name}\en{percentile:g}th Percentile" JAN12_CHINAFISH_LZ_003.RAS channels.txt
++> done
++Writing channel 1 (Al) to fish_C01_P100.0.tiff
++Writing channel 2 (Si) to fish_C02_P100.0.tiff
++Writing channel 3 (P) to fish_C03_P100.0.tiff
++Writing channel 4 (S) to fish_C04_P100.0.tiff
++Writing channel 5 (Cl) to fish_C05_P100.0.tiff
++Writing channel 6 (ES) to fish_C06_P100.0.tiff
++Writing channel 7 (Ca) to fish_C07_P100.0.tiff
++Writing channel 9 (HHH) to fish_C09_P100.0.tiff
++Writing channel 10 (Cr) to fish_C10_P100.0.tiff
++Writing channel 1 (Al) to fish_C01_P99.9.tiff
++Writing channel 2 (Si) to fish_C02_P99.9.tiff
++Writing channel 3 (P) to fish_C03_P99.9.tiff
++Writing channel 4 (S) to fish_C04_P99.9.tiff
++Writing channel 5 (Cl) to fish_C05_P99.9.tiff
++Writing channel 6 (ES) to fish_C06_P99.9.tiff
++Writing channel 7 (Ca) to fish_C07_P99.9.tiff
++Writing channel 9 (HHH) to fish_C09_P99.9.tiff
++Writing channel 10 (Cr) to fish_C10_P99.9.tiff
++Writing channel 1 (Al) to fish_C01_P99.0.tiff
++Writing channel 2 (Si) to fish_C02_P99.0.tiff
++Writing channel 3 (P) to fish_C03_P99.0.tiff
++Writing channel 4 (S) to fish_C04_P99.0.tiff
++Writing channel 5 (Cl) to fish_C05_P99.0.tiff
++Writing channel 6 (ES) to fish_C06_P99.0.tiff
++Writing channel 7 (Ca) to fish_C07_P99.0.tiff
++Writing channel 9 (HHH) to fish_C09_P99.0.tiff
++Writing channel 10 (Cr) to fish_C10_P99.0.tiff
++Writing channel 1 (Al) to fish_C01_P95.0.tiff
++Writing channel 2 (Si) to fish_C02_P95.0.tiff
++Writing channel 3 (P) to fish_C03_P95.0.tiff
++Writing channel 4 (S) to fish_C04_P95.0.tiff
++Writing channel 5 (Cl) to fish_C05_P95.0.tiff
++Writing channel 6 (ES) to fish_C06_P95.0.tiff
++Writing channel 7 (Ca) to fish_C07_P95.0.tiff
++Writing channel 9 (HHH) to fish_C09_P95.0.tiff
++Writing channel 10 (Cr) to fish_C10_P95.0.tiff
++Writing channel 1 (Al) to fish_C01_P90.0.tiff
++Writing channel 2 (Si) to fish_C02_P90.0.tiff
++Writing channel 3 (P) to fish_C03_P90.0.tiff
++Writing channel 4 (S) to fish_C04_P90.0.tiff
++Writing channel 5 (Cl) to fish_C05_P90.0.tiff
++Writing channel 6 (ES) to fish_C06_P90.0.tiff
++Writing channel 7 (Ca) to fish_C07_P90.0.tiff
++Writing channel 9 (HHH) to fish_C09_P90.0.tiff
++Writing channel 10 (Cr) to fish_C10_P90.0.tiff
++.ft P
++.fi
++.SH AUTHOR
++Dave Hughes
++.SH COPYRIGHT
++2012, Dave Hughes
++.\" Generated by docutils manpage writer.
++.\" 
++.
+--- /dev/null
++++ rastools-0.1/build/sphinx/man/rasdump.1
+@@ -0,0 +1,164 @@
++.TH "RASDUMP" "1" "May 08, 2012" "0.1" "rastools"
++.SH NAME
++rasdump \- rasdump utility
++.
++.nr rst2man-indent-level 0
++.
++.de1 rstReportMargin
++\\$1 \\n[an-margin]
++level \\n[rst2man-indent-level]
++level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
++-
++\\n[rst2man-indent0]
++\\n[rst2man-indent1]
++\\n[rst2man-indent2]
++..
++.de1 INDENT
++.\" .rstReportMargin pre:
++. RS \\$1
++. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
++. nr rst2man-indent-level +1
++.\" .rstReportMargin post:
++..
++.de UNINDENT
++. RE
++.\" indent \\n[an-margin]
++.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.nr rst2man-indent-level -1
++.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
++..
++.\" Man page generated from reStructeredText.
++.
++.sp
++This utility accepts a QSCAN RAS file and an optional channel definition file.
++For each channel listed in the latter, a dump is produced of the corresponding
++channel in the RAS file. Various options are provided for customizing the
++output including percentile limiting, and output format.
++.SH SYNOPSIS
++.sp
++Usage:
++.sp
++.nf
++.ft C
++$ rasdump [options] data\-file [channels\-file]
++.ft P
++.fi
++.sp
++Where \fIdata\-file\fP is the file containing the channel data to dump and the
++optional \fIchannel\-file\fP defines the indices and names of the channels to dump.
++If the \fIchannel\-file\fP is omitted all channels are extracted and channels in
++.RAS files will be unnamed.
++.sp
++Options:
++.INDENT 0.0
++.TP
++.B \-\-version
++show program\(aqs version number and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-h, \-\-help
++show this help message and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-q, \-\-quiet
++produce less console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-v, \-\-verbose
++produce more console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-l LOGFILE, \-\-log\-file=LOGFILE
++log messages to the specified file
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-P, \-\-pdb
++run under PDB (debug mode)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-\-help\-formats
++list the available file output formats
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-p PERCENTILE, \-\-percentile=PERCENTILE
++clip values in the output image to the specified percentile
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-C CROP, \-\-crop=CROP
++crop the input data by top,left,bottom,right points
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-o OUTPUT, \-\-output=OUTPUT
++specify the template used to generate the output filenames; supports
++{variables}, see \-\-help\-formats for supported file formats. Default:
++{filename_root}_{channel:02d}_{channel_name}.csv
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-m, \-\-multi
++if specified, produce a single output file with multiple pages or sheets,
++one per channel (only available with certain formats)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-e, \-\-empty
++if specified, empty channels in the output (by default empty channels are
++ignored)
++.UNINDENT
++.SH EXAMPLES
++.SS Basic Usage
++.sp
++The most basic usage of rasdump is to specify only the RAS file from which to
++dump data. This will dump data in the default CSV format, one file per channel
++with no cropping and no percentile limiting. All channels (except empty ones)
++will be extracted, and will be anonymous (since no channels file has been
++specified to name them):
++.sp
++.nf
++.ft C
++$ rasdump JAN12_CHINAFISH_LZ_003.RAS
++Writing channel 0 () to JAN12_CHINAFISH_LZ_00_.csv
++Channel 0 () is empty, skipping
++Writing channel 1 () to JAN12_CHINAFISH_LZ_01_.csv
++Writing channel 2 () to JAN12_CHINAFISH_LZ_02_.csv
++Writing channel 3 () to JAN12_CHINAFISH_LZ_03_.csv
++Writing channel 4 () to JAN12_CHINAFISH_LZ_04_.csv
++Writing channel 5 () to JAN12_CHINAFISH_LZ_05_.csv
++Writing channel 6 () to JAN12_CHINAFISH_LZ_06_.csv
++Writing channel 7 () to JAN12_CHINAFISH_LZ_07_.csv
++Writing channel 8 () to JAN12_CHINAFISH_LZ_08_.csv
++Writing channel 9 () to JAN12_CHINAFISH_LZ_09_.csv
++Writing channel 10 () to JAN12_CHINAFISH_LZ_10_.csv
++Writing channel 11 () to JAN12_CHINAFISH_LZ_11_.csv
++Writing channel 12 () to JAN12_CHINAFISH_LZ_12_.csv
++Writing channel 13 () to JAN12_CHINAFISH_LZ_13_.csv
++Writing channel 14 () to JAN12_CHINAFISH_LZ_14_.csv
++Writing channel 15 () to JAN12_CHINAFISH_LZ_15_.csv
++.ft P
++.fi
++.SS Help Lists
++.sp
++XXX To be written
++.SS Substitution Templates
++.sp
++XXX To be written
++.SS Advanced Usage
++.sp
++XXX To be written
++.SH AUTHOR
++Dave Hughes
++.SH COPYRIGHT
++2012, Dave Hughes
++.\" Generated by docutils manpage writer.
++.\" 
++.
+--- /dev/null
++++ rastools-0.1/build/sphinx/man/rasinfo.1
+@@ -0,0 +1,238 @@
++.TH "RASINFO" "1" "May 08, 2012" "0.1" "rastools"
++.SH NAME
++rasinfo \- rasinfo utility
++.
++.nr rst2man-indent-level 0
++.
++.de1 rstReportMargin
++\\$1 \\n[an-margin]
++level \\n[rst2man-indent-level]
++level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
++-
++\\n[rst2man-indent0]
++\\n[rst2man-indent1]
++\\n[rst2man-indent2]
++..
++.de1 INDENT
++.\" .rstReportMargin pre:
++. RS \\$1
++. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
++. nr rst2man-indent-level +1
++.\" .rstReportMargin post:
++..
++.de UNINDENT
++. RE
++.\" indent \\n[an-margin]
++.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.nr rst2man-indent-level -1
++.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
++.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
++..
++.\" Man page generated from reStructeredText.
++.
++.sp
++This utility accepts a source RAS file from QSCAN. It extracts and prints the
++information from the RAS file\(aqs header. If the optional channels definition
++file is also specified, then channels will be named in the output as they would
++be with rasextract.
++.SH SYNOPSIS
++.sp
++Usage:
++.sp
++.nf
++.ft C
++$ rasinfo [options] data\-file [channels\-file]
++.ft P
++.fi
++.sp
++Where \fIdata\-file\fP is the file you wish to extract header data from and the
++optional \fIchannel\-file\fP defines the indices and names of the channels. If the
++\fIchannel\-file\fP is omitted channels in .RAS files will be unnamed.
++.sp
++The \fBrasinfo\fP utility has several options:
++.INDENT 0.0
++.TP
++.B \-\-version
++show program\(aqs version number and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-h, \-\-help
++show a help message and exit
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-q, \-\-quiet
++produce less console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-v, \-\-verbose
++produce more console output
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-l LOGFILE, \-\-log\-file=LOGFILE
++log messages to the specified file
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-P, \-\-pdb
++run under PDB (debug mode)
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-t, \-\-templates
++output substitution templates use with \fIrasextract \-\-title\fP and
++\fIrasextract \-\-output\fP
++.UNINDENT
++.INDENT 0.0
++.TP
++.B \-r, \-\-ranges
++read each channel in the file and output its range of values
++.UNINDENT
++.SH EXAMPLES
++.SS Basic Usage
++.sp
++The following is an example of basic usage of rasinfo, including
++\fI\%-r\fP switch to output channel count ranges:
++.sp
++.nf
++.ft C
++$ rasinfo \-r JAN12_AMNHBIRD_HZ_004.RAS
++File name:              JAN12_AMNHBIRD_HZ_004.RAS
++Original filename:      JAN12_AMNHBIRD_HZ_004.RAS
++Original filename root: JAN12_AMNHBIRD_HZ
++Version name:           Raster Scan V.0.1
++Version number:         1
++PID:                    0
++X\-Motor name:           HORZ
++Y\-Motor name:           VERT
++Region filename:        TEST.RGN
++Start time:             Tuesday, 17 January 2012, 07:06:05
++Stop time:              Tuesday, 17 January 2012, 13:00:33
++Channel count:          16
++Channel resolution:     3400 x 1301
++Count time:             0.003987
++Sweep count:            1
++Produce ASCII output:   1 (Yes)
++Pixels per point:       1
++Scan direction:         2 (+ve and \-ve)
++Scan type:              1 (Quick scan)
++Current X\-direction:    \-1
++Run number:             4
++Channel  0 range:       0\-0 (empty)
++Channel  1 range:       0\-2449
++Channel  2 range:       0\-1159
++Channel  3 range:       0\-907
++Channel  4 range:       0\-944
++Channel  5 range:       0\-900
++Channel  6 range:       0\-1507
++Channel  7 range:       0\-328
++Channel  8 range:       0\-349
++Channel  9 range:       0\-432
++Channel 10 range:       0\-359
++Channel 11 range:       0\-394
++Channel 12 range:       0\-270
++Channel 13 range:       0\-3989
++Channel 14 range:       0\-222
++Channel 15 range:       0\-1372
++
++Comments:
++The comment line always goes in speech marks
++like this
++and this
++line 4
++line 5
++and the final line
++.ft P
++.fi
++.SS Substitution Templates
++.sp
++The \fI\%-t\fP option causes rasinfo to output the same data but in
++a form suitable for use as substitution templates in \fIrasextract \-t\fP
++and \fIrasextract \-o\fP options:
++.sp
++.nf
++.ft C
++$ rasinfo \-\-templates JAN12_CHINAFISH_LZ_003.RAS
++{rasfile}=JAN12_CHINAFISH_LZ_003.RAS
++{filename}=JAN12_CHINAFISH_LZ_003.RAS
++{filename_root}=JAN12_CHINAFISH_LZ
++{version_name}=Raster Scan V.0.1
++{version_number}=1
++{pid}=0
++{x_motor}=HORZ
++{y_motor}=VERT
++{region_filename}=TEST.RGN
++{start_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:34:08
++{stop_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:43:07
++{channel_count}=16
++{point_count}=240(sandbox)dave@morpheus:~/Desktop/Beamline/Beamline 6\-2/data/data sorted by sample/china fish/maps/LZ/RAS files$ rasinfo \-\-templates JAN12_CHINAFISH_LZ_003.RAS
++{rasfile}=JAN12_CHINAFISH_LZ_003.RAS
++{filename}=JAN12_CHINAFISH_LZ_003.RAS
++{filename_root}=JAN12_CHINAFISH_LZ
++{version_name}=Raster Scan V.0.1
++{version_number}=1
++{pid}=0
++{x_motor}=HORZ
++{y_motor}=VERT
++{region_filename}=TEST.RGN
++{start_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:34:08
++{stop_time:%Y\-%m\-%d %H:%M:%S}=2012\-01\-17 21:43:07
++{channel_count}=16
++{point_count}=240
++{raster_count}=301
++{count_time}=0.004690
++{sweep_count}=1
++{ascii_output}=1
++{pixels_per_point}=1
++{scan_direction}=2
++{scan_type}=1
++{current_x_direction}=\-1
++{run_number}=3
++
++{channel:%02d}=00
++{channel_name}=
++{channel_enabled}=True
++
++{channel:%02d}=01
++{channel_name}=
++{channel_enabled}=True
++
++{channel:%02d}=02
++{channel_name}=
++{channel_enabled}=True
++
++
++{raster_count}=301
++{count_time}=0.004690
++{sweep_count}=1
++{ascii_output}=1
++{pixels_per_point}=1
++{scan_direction}=2
++{scan_type}=1
++{current_x_direction}=\-1
++{run_number}=3
++
++{channel:%02d}=00
++{channel_name}=
++{channel_enabled}=True
++
++{channel:%02d}=01
++{channel_name}=
++{channel_enabled}=True
++
++{channel:%02d}=02
++{channel_name}=
++{channel_enabled}=True
++\&...
++.ft P
++.fi
++.SH AUTHOR
++Dave Hughes
++.SH COPYRIGHT
++2012, Dave Hughes
++.\" Generated by docutils manpage writer.
++.\" 
++.

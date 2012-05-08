@@ -1,0 +1,19 @@
+Source: rastools
+Maintainer: Dave Hughes <dave@waveform.org.uk>
+Homepage: http://www.waveform.org.uk/trac/rastools
+Section: science
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
+Standards-Version: 3.9.3
+X-Python-Version: >= 2.5
+
+Package: rastools
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-matplotlib, python-qt4
+Suggests: gimp, python-xlwt
+Description: Tools for converting scans from the SSRL to images.
+ rastools is a small suite of utilities for converting data files obtained from
+ SSRL (Stanford Synchrotron Radiation Lightsource) scans (.RAS and .DAT files)
+ into images. Various simple manipulations (cropping, percentiles, histograms,
+ color-maps) are supported. Most tools are command line based, but a Qt-based
+ GUI is also included.

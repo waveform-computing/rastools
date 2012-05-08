@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OpenDialog</class>
+ <widget class="QDialog" name="OpenDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>525</width>
+    <height>117</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Open Scan</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="datafile_label">
+       <property name="text">
+        <string>Data file</string>
+       </property>
+       <property name="buddy">
+        <cstring>data_file_combo</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <layout class="QHBoxLayout" name="data_file_layout">
+       <item>
+        <widget class="QComboBox" name="data_file_combo">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+         <property name="maxCount">
+          <number>20</number>
+         </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::NoInsert</enum>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+         </property>
+         <property name="minimumContentsLength">
+          <number>12</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="data_file_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Browse...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="channelfile_label">
+       <property name="text">
+        <string>Channels file (optional)</string>
+       </property>
+       <property name="buddy">
+        <cstring>channel_file_combo</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <layout class="QHBoxLayout" name="channel_file_layout">
+       <item>
+        <widget class="QComboBox" name="channel_file_combo">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+         <property name="maxCount">
+          <number>20</number>
+         </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::NoInsert</enum>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+         </property>
+         <property name="minimumContentsLength">
+          <number>12</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="channel_file_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Browse...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="button_box">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>data_file_combo</tabstop>
+  <tabstop>data_file_button</tabstop>
+  <tabstop>channel_file_combo</tabstop>
+  <tabstop>channel_file_button</tabstop>
+  <tabstop>button_box</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>button_box</sender>
+   <signal>accepted()</signal>
+   <receiver>OpenDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>116</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_box</sender>
+   <signal>rejected()</signal>
+   <receiver>OpenDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>101</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>116</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
