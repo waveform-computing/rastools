@@ -66,14 +66,18 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ $(NAME).egg-info/ tags
+	rm -fr build/ dist/ $(NAME).egg-info/ tags distribute-*.egg distribute-*.tar.gz
 	find $(CURDIR) -name "*.pyc" -delete
-
-cleanall: clean
-	rm -fr dist/
 
 tags: $(PY_SOURCES)
 	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
+
+ppa_release: $(PY_SOURCES) $(DOC_SOURCES)
+	$(MAKE) clean
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
+	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
+	rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
+	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 
 $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
@@ -97,7 +101,7 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
 	rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
-	dpkg-buildpackage -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -Idistribute-*.egg -Idistribute-*.tar.gz -rfakeroot
+	debuild -b -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	mkdir -p dist/
 	mv ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 

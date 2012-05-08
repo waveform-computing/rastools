@@ -17,10 +17,8 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-from distribute_setup import use_setuptools
-use_setuptools()
-from utils import description, get_version, require_python
 from setuptools import setup, find_packages
+from utils import description, get_version, require_python
 
 require_python(0x020500f0)
 
