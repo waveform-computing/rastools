@@ -66,7 +66,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ $(NAME).egg-info/ tags
+	rm -fr build/ $(NAME).egg-info/ tags distribute-*.egg distribute-*.tar.gz
 	find $(CURDIR) -name "*.pyc" -delete
 
 cleanall: clean
