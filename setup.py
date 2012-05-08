@@ -63,7 +63,7 @@ def main():
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
-        packages             = find_packages(exclude=['distribute_setup']),
+        packages             = find_packages(exclude=['distribute_setup', 'utils']),
         install_requires     = ['matplotlib'],
         extras_require       = {'XLS': ['xlwt']},
         include_package_data = True,

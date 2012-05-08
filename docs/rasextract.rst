@@ -28,30 +28,25 @@ The :program:`rasextract` utility has several options:
 
    show program's version number and exit
 
-.. option:: -h
-.. option:: --help
+.. option:: -h, --help
 
    show this help message and exit
 
-.. option:: -q
-.. option:: --quiet
+.. option:: -q, --quiet
 
    produce less console output
 
-.. option:: -v
-.. option:: --verbose
+.. option:: -v, --verbose
 
    produce more console output
 
-.. option:: -l LOGFILE
-.. option:: --log-file=LOGFILE
+.. option:: -l LOGFILE, --log-file=LOGFILE
 
    log messages to the specified file
 
-.. option:: -D
-.. option:: --debug
+.. option:: -P, --pdb
 
-   enables debug mode (runs under PDB)
+   run under PDB (debug mode)
 
 .. option:: --help-colormaps
 
@@ -65,72 +60,60 @@ The :program:`rasextract` utility has several options:
 
    list the available interpolation algorithms
 
-.. option:: -a
-.. option:: --axes
+.. option:: -a, --axes
 
    draw the coordinate axes in the output
 
-.. option:: -b
-.. option:: --color-bar
+.. option:: -b, --color-bar
 
    draw a color-bar showing the range of the color-map to the right of the
    output
 
-.. option:: -H
-.. option:: --histogram
+.. option:: -H, --histogram
 
    draw a histogram of the channel values below the output
 
-.. option:: -c CMAP
-.. option:: --colormap=CMAP
+.. option:: -c CMAP, --colormap=CMAP
 
    the colormap to use in output (e.g. gray, jet, hot); see
    :option:`--help-colormaps` for listing
 
-.. option:: -p PERCENTILE
-.. option:: --percentile=PERCENTILE
+.. option:: -p PERCENTILE, --percentile=PERCENTILE
 
    clip values in the output image to the specified low,high percentile range
-   (mutually exclusive with :option:`--range`)
+   (mutually exclusive with :option:`-r`)
 
-.. option:: -r RANGE
-.. option:: --range=RANGE
+.. option:: -r RANGE, --range=RANGE
 
    clip values in the output image to the specified low,high count range
-   (mutually exclusive with :option:`--percentile`)
+   (mutually exclusive with :option:`-p`)
 
-.. option:: -C CROP
-.. option:: --crop=CROP
+.. option:: -C CROP, --crop=CROP
 
    crop the input data by left,top,right,bottom points
 
-.. option:: -i INTERPOLATION
-.. option:: --interpolation=INTERPOLATION
+.. option:: -i INTERPOLATION, --interpolation=INTERPOLATION
 
    force the use of the specified interpolation algorithm; see
    :option:`--help-interpolations` for listing
 
-.. option:: -t TITLE
-.. option:: --title=TITLE
+.. option:: -t TITLE, --title=TITLE
 
    specify the template used to display a title at the top of the output;
-   supports ``{variables}`` produced by :option:`rasinfo -p`
+   supports ``{variables}`` produced by :option:`rasinfo -t`
 
-.. option:: -o OUTPUT
-.. option:: --output=OUTPUT
+.. option:: -o OUTPUT, --output=OUTPUT
 
    specify the template used to generate the output filenames; supports
    ``{variables}``, see :option:`--help-formats` for supported file formats. Default:
    ``{filename_root}_{channel:02d}_{channel_name}.png``
 
-.. option:: -m
-.. option:: --multi
+.. option:: -m, --multi
 
    if specified, produce a single output file with multiple layers or pages,
    one per channel (only available with certain formats)
 
-.. option:: -e
-.. option:: --empty
+.. option:: -e, --empty
 
    if specified, empty channels in the output (by default empty channels are
    ignored)
@@ -224,12 +207,12 @@ be available.
 Substitution Templates
 ----------------------
 
-The :option:`--output` and :option:`--title` options can be used to specify
-output filenames and titles to write into the images, respectively. Both
-options accept a number of "templates" which will be substituted for certain
-variables at runtime. The templates which are available can be discovered by
-running the rasinfo tool against your .RAS file (and optional channels
-definition) with the :option:`rasinfo --templates` option. For example::
+The :option:`-o` and :option:`-t` options can be used to specify output
+filenames and titles to write into the images, respectively. Both options
+accept a number of "templates" which will be substituted for certain variables
+at runtime. The templates which are available can be discovered by running the
+rasinfo tool against your .RAS file (and optional channels definition) with the
+:option:`rasinfo -t` option. For example::
 
     $ rasinfo -t JAN12_CHINAFISH_LZ_003.RAS
     {rasfile}=JAN12_CHINAFISH_LZ_003.RAS
@@ -265,10 +248,10 @@ definition) with the :option:`rasinfo --templates` option. For example::
     ...
 
 The text surrounded by curly-braces represent substitution templates which can
-be used in rasextract's :option:`--title` and :option:`--output` options. For
-example, to create TIFF output files consisting of the scan date and channel
-number formatted as a two-digit decimal with leading zeros one could use the
-following command line::
+be used in rasextract's :option:`-t` and :option:`-o` options. For example, to
+create TIFF output files consisting of the scan date and channel number
+formatted as a two-digit decimal with leading zeros one could use the following
+command line::
 
     $ rasextract -o "{start_time:%Y-%m-%d}_{channel:02d}.tiff" JAN12_CHINAFISH_LZ_003.RAS channels.txt
     Writing channel 1 (Al) to 2012-01-17_01.tiff
@@ -297,14 +280,11 @@ Quite complex titles can be achieved with this syntax. For example::
 
 Will produce titles like this within the image:
 
-.. centered::
-   JAN12_CHINAFISH_LZ - Channel 6 (ES)
+.. rst-class:: center
 
-.. centered::
-   Tuesday, 17 Jan 2012
-
-.. centered::
-   99th Percentile
+|  JAN12_CHINAFISH_LZ - Channel 6 (ES)
+|  Tuesday, 17 Jan 2012
+|  99th Percentile
 
 Note that the backslash-n (\\n) escape sequence was used to generate line-breaks within the template.
 

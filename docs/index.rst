@@ -11,27 +11,17 @@ color-maps) are supported. Most tools are command line based, but a Qt-based
 GUI is also included.
 
 
-.. only:: html
-
-   Download
-   ========
-
-   You can find pre-built binary packages for several platforms available from
-   the `rastools development site
-   <http://www.waveform.org.uk/trac/rastools/wiki/Download>`_.
-
-
 Contents
 ========
 
 .. toctree::
    :maxdepth: 1
 
+   install
    rasdump
    rasextract
    rasinfo
    rasviewer
-   install
    license
 
 Further information on the tools can be found at the `rastools wiki
@@ -42,6 +32,6 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
+.. * :ref:`modindex`
 

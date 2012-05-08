@@ -90,7 +90,7 @@ class RasExtractUtility(rastools.main.Utility):
         self.parser.add_option('-i', '--interpolation', dest='interpolation', action='store',
             help="""force the use of the specified interpolation algorithm; see --help-interpolation for listing""")
         self.parser.add_option('-t', '--title', dest='title', action='store',
-            help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -p""")
+            help="""specify the template used to display a title at the top of the output; supports {variables} produced by rasinfo -t""")
         self.parser.add_option('-o', '--output', dest='output', action='store',
             help="""specify the template used to generate the output filenames; supports {variables}, see --help-formats for supported file formats. Default: %default""")
         self.parser.add_option('-m', '--multi', dest='multi', action='store_true',

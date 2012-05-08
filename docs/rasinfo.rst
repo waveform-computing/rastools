@@ -5,7 +5,7 @@ rasinfo
 This utility accepts a source RAS file from QSCAN. It extracts and prints the
 information from the RAS file's header. If the optional channels definition
 file is also specified, then channels will be named in the output as they would
-be with rasextract. The available command line options are listed below.
+be with rasextract.
 
 Synopsis
 ========
@@ -26,39 +26,32 @@ The :program:`rasinfo` utility has several options:
 
    show program's version number and exit
 
-.. option:: -h
-.. option:: --help
+.. option:: -h, --help
 
    show a help message and exit
 
-.. option:: -q
-.. option:: --quiet
+.. option:: -q, --quiet
 
    produce less console output
 
-.. option:: -v
-.. option:: --verbose
+.. option:: -v, --verbose
 
    produce more console output
 
-.. option:: -l LOGFILE
-.. option:: --log-file=LOGFILE
+.. option:: -l LOGFILE, --log-file=LOGFILE
 
    log messages to the specified file
 
-.. option:: -D
-.. option:: --debug
+.. option:: -P, --pdb
 
-   enables debug mode (runs under PDB)
+   run under PDB (debug mode)
 
-.. option:: -t
-.. option:: --templates
+.. option:: -t, --templates
 
    output substitution templates use with :option:`rasextract --title` and
    :option:`rasextract --output`
 
-.. option:: -r
-.. option:: --ranges
+.. option:: -r, --ranges
 
    read each channel in the file and output its range of values
 
@@ -69,7 +62,7 @@ Basic Usage
 -----------
 
 The following is an example of basic usage of rasinfo, including
-:option:`--ranges` switch to output channel count ranges::
+:option:`-r` switch to output channel count ranges::
 
     $ rasinfo -r JAN12_AMNHBIRD_HZ_004.RAS
     File name:              JAN12_AMNHBIRD_HZ_004.RAS
@@ -121,9 +114,9 @@ The following is an example of basic usage of rasinfo, including
 Substitution Templates
 ----------------------
 
-The :option:`--templates` option causes rasinfo to output the same data but in
-a form suitable for use as substitution templates in :option:`rasextract --title`
-and :option:`rasextract --output` options::
+The :option:`-t` option causes rasinfo to output the same data but in
+a form suitable for use as substitution templates in :option:`rasextract -t`
+and :option:`rasextract -o` options::
 
     $ rasinfo --templates JAN12_CHINAFISH_LZ_003.RAS
     {rasfile}=JAN12_CHINAFISH_LZ_003.RAS

@@ -72,8 +72,8 @@ class Utility(object):
             help="""produce more console output""")
         self.parser.add_option('-l', '--log-file', dest='logfile',
             help="""log messages to the specified file""")
-        self.parser.add_option('-D', '--debug', dest='debug', action='store_true',
-            help="""enables debug mode (runs under PDB)""")
+        self.parser.add_option('-P', '--pdb', dest='debug', action='store_true',
+            help="""run under PDB (debug mode)""")
 
     def __call__(self, args=None):
         if args is None:

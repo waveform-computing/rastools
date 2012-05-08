@@ -3,9 +3,8 @@
 # External utilities
 PYTHON=python
 PYFLAGS=
-DESTDIR=/
+DEST_DIR=/
 PROJECT=rastools
-BUILDIR=$(CURDIR)/debian/$(PROJECT)
 
 # Calculate the base names of the distribution, the location of all source,
 # documentation and executable script files
@@ -15,7 +14,7 @@ PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.versio
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
-MAN_SOURCES:=$(wildcard docs/*.rst)
+DOC_SOURCES:=$(wildcard docs/*.rst)
 
 # Calculate the name of all outputs
 DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
@@ -23,12 +22,14 @@ DIST_EXE=dist/$(NAME)-$(VER).win32.exe
 DIST_RPM=dist/$(NAME)-$(VER)-1.src.rpm
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
 DIST_DEB=dist/$(NAME)_$(VER)-1~ppa1_all.deb
-MAN_PAGES=docs/_build/man/rasextract.1 docs/_build/man/rasdump.1 docs/_build/man/rasinfo.1
+MAN_DIR=build/sphinx/man
+MAN_PAGES=$(MAN_DIR)/rasextract.1 $(MAN_DIR)/rasdump.1 $(MAN_DIR)/rasinfo.1
 
 # Default target
 all:
-	@echo "make source - Create source package"
 	@echo "make install - Install on local system"
+	@echo "make doc - Generate HTML and PDF documentation"
+	@echo "make source - Create source package"
 	@echo "make buildegg - Generate a PyPI egg package"
 	@echo "make buildrpm - Generate an RedHat package"
 	@echo "make builddeb - Generate a Debian package"
@@ -36,7 +37,12 @@ all:
 	@echo "make clean - Get rid of scratch and byte files"
 
 install:
-	$(PYTHON) $(PYFLAGS) setup.py install --root $(DESTDIR) $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR) $(COMPILE)
+
+doc: $(DOC_SOURCES)
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b html
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b latex
+	$(MAKE) -C build/sphinx/latex all-pdf
 
 source: $(DIST_TAR)
 
@@ -60,7 +66,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ docs/_build/* $(NAME).egg-info/ tags
+	rm -fr build/ $(NAME).egg-info/ tags
 	find $(CURDIR) -name "*.pyc" -delete
 
 cleanall: clean
@@ -69,8 +75,8 @@ cleanall: clean
 tags: $(PY_SOURCES)
 	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
 
-$(MAN_PAGES): $(MAN_SOURCES)
-	make -C docs man
+$(MAN_PAGES): $(DOC_SOURCES)
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 
 $(DIST_TAR): $(PY_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE)
@@ -91,7 +97,7 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
 	rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
-	dpkg-buildpackage -i -I -rfakeroot
+	dpkg-buildpackage -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -Idistribute-*.egg -Idistribute-*.tar.gz -rfakeroot
 	mkdir -p dist/
 	mv ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 

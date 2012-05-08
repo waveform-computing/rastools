@@ -34,11 +34,13 @@ rastools.  If not, see <http://www.gnu.org/licenses/>.
 Pre-requisites
 ==============
 
-rastools depends primarily on matplotlib. If you wish to use the GUI you will
-also need PyQt4 installed. On Linux these, and other dependencies should be
-automatically handled assuming you install from a .deb package. On Windows, it
-is probably simplest to install one of the pre-built Python distributions that
-includes matplotlib like the `Enthought Python Distribution
+rastools depends primarily on `matplotlib
+<http://matplotlib.sourceforge.net>`_. If you wish to use the GUI you will also
+need `PyQt4 <http://www.riverbankcomputing.com/software/pyqt/download>`_
+installed. On Linux these, and other dependencies should be automatically
+handled assuming you install from a .deb package. On Windows, it is probably
+simplest to install one of the pre-built Python distributions that includes
+matplotlib like the `Enthought Python Distribution
 <http://enthought.com/products/epd.php>`_ or `Python (x,y)
 <http://code.google.com/p/pythonxy/>`_ (both of these include matplotlib and
 PyQt4).
@@ -69,35 +71,5 @@ The set of tools included is:
    files. It supports all the transforms that ``rasextract`` supports and also
    allows exporting of images
 
-Further information on the tools can be found at the `rastools wiki <http://www.waveform.org.uk/trac/rastools/wiki>`_.
-
-
-Installation
-============
-
-rastools is distributed in several formats. The following sections detail
-installation on a variety of platforms.
-
-
-Ubuntu Linux
-------------
-
-For Ubuntu Linux it is simplest to
-install from the PPA as follows::
-
-    $ sudo add-apt-repository ppa://waveform/
-    $ sudo apt-get update
-    $ sudo apt-get install rastools
-
-
-Microsoft Windows
------------------
-
-On Windows, first install one of the Python matplotlib distributions mentioned
-above, and then use the executable installer.
-
-
-Apple Mac OS X
---------------
-
-???
+Further information on the tools can be found at the `rastools wiki
+<http://www.waveform.org.uk/trac/rastools/wiki>`_.

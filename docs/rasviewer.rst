@@ -14,8 +14,14 @@ it is installed upon.
 Opening Files
 =============
 
+XXX To be written
+
 Manipulating Channels
 =====================
 
+XXX To be written
+
 Exporting Images
 ================
+
+XXX To be written
