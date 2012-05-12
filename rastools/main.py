@@ -27,7 +27,7 @@ import locale
 import traceback
 import glob
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 # Use the user's default locale instead of C
 locale.setlocale(locale.LC_ALL, '')
