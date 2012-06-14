@@ -28,8 +28,6 @@ import matplotlib.image
 from collections import namedtuple
 
 DPI = 72.0
-PARSERS = []
-IMAGE_WRITERS = {}
 
 Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
@@ -112,10 +110,12 @@ class RasExtractUtility(rastools.main.Utility):
             sys.stdout.write('\n'.join(sorted(alg for alg in mpl.image.AxesImage._interpd)))
             sys.stdout.write('\n\n')
             return 0
-        self.load_backends()
+        load_backends()
         if options.list_formats:
             sys.stdout.write('The following file formats are available:\n\n')
-            sys.stdout.write('\n'.join(sorted(ext for ext in IMAGE_WRITERS)))
+            sys.stdout.write('\n'.join(sorted(
+                ext for ext in self._image_writers
+            )))
             sys.stdout.write('\n\n')
             return 0
         if len(args) < 1:
@@ -128,11 +128,14 @@ class RasExtractUtility(rastools.main.Utility):
         ext = os.path.splitext(args[0])[-1]
         files = (sys.stdin if arg == '-' else arg for arg in args)
         if options.loglevel<logging.WARNING:
-            progress = (self.progress_start, self.progress_update, self.progress_finish)
+            progress = (
+                self.progress_start,
+                self.progress_update,
+                self.progress_finish)
         else:
             progress = (None, None, None)
         try:
-            f = PARSERS[ext](*files, progress=progress)
+            f = self._data_parsers[ext](*files, progress=progress)
         except KeyError:
             self.parser.error('unrecognized file extension %s' % ext)
         # Check the percentile range is valid
@@ -179,7 +182,7 @@ class RasExtractUtility(rastools.main.Utility):
         # Check the requested file format is known
         ext = os.path.splitext(options.output)[1]
         try:
-            (canvas_method, interpolation, multi_class) = IMAGE_WRITERS[ext]
+            (canvas_method, interpolation, multi_class) = self._image_writers[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
         # Check the requested interpolation is valid
@@ -189,7 +192,7 @@ class RasExtractUtility(rastools.main.Utility):
             self.parser.error('interpolation algorithm %s is unknown')
         # Check special format switches
         if options.multi and not multi_class:
-            multi_ext = [ext for (ext, (_, _, multi)) in IMAGE_WRITERS.iteritems() if multi]
+            multi_ext = [ext for (ext, (_, _, multi)) in self._image_writers.iteritems() if multi]
             if multi_ext:
                 self.parser.error('output filename must end with %s when --multi is specified' % ','.join(multi_ext))
             else:
@@ -356,11 +359,12 @@ class RasExtractUtility(rastools.main.Utility):
         return fig
 
     def format_dict(self, source, options, **kwargs):
-        """Utility routine which converts the options array for use in format substitutions"""
+        """Converts the options array for use in format substitutions"""
         return source.format_dict(
             percentile_from=options.percentile[0],
             percentile_to=options.percentile[1],
             percentile=options.percentile,
+            # XXX range?
             interpolation=options.interpolation,
             colormap=options.cmap,
             crop_left=options.crop.left,
@@ -373,17 +377,16 @@ class RasExtractUtility(rastools.main.Utility):
 
     def load_backends(self):
         """Load the various matplotlib backends and custom extensions"""
-        global IMAGE_WRITERS, PARSERS
         from rastools.parsers import PARSERS
         from rastools.image_writers import IMAGE_WRITERS
         # Re-arrange the arrays into more useful dictionaries keyed by
         # extension
-        IMAGE_WRITERS = dict(
+        self._image_writers = dict(
             (ext, (method, interpolation, multi_class))
             for (method, exts, _, interpolation, multi_class) in IMAGE_WRITERS
             for ext in exts
         )
-        PARSERS = dict(
+        self._data_parsers = dict(
             (ext, klass)
             for (klass, exts, _) in PARSERS
             for ext in exts

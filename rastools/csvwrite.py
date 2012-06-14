@@ -16,9 +16,13 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""CSV/TSV writer module for rasdump and rasviewer"""
+
 import csv
 
 class CsvWriter(object):
+    "CSV writer class for rasdump"
+
     def __init__(self, filename_or_obj, channel):
         if isinstance(filename_or_obj, basestring):
             self._file = open(filename_or_obj, 'w')
@@ -27,11 +31,14 @@ class CsvWriter(object):
         self._writer = csv.writer(self._file, dialect='excel')
 
     def write(self, data):
+        "Writes channel data as CSV"
         for row in data:
             self._writer.writerow(row)
 
 
 class TsvWriter(CsvWriter):
+    "Tab-separated writer class for rasdump"
+
     def __init__(self, filename_or_obj, channel):
         super(TsvWriter, self).__init__(filename_or_obj, channel)
         self._writer = csv.writer(self._file, dialect='excel-tab')

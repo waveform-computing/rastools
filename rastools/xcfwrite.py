@@ -19,8 +19,6 @@
 """This module uses GIMP's batch mode to support multi-layered XCF output"""
 
 import os
-import sys
-mswindows = sys.platform.startswith('win')
 import tempfile
 import subprocess
 import logging
@@ -45,7 +43,8 @@ try:
             logging.error(line.rstrip())
         raise Exception()
 except:
-    raise ImportError('Unable to test-launch GIMP executable "%s"' % GIMP_EXECUTABLE)
+    raise ImportError('Unable to test-launch GIMP executable "%s"' %
+        GIMP_EXECUTABLE)
 
 
 class FigureCanvasXcf(FigureCanvasAgg):
@@ -76,7 +75,8 @@ class FigureCanvasXcf(FigureCanvasAgg):
                     '-i',                  # run in non-interactive mode
                     '-b', scheme,          # run batch to generate layered XCF
                     '-b', '(gimp-quit 0)', # ensure we terminate GIMP afterward
-                ], stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
+                    ], stdin=None, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, shell=False)
                 output = p.communicate()[0]
                 # As with the test at the start, only log GIMP's output if an
                 # error occurs - otherwise we don't care
@@ -147,7 +147,7 @@ class XcfLayers(object):
   )
   (gimp-image-delete im)
 )
-""" %subst
+""" % subst
             # If the output file already exists, remove it first
             try:
                 os.unlink(self.filename)

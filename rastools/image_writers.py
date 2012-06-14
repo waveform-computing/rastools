@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Centralized loader for image-writing modules"""
+
 import logging
 import matplotlib
 
@@ -31,9 +33,11 @@ except ImportError:
     raise
 else:
     IMAGE_WRITERS.extend([
-        # canvas method              exts                description             interpolation  multi-class
-        (FigureCanvasAgg.print_bmp,  ('.bmp', '.BMP'),   'Windows bitmap',       'nearest',     None),
-        (FigureCanvasAgg.print_png,  ('.png', '.PNG'),   'PNG image',            'nearest',     None),
+        # canvas method, exts, description, default interpolation, multi-class
+        (FigureCanvasAgg.print_bmp, ('.bmp', '.BMP'), 'Windows bitmap',
+            'nearest', None),
+        (FigureCanvasAgg.print_png, ('.png', '.PNG'), 'PNG image',
+            'nearest', None),
     ])
 
 logging.info('Loading SVG support')
@@ -43,8 +47,10 @@ except ImportError:
     logging.warning('Failed to load Cairo support')
 else:
     IMAGE_WRITERS.extend([
-        (FigureCanvasSVG.print_svg,  ('.svg', '.SVG'),   'SVG image',            'lanczos',     None),
-        (FigureCanvasSVG.print_svgz, ('.svgz', '.SVGZ'), 'Compressed SVG image', 'lanczos',     None),
+        (FigureCanvasSVG.print_svg, ('.svg', '.SVG'), 'SVG image', 
+            'lanczos', None),
+        (FigureCanvasSVG.print_svgz, ('.svgz', '.SVGZ'),
+            'Compressed SVG image', 'lanczos', None),
     ])
 
 logging.info('Loading TIFF, GIF, JPEG support')
@@ -54,9 +60,12 @@ except ImportError:
     logging.warning('Failed to load TIFF support')
 else:
     IMAGE_WRITERS.extend([
-        (FigureCanvasPIL.print_tif, ('.tif', '.tiff', '.TIF', '.TIFF'), 'TIFF image', 'nearest', None),
-        (FigureCanvasPIL.print_gif, ('.gif', '.GIF'),                   'GIF image',  'nearest', None),
-        (FigureCanvasPIL.print_jpg, ('.jpg', '.jpeg', '.JPG', '.JPEG'), 'JPEG image', 'lanczos', None),
+        (FigureCanvasPIL.print_tif, ('.tif', '.tiff', '.TIF', '.TIFF'),
+            'TIFF image', 'nearest', None),
+        (FigureCanvasPIL.print_gif, ('.gif', '.GIF'),
+            'GIF image', 'nearest', None),
+        (FigureCanvasPIL.print_jpg, ('.jpg', '.jpeg', '.JPG', '.JPEG'),
+            'JPEG image', 'lanczos', None),
     ])
 
 logging.info('Loading PostScript support')
@@ -66,8 +75,10 @@ except ImportError:
     logging.warning('Failed to load PostScript support')
 else:
     IMAGE_WRITERS.extend([
-        (FigureCanvasPS.print_eps, ('.eps', '.EPS'), 'Encapsulated PostScript image', 'lanczos', None),
-        (FigureCanvasPS.print_ps,  ('.ps', '.PS'),   'PostScript document',           'lanczos', None),
+        (FigureCanvasPS.print_eps, ('.eps', '.EPS'),
+            'Encapsulated PostScript image', 'lanczos', None),
+        (FigureCanvasPS.print_ps, ('.ps', '.PS'),
+            'PostScript document', 'lanczos', None),
     ])
 
 logging.info('Loading PDF support')
@@ -78,7 +89,8 @@ except ImportError:
 else:
     matplotlib.rc('pdf', use14corefonts=True, compression=True)
     IMAGE_WRITERS.extend([
-        (FigureCanvasPdf.print_pdf, ('.pdf', '.PDF'), 'Portable Document Format', 'lanczos', PdfPages),
+        (FigureCanvasPdf.print_pdf, ('.pdf', '.PDF'),
+            'Portable Document Format', 'lanczos', PdfPages),
     ])
 
 logging.info('Loading GIMP support')
@@ -88,5 +100,6 @@ except ImportError:
     logging.warning('Failed to load GIMP support')
 else:
     IMAGE_WRITERS.extend([
-        (FigureCanvasXcf.print_xcf, ('.xcf', '.XCF'), 'GIMP XCF image', 'nearest', XcfLayers),
+        (FigureCanvasXcf.print_xcf, ('.xcf', '.XCF'),
+            'GIMP XCF image', 'nearest', XcfLayers),
     ])

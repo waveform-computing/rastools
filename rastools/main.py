@@ -16,9 +16,14 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-mswindows = sys.platform.startswith('win')
+"""Defines a base class for command line utilities.
 
+This module define a Utility class which provides common facilities to command
+line applications: a help screen, universal file globbing, response file
+handling, and common logging configuration and options.
+"""
+
+import sys
 import os
 import optparse
 import ConfigParser
@@ -26,19 +31,75 @@ import logging
 import locale
 import traceback
 import glob
+from itertools import chain
 
 __version__ = '0.2'
 
 # Use the user's default locale instead of C
 locale.setlocale(locale.LC_ALL, '')
 
+def normalize_path(path):
+    "Eliminates symlinks, makes path absolute and normalizes case"
+    return os.path.normcase(os.path.realpath(os.path.abspath(
+        os.path.expanduser(path)
+    )))
+
+def glob_arg(arg):
+    "Perform shell-style globbing of arguments"
+    if set('*?[') & set(arg):
+        args = glob.glob(normalize_path(arg))
+        if args:
+            return args
+    # Return the original parameter in the case where the parameter contains no
+    # wildcards or globbing returns no results
+    return [arg]
+
+def flatten(arg):
+    "Flatten one level of nesting"
+    return chain.from_iterable(arg)
+
+def expand_args(args):
+    """Expands @response files and wildcards in the command line"""
+    windows = sys.platform.startswith('win')
+    result = []
+    for arg in args:
+        if arg.startswith('@') and len(arg) > 1:
+            arg = normalize_path(arg[1:])
+            try:
+                with open(arg, 'rU') as resp_file:
+                    for resp_arg in resp_file:
+                        # Only strip the line break (whitespace is
+                        # significant)
+                        resp_arg = resp_arg.rstrip('\n')
+                        # Only perform globbing on response file values for
+                        # UNIX
+                        if windows:
+                            result.append(resp_arg)
+                        else:
+                            result.extend(glob_arg(resp_arg))
+            except IOError, exc:
+                raise optparse.OptionValueError(str(exc))
+        else:
+            result.append(arg)
+    # Perform globbing on everything for Windows
+    if windows:
+        result = flatten(glob_arg(f) for f in result)
+    return result
+
+
 class OptionParser(optparse.OptionParser):
-    # Customize error handling to raise an exception (default simply prints an
-    # error and terminates execution)
+    "Customized OptionParser which raises an exception but doesn't terminate"
     def error(self, msg):
         raise optparse.OptParseError(msg)
 
 class Utility(object):
+    """Base class for command line utilities.
+
+    This class provides command line parsing, file globbing, response file
+    handling and common logging configuration for command line utilities.
+    Descendent classes should override the main() method to implement their
+    main body, and __init__() if they wish to extend the command line options.
+    """
     # Get the default output encoding from the default locale
     encoding = locale.getdefaultlocale()[1]
     status = ''
@@ -55,7 +116,10 @@ class Utility(object):
         if version is None:
             version = '%%prog %s' % __version__
         if description is None:
-            description = '\n'.join(s.strip() for s in self.__doc__.split('\n')[1:] if s)
+            description = '\n'.join(
+                s.strip() for s in
+                self.__doc__.split('\n')[1:] if s
+            )
         self.parser = OptionParser(
             usage=usage,
             version=version,
@@ -66,26 +130,30 @@ class Utility(object):
             logfile='',
             loglevel=logging.WARNING
         )
-        self.parser.add_option('-q', '--quiet', dest='loglevel', action='store_const', const=logging.ERROR,
+        self.parser.add_option('-q', '--quiet', dest='loglevel',
+            action='store_const', const=logging.ERROR,
             help="""produce less console output""")
-        self.parser.add_option('-v', '--verbose', dest='loglevel', action='store_const', const=logging.INFO,
+        self.parser.add_option('-v', '--verbose', dest='loglevel',
+            action='store_const', const=logging.INFO,
             help="""produce more console output""")
         self.parser.add_option('-l', '--log-file', dest='logfile',
             help="""log messages to the specified file""")
-        self.parser.add_option('-P', '--pdb', dest='debug', action='store_true',
-            help="""run under PDB (debug mode)""")
+        self.parser.add_option('-P', '--pdb', dest='debug',
+            action='store_true', help="""run under PDB (debug mode)""")
 
     def __call__(self, args=None):
         if args is None:
             args = sys.argv[1:]
-        (options, args) = self.parser.parse_args(self.expand_args(args))
+        (options, args) = self.parser.parse_args(expand_args(args))
         console = logging.StreamHandler(sys.stderr)
         console.setFormatter(logging.Formatter('%(message)s'))
         console.setLevel(options.loglevel)
         logging.getLogger().addHandler(console)
         if options.logfile:
             logfile = logging.FileHandler(options.logfile)
-            logfile.setFormatter(logging.Formatter('%(asctime)s, %(levelname)s, %(message)s'))
+            logfile.setFormatter(
+                logging.Formatter('%(asctime)s, %(levelname)s, %(message)s')
+            )
             logfile.setLevel(logging.DEBUG)
             logging.getLogger().addHandler(logfile)
         if options.debug:
@@ -97,78 +165,43 @@ class Utility(object):
             import pdb
             return pdb.runcall(self.main, options, args)
         else:
-            try:
-                return self.main(options, args) or 0
-            except:
-                return self.handle(*sys.exc_info())
+            sys.excepthook = self.handle
+            return self.main(options, args) or 0
 
-    def expand_args(self, args):
-        """Expands @response files and wildcards in the command line"""
-        result = []
-        for arg in args:
-            if arg.startswith('@') and len(arg) > 1:
-                arg = os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(arg[1:]))))
-                try:
-                    with open(arg, 'rU') as resp_file:
-                        for resp_arg in resp_file:
-                            # Only strip the line break (whitespace is significant)
-                            resp_arg = resp_arg.rstrip('\n')
-                            # Only perform globbing on response file values for UNIX
-                            if mswindows:
-                                result.append(resp_arg)
-                            else:
-                                result.extend(self.glob_arg(resp_arg))
-                except IOError, e:
-                    raise optparse.OptionValueError(str(e))
-            else:
-                result.append(arg)
-        # Perform globbing on everything for Windows
-        if mswindows:
-            result = reduce(lambda a, b: a + b, [self.glob_arg(f) for f in result], [])
-        return result
-
-    def glob_arg(self, arg):
-        """Performs shell-style globbing of arguments"""
-        if set('*?[') & set(arg):
-            args = glob.glob(os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(arg)))))
-            if args:
-                return args
-        # Return the original parameter in the case where the parameter
-        # contains no wildcards or globbing returns no results
-        return [arg]
-
-    def handle(self, type, value, tb):
-        """Exception hook for non-debug mode."""
-        if issubclass(type, (SystemExit, KeyboardInterrupt)):
+    def handle(self, exc_type, exc_value, exc_trace):
+        "Exception hook for non-debug mode"
+        if issubclass(exc_type, (SystemExit, KeyboardInterrupt)):
             # Just ignore system exit and keyboard interrupt errors (after all,
             # they're user generated)
             return 130
-        elif issubclass(type, (ValueError, IOError, ConfigParser.Error)):
+        elif issubclass(exc_type, (ValueError, IOError, ConfigParser.Error)):
             # For simple errors like IOError just output the message which
             # should be sufficient for the end user (no need to confuse them
             # with a full stack trace)
-            logging.critical(str(value))
+            logging.critical(str(exc_value))
             return 1
-        elif issubclass(type, (optparse.OptParseError,)):
+        elif issubclass(exc_type, (optparse.OptParseError,)):
             # For option parser errors output the error along with a message
             # indicating how the help page can be displayed
-            logging.critical(str(value))
+            logging.critical(str(exc_value))
             logging.critical('Try the --help option for more information.')
             return 2
         else:
             # Otherwise, log the stack trace and the exception into the log
             # file for debugging purposes
-            for line in traceback.format_exception(type, value, tb):
-                for s in line.rstrip().split('\n'):
-                    logging.critical(s)
+            for line in traceback.format_exception(exc_type, exc_value, exc_trace):
+                for msg in line.rstrip().split('\n'):
+                    logging.critical(msg)
             return 1
 
     def progress_start(self):
+        "Called at the start of a long operation to display progress"
         self.progress = 0
         self.status = 'Reading channel data %d%%' % self.progress
         sys.stderr.write(self.status)
 
     def progress_update(self, new_progress):
+        "Called to update progress during a long operation"
         if new_progress != self.progress:
             self.progress = new_progress
             new_status = 'Reading channel data %d%%' % self.progress
@@ -177,8 +210,9 @@ class Utility(object):
             self.status = new_status
 
     def progress_finish(self):
+        "Called to clean up the display at the end of a long operation"
         sys.stderr.write('\n')
 
     def main(self, options, args):
-        pass
-
+        "Called as the main body of the utility"
+        raise NotImplementedError

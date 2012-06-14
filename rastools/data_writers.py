@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Centralized loader for data-dump modules"""
+
 import logging
 
 __all__ = ['DATA_WRITERS']
@@ -38,13 +40,16 @@ else:
 
 logging.info('Loading RAS support')
 try:
-    from rastools.raswrite import RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
+    from rastools.raswrite import (
+        RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
+    )
 except ImportError:
     logging.warning('Failed to load RAS support')
 else:
     DATA_WRITERS.extend([
-        (RasWriter,      ('.ras', '.RAS'),     'QSCAN raster file',  RasMultiWriter),
-        (RasAsciiWriter, ('.ras_a', '.RAS_A'), 'QSCAN ASCII output', RasAsciiMultiWriter),
+        (RasWriter, ('.ras', '.RAS'), 'QSCAN raster file', RasMultiWriter),
+        (RasAsciiWriter, ('.ras_a', '.RAS_A'), 'QSCAN ASCII output',
+            RasAsciiMultiWriter),
     ])
 
 logging.info('Loading Excel support')

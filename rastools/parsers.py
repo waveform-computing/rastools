@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Centralized loader for data-file parsing modules"""
+
 import logging
 
 __all__ = ['PARSERS']
