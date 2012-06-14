@@ -22,8 +22,9 @@ import os
 import re
 import logging
 import datetime as dt
-import numpy as np
 from collections import namedtuple
+
+import numpy as np
 
 class Error(ValueError):
     """Base exception class"""
@@ -71,18 +72,17 @@ class DatFileReader(object):
     # ...
     header_version = 1
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(DatFileReader, self).__init__()
         self.progress_start, self.progress_update, self.progress_finish = \
             kwargs.get('progress', (None, None, None))
-        dat_file, = args
-        if isinstance(dat_file, basestring):
-            logging.debug('Opening dat file %s', dat_file)
-            self._file = open(dat_file, 'rU')
+        if isinstance(data_file, basestring):
+            logging.debug('Opening dat file %s', data_file)
+            self._file = open(data_file, 'rU')
         else:
-            logging.debug('Opening dat file %s', dat_file.name)
-            self._file = dat_file
+            logging.debug('Opening dat file %s', data_file.name)
+            self._file = data_file
         self.version_number = self.header_version
         self.filename_root = re.sub(r'^(.*?)[0-9_-]+\.(dat|DAT)$', r'\1',
             os.path.split(self._file.name)[1])
@@ -305,6 +305,7 @@ class DatChannels(object):
 
     def read_channels(self):
         """Read the channel data from a dat file"""
+        # XXX Parse optional channels file
         if not self._read_channels:
             self._read_channels = True
             logging.debug('Allocating channel array')

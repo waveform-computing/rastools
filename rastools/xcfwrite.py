@@ -22,6 +22,7 @@ import os
 import tempfile
 import subprocess
 import logging
+
 from PIL import Image
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 

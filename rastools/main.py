@@ -142,13 +142,15 @@ class Utility(object):
             action='store_true', help="""run under PDB (debug mode)""")
 
     def __call__(self, args=None):
+        sys.excepthook = self.handle
         if args is None:
             args = sys.argv[1:]
-        (options, args) = self.parser.parse_args(expand_args(args))
         console = logging.StreamHandler(sys.stderr)
         console.setFormatter(logging.Formatter('%(message)s'))
-        console.setLevel(options.loglevel)
+        console.setLevel(logging.DEBUG)
         logging.getLogger().addHandler(console)
+        (options, args) = self.parser.parse_args(expand_args(args))
+        console.setLevel(options.loglevel)
         if options.logfile:
             logfile = logging.FileHandler(options.logfile)
             logfile.setFormatter(
@@ -165,7 +167,6 @@ class Utility(object):
             import pdb
             return pdb.runcall(self.main, options, args)
         else:
-            sys.excepthook = self.handle
             return self.main(options, args) or 0
 
     def handle(self, exc_type, exc_value, exc_trace):

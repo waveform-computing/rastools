@@ -16,12 +16,14 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
+"""Parser for QSCAN RAS files"""
+
 import logging
 import struct
 import datetime as dt
+
 import numpy as np
+
 
 class Error(ValueError):
     """Base exception class"""
@@ -158,7 +160,7 @@ class RasFileReader(object):
         + '40s'   # start_time
         + '40s'   # stop_time
         + 'i'     # num_chans
-        + 'i'     # XXX Not listed in spec, but it's there!
+        + 'i'     # not listed in spec, but it's there!
         + 'd'     # count_time
         + 'i'     # num_sweeps
         + 'i'     # ascii_out
@@ -173,33 +175,25 @@ class RasFileReader(object):
         + 'i'     # run_num
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(RasFileReader, self).__init__()
-        (
-            self.progress_start,
+        (   self.progress_start,
             self.progress_update,
             self.progress_finish,
         ) = kwargs.get('progress', (None, None, None))
-        if len(args) == 1:
-            ras_file, channels_file = args[0], None
-        elif len(args) == 2:
-            ras_file, channels_file = args
+        if isinstance(data_file, basestring):
+            logging.debug('Opening QSCAN RAS file %s', data_file)
+            self._file = open(data_file, 'rb')
         else:
-            raise ValueError('expected one or two values to unpack')
-        if isinstance(ras_file, basestring):
-            logging.debug('Opening QSCAN RAS file %s' % ras_file)
-            self._file = open(ras_file, 'rb')
-        else:
-            logging.debug('Opening QSCAN RAS file %s' % ras_file.name)
-            self._file = ras_file
+            logging.debug('Opening QSCAN RAS file %s', data_file.name)
+            self._file = data_file
         # Parse the header
         logging.debug('Reading QSCAN RAS header')
         self.comments = [''] * 6
         self.commands = [''] * 4
         self.offsets = [0.0] * 6
-        (
-            self.version,
+        (   self.version,
             self.version_number,
             self.pid,
             self.comments[0],
@@ -250,7 +244,9 @@ class RasFileReader(object):
         if not self.version.startswith('Raster Scan'):
             raise RasFileError('This does not appear to be a QSCAN RAS file')
         if self.version_number != self.header_version:
-            raise RasFileError('Cannot interpret QSCAN RAS version %d - only version %d' % (self.version_number, self.header_version))
+            raise RasFileError(
+                'Cannot interpret QSCAN RAS version %d - only '
+                'version %d' % (self.version_number, self.header_version))
         # Right strip the various string fields
         strip_chars = '\t\r\n \0'
         self.version = self.version.rstrip(strip_chars)
@@ -272,39 +268,50 @@ class RasFileReader(object):
         self.channels = RasChannels(self, channels_file)
 
     def format_dict(self, **kwargs):
+        """Returns a dictionary suitable for use with the format method.
+
+        This method returns a dictionary containing information extracted from
+        the RAS file header, with the intention that it be used in with the
+        string format() method. Any keyword arguments specified in the call are
+        added to the dictionary that is returned (allowing, for example, a
+        channel object to enhance the dictionary with channel-specific
+        information).
+        """
         return dict(
-            filename           = self._file.name,
-            filename_original  = self.file_name,
-            filename_root      = self.file_head,
-            version_name       = self.version,
-            version_number     = self.version_number,
-            pid                = self.pid,
-            x_motor            = self.x_motor,
-            y_motor            = self.y_motor,
-            region_filename    = self.region,
-            start_time         = self.start_time,
-            stop_time          = self.stop_time,
-            channel_count      = self.channel_count,
-            x_size             = self.x_size,
-            y_size             = self.y_size,
-            count_time         = self.count_time,
-            sweep_count        = self.sweep_count,
-            ascii_output       = self.ascii_out,
-            pixels_per_point   = self.pixel_point,
-            scan_direction     = self.scan_direction,
-            scan_type          = self.scan_type,
-            current_x_direction= self.current_x_direction,
-            run_number         = self.run_number,
-            comments           = self.comments,
+            filename            = self._file.name,
+            filename_original   = self.file_name,
+            filename_root       = self.file_head,
+            version_name        = self.version,
+            version_number      = self.version_number,
+            pid                 = self.pid,
+            x_motor             = self.x_motor,
+            y_motor             = self.y_motor,
+            region_filename     = self.region,
+            start_time          = self.start_time,
+            stop_time           = self.stop_time,
+            channel_count       = self.channel_count,
+            x_size              = self.x_size,
+            y_size              = self.y_size,
+            count_time          = self.count_time,
+            sweep_count         = self.sweep_count,
+            ascii_output        = self.ascii_out,
+            pixels_per_point    = self.pixel_point,
+            scan_direction      = self.scan_direction,
+            scan_type           = self.scan_type,
+            current_x_direction = self.current_x_direction,
+            run_number          = self.run_number,
+            comments            = self.comments,
             **kwargs
         )
 
 
 class RasChannels(object):
+    """Represents a sequence of channels in a RAS file"""
+
     def __init__(self, parent, channels_file):
         super(RasChannels, self).__init__()
         self.parent = parent
-        self._read_channels = False
+        self._done_data = False
         # All channels are initially created unnamed and enabled
         self._items = [
             RasChannel(self, index, '')
@@ -317,10 +324,10 @@ class RasChannels(object):
                 channel.enabled = False
             # Parse the channels file
             if isinstance(channels_file, basestring):
-                logging.debug('Opening channels file %s' % channels_file)
+                logging.debug('Opening channels file %s', channels_file)
                 self._file = open(channels_file, 'rb')
             else:
-                logging.debug('Opening channels file %s' % channels_file.name)
+                logging.debug('Opening channels file %s', channels_file.name)
                 self._file = channels_file
             logging.debug('Parsing channels file')
             for line_num, line in enumerate(self._file):
@@ -330,38 +337,58 @@ class RasChannels(object):
                     try:
                         (index, name) = line.split(None, 1)
                     except ValueError:
-                        raise ChannelFileError('only one value found on line %d' % line_num + 1)
+                        raise ChannelFileError(
+                            'only one value found on line %d' % line_num + 1)
                     try:
                         index = int(index)
                     except ValueError:
-                        raise ChannelFileError('non-integer channel number ("%s") found on line %d' % (index, line_num + 1))
+                        raise ChannelFileError(
+                            'non-integer channel number ("%s") found on '
+                            'line %d' % (index, line_num + 1))
                     if index < 0:
-                        raise ChannelFileError('negative channel number (%d) found on line %d' % (index, line_num + 1))
+                        raise ChannelFileError(
+                            'negative channel number (%d) found on line '
+                            '%d' % (index, line_num + 1))
                     if index >= len(self):
-                        raise ChannelFileError('channel number (%d) on line %d exceeds number of channels in RAS file (%d)' % (index, line_num + 1, self.channel_count))
+                        raise ChannelFileError(
+                            'channel number (%d) on line %d exceeds number '
+                            'of channels in RAS file (%d)' % (
+                                index, line_num + 1, len(self)))
                     if self[index].enabled:
-                        raise ChannelFileError('channel %d has been specified twice; second instance on line %d' % (index, line_num + 1))
+                        raise ChannelFileError(
+                            'channel %d has been specified twice; second '
+                            'instance on line %d' % (index, line_num + 1))
                     self[index].name = name
                     self[index].enabled = True
 
-    def read_channels(self):
-        if not self._read_channels:
-            self._read_channels = True
+    def _read_data(self):
+        """Reads channel data from the source file."""
+        # This method is called when channel data is first accessed to read the
+        # data from the source file (in other words, channel data is loaded
+        # lazily - this is because some applications like rasinfo only require
+        # header information and extracting the channel data is a lengthy
+        # operation).
+        if not self._done_data:
+            self._done_data = True
             # Initialize a list of zero-filled arrays
             logging.debug('Allocating channel arrays')
             for channel in self:
-                channel._data = np.zeros((self.parent.y_size, self.parent.x_size), np.uint32)
+                channel._data = np.zeros(
+                    (self.parent.y_size, self.parent.x_size), np.uint32)
             # Read a line at a time and extract the specified channel
-            input_struct = struct.Struct('I' * self.parent.x_size * self.parent.channel_count)
+            input_struct = struct.Struct(
+                'I' * self.parent.x_size * len(self))
             if self.parent.progress_start:
                 self.parent.progress_start()
             try:
                 for y in xrange(self.parent.y_size):
-                    data = input_struct.unpack(self.parent._file.read(input_struct.size))
+                    data = input_struct.unpack(
+                        self.parent._file.read(input_struct.size))
                     for channel in self:
-                        channel._data[y] = data[channel.index::self.parent.channel_count]
+                        channel._data[y] = data[channel.index::len(self)]
                     if self.parent.progress_update:
-                        self.parent.progress_update(round(y * 100.0 / self.parent.y_size))
+                        self.parent.progress_update(
+                            round(y * 100.0 / self.parent.y_size))
             finally:
                 if self.parent.progress_finish:
                     self.parent.progress_finish()
@@ -381,6 +408,8 @@ class RasChannels(object):
 
 
 class RasChannel(object):
+    """Container for a channel of data in a RAS file"""
+
     def __init__(self, channels, index, name, enabled=True):
         self._channels = channels
         self._data = None
@@ -390,18 +419,28 @@ class RasChannel(object):
 
     @property
     def index(self):
+        """Returns the index of the channel in the RAS file"""
         return self._index
 
     @property
     def data(self):
-        self._channels.read_channels()
+        """Returns the channel data as a numpy array"""
+        self._channels._read_data()
         return self._data
 
     @property
     def parent(self):
+        """Returns the RAS file object that contains this channel"""
         return self._channels.parent
 
     def format_dict(self, **kwargs):
+        """Returns a dictionary suitable for use with the format method.
+
+        This method returns a dictionary containing information extracted from
+        the RAS file channel, with the intention that it be used in with the
+        string format() method. Any keyword arguments specified in the call are
+        added to the dictionary that is returned.
+        """
         return self.parent.format_dict(
             channel         = self.index,
             channel_name    = self.name,

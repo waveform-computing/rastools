@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+"""Installation utility functions"""
+
 import re
 import sys
-import logging
 
 def require_python(minimum):
     if sys.hexversion < minimum:
@@ -28,19 +28,22 @@ def require_python(minimum):
             parts.insert(0, minimum & 0xff)
             minimum >>= 8
         if parts[-1] == 0xf0:
-            raise Exception('Python %d.%d.%d or better is required' % parts[:3])
+            error = 'Python %d.%d.%d or better is required' % parts[:3]
         else:
-            raise Exception('Python %d.%d.%d (%02x) of better is required' % parts)
+            error = 'Python %d.%d.%d (%02x) of better is required' % parts
+        raise Exception(error)
 
 def get_version(filename):
-    p = re.compile(r'(\d\.\d(\.\d+)?)')
-    with open(filename) as f:
-        for line_num, line in enumerate(f):
+    version_re = re.compile(r'(\d\.\d(\.\d+)?)')
+    with open(filename) as source:
+        for line_num, line in enumerate(source):
             if line.startswith('__version__'):
-                r = p.search(line)
-                if not r:
-                    raise Exception('No valid __version__ string found on line %d of %s' % (line_num + 1, filename))
-                return r.group(1)
+                match = version_re.search(line)
+                if not match:
+                    raise Exception(
+                        'Invalid __version__ string found on '
+                        'line %d of %s' % (line_num + 1, filename))
+                return match.group(1)
     raise Exception('No __version__ line found in %s' % filename)
 
 def description(filename):

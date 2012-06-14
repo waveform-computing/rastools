@@ -18,7 +18,6 @@
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import os
 import sys
 import logging
 import rastools.main
@@ -47,7 +46,6 @@ class RasInfoUtility(rastools.main.Utility):
             help="""read each channel in the file and output its range of values""")
 
     def main(self, options, args):
-        super(RasInfoUtility, self).main(options, args)
         if len(args) < 1:
             self.parser.error('you must specify a RAS file')
         if len(args) > 2:

@@ -74,7 +74,6 @@ class RasDumpUtility(rastools.main.Utility):
             "in the output (by default empty channels are ignored)")
 
     def main(self, options, args):
-        super(RasDumpUtility, self).main(options, args)
         self.load_backends()
         if options.list_formats:
             sys.stdout.write('The following file formats are available:\n\n')
