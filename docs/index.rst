@@ -2,8 +2,6 @@
 Welcome!
 ========
 
-Tools for converting scans from the SSRL to images.
-
 rastools is a small suite of utilities for converting data files obtained from
 SSRL (Stanford Synchrotron Radiation Lightsource) scans (.RAS and .DAT files)
 into images. Various simple manipulations (cropping, percentiles, histograms,
