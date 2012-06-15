@@ -20,7 +20,7 @@
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
-require_python(0x020500f0)
+require_python(0x020600f0)
 
 classifiers = [
     'Development Status :: 4 - Beta',
@@ -32,7 +32,6 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
     'Operating System :: Unix',
-    'Programming Language :: Python :: 2.5',
     'Programming Language :: Python :: 2.6',
     'Programming Language :: Python :: 2.7',
     'Topic :: Multimedia :: Graphics',
@@ -54,7 +53,7 @@ entry_points = {
 def main():
     setup(
         name                 = 'rastools',
-        version              = get_version('rastools/main.py'),
+        version              = get_version('rastools/__init__.py'),
         description          = 'Tools for converting SSRL scans into images',
         long_description     = description('README.txt'),
         author               = 'Dave Hughes',

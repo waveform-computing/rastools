@@ -32,8 +32,8 @@ import traceback
 import glob
 from itertools import chain
 
+from rastools import __version__
 
-__version__ = '0.2'
 
 # Use the user's default locale instead of C
 locale.setlocale(locale.LC_ALL, '')
