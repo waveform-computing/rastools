@@ -20,9 +20,9 @@
 
 import logging
 
-__all__ = ['PARSERS']
+__all__ = ['DATA_PARSERS']
 
-PARSERS = []
+DATA_PARSERS = []
 
 logging.info('Loading RAS parser')
 try:
