@@ -103,8 +103,6 @@ class TerminalApplication(object):
     """
     # Get the default output encoding from the default locale
     encoding = locale.getdefaultlocale()[1]
-    status = ''
-    progress = 0
 
     # This class is the abstract base class for each of the command line
     # utility classes defined. It provides some basic facilities like an option
@@ -195,25 +193,6 @@ class TerminalApplication(object):
                 for msg in line.rstrip().split('\n'):
                     logging.critical(msg)
             return 1
-
-    def progress_start(self):
-        "Called at the start of a long operation to display progress"
-        self.progress = 0
-        self.status = 'Reading channel data %d%%' % self.progress
-        sys.stderr.write(self.status)
-
-    def progress_update(self, new_progress):
-        "Called to update progress during a long operation"
-        if new_progress != self.progress:
-            self.progress = new_progress
-            new_status = 'Reading channel data %d%%' % self.progress
-            sys.stderr.write('\b' * len(self.status))
-            sys.stderr.write(new_status)
-            self.status = new_status
-
-    def progress_finish(self):
-        "Called to clean up the display at the end of a long operation"
-        sys.stderr.write('\n')
 
     def main(self, options, args):
         "Called as the main body of the utility"

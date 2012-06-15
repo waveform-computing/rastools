@@ -23,14 +23,28 @@ import re
 import logging
 import datetime as dt
 from collections import namedtuple
+from bisect import bisect_left
 
 import numpy as np
+
 
 class Error(ValueError):
     """Base exception class"""
 
 class DatFileError(Error):
     """Base class for errors encountered in dat file parsing"""
+
+class SortedList(list):
+    """Sorted list derivative with quicker index() method"""
+    def __init__(self, source):
+        super(SortedList, self).__init__(sorted(source))
+
+    def index(self, i):
+        "Locate i within the sorted list"
+        result = bisect_left(self, i)
+        if result >= len(self) or self[result] != i:
+            raise ValueError('{0} is not in list'.format(i))
+        return result
 
 
 DatParseState = namedtuple('DatParseState', ('re', 'next'))
@@ -77,14 +91,18 @@ class DatFileReader(object):
         super(DatFileReader, self).__init__()
         self.progress_start, self.progress_update, self.progress_finish = \
             kwargs.get('progress', (None, None, None))
+        if channels_file:
+            logging.warning('Channels files are currently ignored')
         if isinstance(data_file, basestring):
             logging.debug('Opening dat file %s', data_file)
             self._file = open(data_file, 'rU')
         else:
             logging.debug('Opening dat file %s', data_file.name)
             self._file = data_file
-        self.version_number = self.header_version
-        self.filename_root = re.sub(r'^(.*?)[0-9_-]+\.(dat|DAT)$', r'\1',
+        self.header = {}
+        self.version = self.header_version
+        self.filename = self._file.name
+        self.filename_root = re.sub(r'^(.*?)[_-][0-9]+\.(dat|DAT)$', r'\1',
             os.path.split(self._file.name)[1])
         self.start_time = dt.datetime.fromtimestamp(
             os.stat(self._file.name).st_ctime
@@ -95,10 +113,14 @@ class DatFileReader(object):
         self.x_coords = []
         self.y_coords = []
         self.comments = ''
-        self.energy_points = 0.0
         self.channel_names = []
         self.channel_count = 0
         data_line = self.read_header()
+        self.header['energy_points'] = 0.0
+        self.header['x_from'] = self.x_coords[0]
+        self.header['x_to'] = self.x_coords[-1]
+        self.header['y_from'] = self.y_coords[0]
+        self.header['y_to'] = self.y_coords[-1]
         self.channels = DatChannels(self, data_line)
 
     def read_header(self):
@@ -245,7 +267,7 @@ class DatFileReader(object):
                 'points requested (%d) on line %d' %
                 (self.x_size, len(self.x_coords), line)
             )
-        # XXX guarantee sorting of x_coords and y_coords?
+        self.x_coords = SortedList(self.x_coords)
 
     def _state_ord_points(self, match, line):
         """Parse the ordinate coordinates"""
@@ -264,6 +286,7 @@ class DatFileReader(object):
                 'ordinate points requested (%d) on line %d' %
                 (self.y_size, len(self.y_coords), line)
             )
+        self.y_coords = SortedList(self.y_coords)
 
     def _state_energy_points(self, match, line):
         """Parse the energy points value"""
@@ -277,18 +300,21 @@ class DatFileReader(object):
 
     def format_dict(self, **kwargs):
         """Return a dictionary suitable for the format method"""
-        return dict(
+        result = {}
+        result.update(
+            self.header,
             filename           = self._file.name,
             filename_root      = self.filename_root,
-            version_number     = self.version_number,
+            version            = self.version,
+            start_time         = self.start_time,
+            stop_time          = self.stop_time,
             channel_count      = self.channel_count,
             x_size             = self.x_size,
             y_size             = self.y_size,
-            start_time         = self.start_time,
-            stop_time          = self.stop_time,
             comments           = self.comments,
             **kwargs
         )
+        return result
 
 
 class DatChannels(object):
@@ -322,7 +348,6 @@ class DatChannels(object):
                             'non-float value found on line %d' %
                             (line_num + self._data_line)
                         )
-                    # XXX if x_coords and y_coords are guaranteed sorted use bisect?
                     try:
                         y = self.parent.y_coords.index(line[0])
                     except ValueError:
@@ -376,7 +401,7 @@ class DatChannel(object):
     def __init__(self, channels, index, name, enabled=True):
         self._channels = channels
         self._index = index
-        self.name = name
+        self.name = name if name else 'I{0}'.format(index)
         self.enabled = enabled
         self._data = None
 
@@ -404,6 +429,7 @@ class DatChannel(object):
             channel_enabled = self.enabled,
             channel_min     = self.data.min(),
             channel_max     = self.data.max(),
+            channel_empty   = self.data.min() == self.data.max(),
             **kwargs
         )
 

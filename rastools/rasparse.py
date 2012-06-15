@@ -146,6 +146,7 @@ class RasFileReader(object):
     # }
     datetime_format = '%a %b %d %H:%M:%S %Y'
     header_version = 1
+    header_string = 'Raster Scan V.0.1'
     header_struct = struct.Struct(
         '<'       # little-endian
         + '80s'   # version
@@ -190,47 +191,48 @@ class RasFileReader(object):
             self._file = data_file
         # Parse the header
         logging.debug('Reading QSCAN RAS header')
+        self.header = {}
         self.comments = [''] * 6
-        self.commands = [''] * 4
-        self.offsets = [0.0] * 6
-        (   self.version,
-            self.version_number,
-            self.pid,
+        self.header['commands'] = [0] * 4
+        self.header['offsets'] = [0.0] * 6
+        (   self.header['version_string'],
+            self.version,
+            self.header['pid'],
             self.comments[0],
             self.comments[1],
             self.comments[2],
             self.comments[3],
             self.comments[4],
             self.comments[5],
-            self.x_motor,
-            self.y_motor,
-            self.region,
-            self.file_head,
-            self.file_name,
+            self.header['x_motor'],
+            self.header['y_motor'],
+            self.header['region_filename'],
+            self.filename_root,
+            self.header['filename_original'],
             self.start_time,
             self.stop_time,
             self.channel_count,
             _,
-            self.count_time,
-            self.sweep_count,
-            self.ascii_out,
+            self.header['count_time'],
+            self.header['sweep_count'],
+            self.header['ascii_out'],
             self.x_size,
             self.y_size,
-            self.pixel_point,
-            self.scan_direction,
-            self.scan_type,
-            self.current_x_direction,
-            self.commands[0],
-            self.commands[1],
-            self.commands[2],
-            self.commands[3],
-            self.offsets[0],
-            self.offsets[1],
-            self.offsets[2],
-            self.offsets[3],
-            self.offsets[4],
-            self.offsets[5],
-            self.run_number,
+            self.header['pixels_per_point'],
+            self.header['scan_direction'],
+            self.header['scan_type'],
+            self.header['current_x_direction'],
+            self.header['commands'][0],
+            self.header['commands'][1],
+            self.header['commands'][2],
+            self.header['commands'][3],
+            self.header['offsets'][0],
+            self.header['offsets'][1],
+            self.header['offsets'][2],
+            self.header['offsets'][3],
+            self.header['offsets'][4],
+            self.header['offsets'][5],
+            self.header['run_number'],
         ) = self.header_struct.unpack(self._file.read(self.header_struct.size))
         # XXX There's a nasty off-by-one error here. The header actually
         # contains one more int32 which appears to always be zero. By not
@@ -241,20 +243,21 @@ class RasFileReader(object):
         # software does so I'm loathe to do different despite it being an
         # obvious bug. Anyway, one should avoid using the first channel of data
         # in a RAS file as its first value will definitely be incorrect
-        if not self.version.startswith('Raster Scan'):
+        if not self.header['version_string'].startswith('Raster Scan'):
             raise RasFileError('This does not appear to be a QSCAN RAS file')
-        if self.version_number != self.header_version:
+        if self.version != self.header_version:
             raise RasFileError(
                 'Cannot interpret QSCAN RAS version %d - only '
-                'version %d' % (self.version_number, self.header_version))
+                'version %d' % (self.version, self.header_version))
         # Right strip the various string fields
         strip_chars = '\t\r\n \0'
-        self.version = self.version.rstrip(strip_chars)
-        self.x_motor = self.x_motor.rstrip(strip_chars)
-        self.y_motor = self.y_motor.rstrip(strip_chars)
-        self.region = self.region.rstrip(strip_chars)
-        self.file_head = self.file_head.rstrip(strip_chars)
-        self.file_name = self.file_name.rstrip(strip_chars)
+        self.filename = self._file.name
+        self.filename_root = self.filename_root.rstrip(strip_chars)
+        self.header['version_string'] = self.header['version_string'].rstrip(strip_chars)
+        self.header['x_motor'] = self.header['x_motor'].rstrip(strip_chars)
+        self.header['y_motor'] = self.header['y_motor'].rstrip(strip_chars)
+        self.header['region_filename'] = self.header['region_filename'].rstrip(strip_chars)
+        self.header['filename_original'] = self.header['filename_original'].rstrip(strip_chars)
         # Convert comments to a simple string
         self.comments = '\n'.join(
             line.rstrip(strip_chars)
@@ -277,32 +280,21 @@ class RasFileReader(object):
         channel object to enhance the dictionary with channel-specific
         information).
         """
-        return dict(
-            filename            = self._file.name,
-            filename_original   = self.file_name,
-            filename_root       = self.file_head,
-            version_name        = self.version,
-            version_number      = self.version_number,
-            pid                 = self.pid,
-            x_motor             = self.x_motor,
-            y_motor             = self.y_motor,
-            region_filename     = self.region,
-            start_time          = self.start_time,
-            stop_time           = self.stop_time,
-            channel_count       = self.channel_count,
-            x_size              = self.x_size,
-            y_size              = self.y_size,
-            count_time          = self.count_time,
-            sweep_count         = self.sweep_count,
-            ascii_output        = self.ascii_out,
-            pixels_per_point    = self.pixel_point,
-            scan_direction      = self.scan_direction,
-            scan_type           = self.scan_type,
-            current_x_direction = self.current_x_direction,
-            run_number          = self.run_number,
-            comments            = self.comments,
+        result = {}
+        result.update(
+            self.header,
+            filename      = self._file.name,
+            filename_root = self.filename_root,
+            version       = self.version,
+            start_time    = self.start_time,
+            stop_time     = self.stop_time,
+            channel_count = self.channel_count,
+            x_size        = self.x_size,
+            y_size        = self.y_size,
+            comments      = self.comments,
             **kwargs
         )
+        return result
 
 
 class RasChannels(object):
@@ -414,7 +406,7 @@ class RasChannel(object):
         self._channels = channels
         self._data = None
         self._index = index
-        self.name = name
+        self.name = name if name else 'I{0}'.format(index)
         self.enabled = enabled
 
     @property
@@ -447,5 +439,6 @@ class RasChannel(object):
             channel_enabled = self.enabled,
             channel_min     = self.data.min(),
             channel_max     = self.data.max(),
+            channel_empty   = self.data.min() == self.data.max(),
             **kwargs
         )

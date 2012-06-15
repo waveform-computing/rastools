@@ -22,22 +22,19 @@
 import os
 import sys
 import logging
-from collections import namedtuple
 
 import numpy as np
 import matplotlib
 import matplotlib.cm
 import matplotlib.image
 
-import rastools.main
+from rastools.rasutility import (
+    RasUtility, RasChannelEmptyError, RasChannelProcessor)
+
 
 DPI = 72.0
 
-Percentile = namedtuple('Percentile', ('low', 'high'))
-Range = namedtuple('Range', ('low', 'high'))
-Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
-
-class RasExtractUtility(rastools.main.Utility):
+class RasExtractUtility(RasUtility):
     """%prog [options] data-file [channel-file]
 
     This utility accepts a data file and an optional channel definition file.
@@ -51,9 +48,8 @@ class RasExtractUtility(rastools.main.Utility):
 
     def __init__(self):
         super(RasExtractUtility, self).__init__()
-        self._image_writers = {}
-        self._data_parsers = {}
-        self._renderer = RasRenderer()
+        self._image_writers = None
+        self.renderer = RasRenderer()
         self.parser.set_defaults(
             list_colormaps=False,
             list_formats=False,
@@ -62,13 +58,9 @@ class RasExtractUtility(rastools.main.Utility):
             show_colorbar=False,
             show_histogram=False,
             colormap='gray',
-            crop='0,0,0,0',
-            percentile=None,
-            range=None,
             output='{filename_root}_{channel:02d}_{channel_name}.png',
             title='',
             interpolation=None,
-            empty=False,
             multi=False,
         )
         self.parser.add_option(
@@ -81,6 +73,9 @@ class RasExtractUtility(rastools.main.Utility):
             '--help-interpolations', dest='list_interpolations',
             action='store_true', help='list the available interpolation '
             'algorithms')
+        self.add_range_options()
+        self.add_crop_option()
+        self.add_empty_option()
         self.parser.add_option(
             '-a', '--axes', dest='show_axes', action='store_true',
             help='draw the coordinate axes in the output')
@@ -92,20 +87,9 @@ class RasExtractUtility(rastools.main.Utility):
             '-H', '--histogram', dest='show_histogram', action='store_true',
             help='draw a histogram of the channel values below the output')
         self.parser.add_option(
-            '-c', '--colormap', dest='colormap', action='store',
+            '-C', '--colormap', dest='colormap', action='store',
             help='the colormap to use in output (e.g. gray, jet, hot); '
             'see --help-colormaps for listing')
-        self.parser.add_option(
-            '-p', '--percentile', dest='percentile', action='store',
-            help='clip values in the output image to the specified low,high '
-            'percentile range (mutually exclusive with --range)')
-        self.parser.add_option(
-            '-r', '--range', dest='range', action='store',
-            help='clip values in the output image to the specified low,high '
-            'count range (mutually exclusive with --percentile)')
-        self.parser.add_option(
-            '-C', '--crop', dest='crop', action='store',
-            help='crop the input data by left,top,right,bottom points')
         self.parser.add_option(
             '-i', '--interpolation', dest='interpolation', action='store',
             help='force the use of the specified interpolation algorithm; see '
@@ -124,10 +108,18 @@ class RasExtractUtility(rastools.main.Utility):
             help='if specified, produce a single output file with multiple '
             'layers or pages, one per channel (only available with certain '
             'formats)')
-        self.parser.add_option(
-            '-e', '--empty', dest='empty', action='store_true',
-            help='if specified, include empty channels in the output (by '
-            'default empty channels are ignored)')
+
+    @property
+    def image_writers(self):
+        "Load matplotlib backends lazily as some are expensive to load"
+        if self._image_writers is None:
+            from rastools.image_writers import IMAGE_WRITERS
+            self._image_writers = dict(
+                (ext, (method, interp, multi_class, desc))
+                for (method, exts, desc, interp, multi_class) in IMAGE_WRITERS
+                for ext in exts
+            )
+        return self._image_writers
 
     def main(self, options, args):
         if options.list_colormaps:
@@ -136,53 +128,25 @@ class RasExtractUtility(rastools.main.Utility):
         if options.list_interpolations:
             self.list_interpolations()
             return 0
-        self.load_backends()
         if options.list_formats:
             self.list_formats()
             return 0
-        # Parse the input file(s)
-        if len(args) == 0:
-            self.parser.error('you must specify a data file')
-        elif len(args) == 1:
-            args = (args[0], None)
-        elif len(args) > 2:
-            self.parser.error('you cannot specify more than two filenames')
-        data_file, channels_file = args
-        if data_file == '-' and channels_file == '-':
-            self.parser.error('you cannot specify stdin for both files!')
-        # XXX #15: what format is stdin?
-        ext = os.path.splitext(data_file)[-1]
-        data_file, channels_file = (
-            sys.stdin if arg == '-' else arg
-            for arg in (data_file, channels_file)
-        )
-        if options.loglevel < logging.WARNING:
-            progress = (
-                self.progress_start,
-                self.progress_update,
-                self.progress_finish)
-        else:
-            progress = (None, None, None)
-        try:
-            data_file = self._data_parsers[ext](
-                data_file, channels_file, progress=progress)
-        except KeyError:
-            self.parser.error('unrecognized file extension %s' % ext)
         # Configure the renderer from the command line options
-        self.parse_percentile(options)
-        self.parse_range(options)
-        self.parse_colormap(options)
-        self.parse_crop(options)
+        data_file = self.parse_files(options, args)
+        self.renderer.colormap = self.parse_colormap_option(options)
+        self.renderer.crop = self.parse_crop_option(options)
+        self.renderer.clip = self.parse_range_options(options)
+        self.renderer.colorbar = options.show_colorbar
+        self.renderer.histogram = options.show_histogram
+        self.renderer.axes = options.show_axes
+        self.renderer.title = options.title
+        self.renderer.empty = options.empty
         (   canvas_method,
             multi_class,
             default_interpolation
-        ) = self.parse_output(options)
-        self.parse_interpolation(options, default_interpolation)
-        self.parse_multi(options, multi_class)
-        self._renderer.colorbar = options.show_colorbar
-        self._renderer.histogram = options.show_histogram
-        self._renderer.axes = options.show_axes
-        self._renderer.title = options.title
+        ) = self.parse_output_options(options)
+        self.renderer.interpolation = self.parse_interpolation_option(
+            options, default_interpolation)
         # Extract the specified channels
         logging.info(
             'File contains %d channels, extracting channels %s',
@@ -195,7 +159,7 @@ class RasExtractUtility(rastools.main.Utility):
         )
         if options.multi:
             filename = options.output.format(
-                **self._renderer.format_dict(data_file))
+                **self.renderer.format_dict(data_file))
             logging.warning('Writing all channels to %s',  filename)
             output = multi_class(filename)
         try:
@@ -207,12 +171,11 @@ class RasExtractUtility(rastools.main.Utility):
                             channel.index, channel.name)
                     else:
                         filename = options.output.format(
-                            **self._renderer.format_dict(channel))
+                            **self.renderer.format_dict(channel))
                         logging.warning(
                             'Writing channel %d (%s) to %s',
                             channel.index, channel.name, filename)
-                    figure = self._renderer.draw(
-                        channel, allow_empty=options.empty)
+                    figure = self.renderer.draw(channel)
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
@@ -227,25 +190,8 @@ class RasExtractUtility(rastools.main.Utility):
             if options.multi:
                 output.close()
 
-    def load_backends(self):
-        """Load the various matplotlib backends and custom extensions"""
-        from rastools.parsers import PARSERS
-        from rastools.image_writers import IMAGE_WRITERS
-        # Re-arrange the arrays into more useful dictionaries keyed by
-        # extension
-        self._image_writers = dict(
-            (ext, (method, interpolation, multi_class))
-            for (method, exts, _, interpolation, multi_class) in IMAGE_WRITERS
-            for ext in exts
-        )
-        self._data_parsers = dict(
-            (ext, cls)
-            for (cls, exts, _) in PARSERS
-            for ext in exts
-        )
-
     def list_colormaps(self):
-        """Prints the list of available colormaps to stdout"""
+        "Prints the list of available colormaps to stdout"
         sys.stdout.write('The following colormaps are available:\n\n')
         sys.stdout.write('\n'.join(sorted(
             name for name in matplotlib.cm.datad
@@ -259,7 +205,7 @@ class RasExtractUtility(rastools.main.Utility):
             'show_colormaps.html\n\n')
 
     def list_interpolations(self):
-        """Prints the list of supported interpolations to stdout"""
+        "Prints the list of supported interpolations to stdout"
         sys.stdout.write(
             'The following image interpolation algorithms are available:\n\n')
         sys.stdout.write('\n'.join(sorted(
@@ -268,103 +214,33 @@ class RasExtractUtility(rastools.main.Utility):
         sys.stdout.write('\n\n')
 
     def list_formats(self):
-        """Prints the list of supported iamge formats to stdout"""
+        "Prints the list of supported image formats to stdout"
         sys.stdout.write('The following file formats are available:\n\n')
-        sys.stdout.write('\n'.join(sorted(
-            ext for ext in self._image_writers
-        )))
-        sys.stdout.write('\n\n')
+        for ext in sorted(self.image_writers.iterkeys()):
+            sys.stdout.write('%-8s - %s\n' % (ext, self.image_writers[ext][-1]))
+        sys.stdout.write('\n')
 
-    def parse_percentile(self, options):
-        """Parses the --percentile option and checks its validity"""
-        if options.percentile:
-            if options.range:
-                self.parser.error(
-                    'you may specify one of --percentile and --range')
-            s = options.percentile
-            if ',' in s:
-                low, high = s.split(',', 1)
-            elif '-' in s:
-                low, high = s.split('-', 1)
-            else:
-                low, high = ('0.0', s)
-            try:
-                self._renderer.clip = Percentile(float(low), float(high))
-            except ValueError:
-                self.parser.error(
-                    '%s is not a valid percentile range' % options.percentile)
-            if self._renderer.clip.low > self._renderer.clip.high:
-                self.parser.error('percentile range must be specified low-high')
-            for i in self._renderer.clip:
-                if not (0.0 <= i <= 100.0):
-                    self.parser.error(
-                        'percentile must be between 0 and 100 (%f '
-                        'specified)' % i)
-
-    def parse_range(self, options):
-        """Parses the --range option and checks its validity"""
-        if options.range:
-            s = options.range
-            if ',' in s:
-                low, high = s.split(',', 1)
-            elif '-' in s:
-                low, high = s.split('-', 1)
-            else:
-                low, high = ('0.0', s)
-            try:
-                self._renderer.clip = Range(float(low), float(high))
-            except ValueError:
-                self.parser.error(
-                    '%s is not a valid count range' % self._renderer.clip)
-            if self._renderer.clip.low > self._renderer.clip.high:
-                self.parser.error('count range must be specified low-high')
-
-    def parse_crop(self, options):
-        """Parses the --crop option and checks its validity"""
-        try:
-            left, top, right, bottom = options.crop.split(',', 4)
-        except ValueError:
-            self.parser.error(
-                'you must specify 4 integer values for the --crop option')
-        try:
-            self._renderer.crop = Crop(
-                int(left), int(top), int(right), int(bottom))
-        except ValueError:
-            self.parser.error(
-                'non-integer values found in --crop value %s' % options.crop)
-
-    def parse_colormap(self, options):
-        """Checks the validity of the --colormap option"""
+    def parse_colormap_option(self, options):
+        "Checks the validity of the --colormap option"
         if not matplotlib.cm.get_cmap(options.colormap):
             self.parser.error('color-map %s is unknown' % options.colormap)
-        self._renderer.colormap = options.colormap
+        return options.colormap
 
-    def parse_output(self, options):
-        """Checks the validity of the --output option"""
+    def parse_output_options(self, options):
+        "Checks the validity of the --output and --multi options"
         ext = os.path.splitext(options.output)[1]
         try:
             (   canvas_method,
                 default_interpolation,
                 multi_class,
-            ) = self._image_writers[ext]
+                _
+            ) = self.image_writers[ext]
         except KeyError:
             self.parser.error('unknown image format "%s"' % ext)
-        return canvas_method, multi_class, default_interpolation
-
-    def parse_interpolation(self, options, default_interpolation):
-        """Checks the validity of the --interpolation option"""
-        if options.interpolation is None:
-            options.interpolation = default_interpolation
-        if not options.interpolation in matplotlib.image.AxesImage._interpd:
-            self.parser.error('interpolation algorithm %s is unknown')
-        self._renderer.interpolation = options.interpolation
-
-    def parse_multi(self, options, multi_class):
-        """Checks the validity of the --multi switch"""
         if options.multi and not multi_class:
             multi_ext = [
                 ext
-                for (ext, (_, _, multi)) in self._image_writers.iteritems()
+                for (ext, (_, _, multi, _)) in self.image_writers.iteritems()
                 if multi
             ]
             if multi_ext:
@@ -375,10 +251,19 @@ class RasExtractUtility(rastools.main.Utility):
                 self.parser.error(
                     '--multi is not supported by any registered '
                     'output formats')
+        return canvas_method, multi_class, default_interpolation
+
+    def parse_interpolation_option(self, options, default_interpolation):
+        "Checks the validity of the --interpolation option"
+        if options.interpolation is None:
+            options.interpolation = default_interpolation
+        if not options.interpolation in matplotlib.image.AxesImage._interpd:
+            self.parser.error('interpolation algorithm %s is unknown')
+        return options.interpolation
 
 
 class BoundingBox(object):
-    """Represents a bounding-box in a matplotlib figure"""
+    "Represents a bounding-box in a matplotlib figure"
 
     def __init__(self, left, bottom, width, height):
         self.left = left
@@ -388,16 +273,16 @@ class BoundingBox(object):
 
     @property
     def top(self):
-        """Returns the top coordinate of the bounding box"""
+        "Returns the top coordinate of the bounding box"
         return self.bottom + self.height
 
     @property
     def right(self):
-        """Returns the right coordinate of the bounding box"""
+        "Returns the right coordinate of the bounding box"
         return self.left + self.width
 
     def relative_to(self, container):
-        """Returns the bounding-box as a proportion of container"""
+        "Returns the bounding-box as a proportion of container"
         return BoundingBox(
             self.left / container.width,
             self.bottom / container.height,
@@ -424,11 +309,11 @@ class BoundingBox(object):
         return value in (self.left, self.bottom, self.width, self.height)
 
 
-class RasRenderer(object):
-    """Renderer class for data files"""
+class RasRenderer(RasChannelProcessor):
+    "Renderer class for data files"
+
     def __init__(self):
-        self.clip = None
-        self.crop = Crop(0, 0, 0, 0)
+        super(RasRenderer, self).__init__()
         self.colormap = 'gray'
         self.colorbar = False
         self.histogram = False
@@ -438,60 +323,12 @@ class RasRenderer(object):
         self.axes = False
         self.title = None
 
-    def draw(self, channel, allow_empty=False):
-        """Draw the specified channel, returning the matplotlib figure"""
-        # Perform any cropping requested. This must be done before calculation
-        # of the data's range and percentile limiting is performed (although
-        # we've pre-calculated the percentile indexes)
-        data = channel.data
-        data = data[
-            self.crop.top:data.shape[0] - self.crop.bottom,
-            self.crop.left:data.shape[1] - self.crop.right
-        ]
-        # Find the minimum and maximum values in the channel and clip
-        # them to a percentile/range if requested
-        vsorted = np.sort(data, None)
-        data_domain = Range(vsorted[0], vsorted[-1])
-        logging.info(
-            'Channel %d (%s) has range %d-%d',
-            channel.index, channel.name, data_domain.low, data_domain.high)
-        if isinstance(self.clip, Percentile):
-            data_range = Range(
-                vsorted[(len(vsorted) - 1) * self.clip.low / 100.0],
-                vsorted[(len(vsorted) - 1) * self.clip.high / 100.0]
-            )
-            logging.info(
-                '%gth percentile is %d',
-                self.clip.low, data_range.low)
-            logging.info(
-                '%gth percentile is %d',
-                self.clip.high, data_range.high)
-        elif isinstance(self.clip, Range):
-            data_range = self.clip
-        else:
-            data_range = data_domain
-        if data_range != data_domain:
-            logging.info(
-                'Channel %d (%s) has new range %d-%d',
-                channel.index, channel.name, *data_range)
-        if data_range.low < data_domain.low:
-            logging.warning(
-                'Channel %d (%s) has no values below %d',
-                channel.index, channel.name, data_range.low)
-        if data_range.high > data_domain.high:
-            logging.warning(
-                'Channel %d (%s) has no values above %d',
-                channel.index, channel.name, data_range.high)
-        if data_range.low == data_range.high:
-            if allow_empty:
-                logging.warning(
-                    'Channel %d (%s) is empty',
-                    channel.index, channel.name)
-            else:
-                logging.warning(
-                    'Channel %d (%s) is empty, skipping',
-                    channel.index, channel.name)
-                return None
+    def draw(self, channel):
+        "Draw the specified channel, returning the matplotlib figure"
+        try:
+            data, data_domain, data_range = self.process(channel)
+        except RasChannelEmptyError:
+            return None
         # Copy the data into a floating-point array (matplotlib's
         # image module won't play with uint32 data - only uint8 or
         # float32) and crop it as necessary
@@ -579,7 +416,7 @@ class RasRenderer(object):
         return figure
 
     def draw_image(self, data, data_range, figure, box):
-        """Draws the image of the data within the specified figure"""
+        "Draws the image of the data within the specified figure"
         # The imshow() call takes care of clamping values with data_range and
         # color-mapping
         axes = figure.add_axes(box, frame_on=self.axes)
@@ -591,12 +428,12 @@ class RasRenderer(object):
             interpolation=self.interpolation)
 
     def draw_histogram(self, data, data_range, figure, box):
-        """Draws the data's historgram within the specified figure"""
+        "Draws the data's historgram within the specified figure"
         axes = figure.add_axes(box)
         axes.hist(data.flat, bins=self.histogram_bins, range=data_range)
 
     def draw_colorbar(self, image, data_domain, data_range, figure, box):
-        """Draws a range color-bar within the specified figure"""
+        "Draws a range color-bar within the specified figure"
         axes = figure.add_axes(box)
         figure.colorbar(
             image, cax=axes, orientation='horizontal',
@@ -608,7 +445,7 @@ class RasRenderer(object):
                 'neither')
 
     def draw_title(self, channel, figure, box):
-        """Draws a title within the specified figure"""
+        "Draws a title within the specified figure"
         axes = figure.add_axes(box)
         axes.set_axis_off()
         # The string_escape codec is used to permit new-line escapes, and
@@ -623,22 +460,11 @@ class RasRenderer(object):
             transform=axes.transAxes)
 
     def format_dict(self, source, **kwargs):
-        """Converts the configuration for use in format substitutions"""
-        return source.format_dict(
-            percentile_from=
-                self.clip.low if isinstance(self.clip, Percentile) else None,
-            percentile_to=
-                self.clip.high if isinstance(self.clip, Percentile) else None,
-            range_from=
-                self.clip.low if isinstance(self.clip, Range) else None,
-            range_to=
-                self.clip.high if isinstance(self.clip, Range) else None,
+        "Converts the configuration for use in format substitutions"
+        return super(RasRenderer, self).format_dict(
+            source,
             interpolation=self.interpolation,
             colormap=self.colormap,
-            crop_left=self.crop.left,
-            crop_top=self.crop.top,
-            crop_right=self.crop.right,
-            crop_bottom=self.crop.bottom,
             **kwargs
         )
 

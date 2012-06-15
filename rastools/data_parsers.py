@@ -30,7 +30,7 @@ try:
 except ImportError:
     logging.warning('Failed to load RAS parser')
 else:
-    PARSERS.extend([
+    DATA_PARSERS.extend([
         (RasFileReader, ('.ras', '.RAS'), 'QSCAN raster file'),
     ])
 
@@ -40,7 +40,7 @@ try:
 except ImportError:
     logging.warning('Failed to load DAT parser')
 else:
-    PARSERS.extend([
+    DATA_PARSERS.extend([
         (DatFileReader, ('.dat', '.DAT'), "Sam's DAT file"),
     ])
 

@@ -52,6 +52,16 @@ else:
             RasAsciiMultiWriter),
     ])
 
+logging.info('Loading DAT support')
+try:
+    from rastools.datwrite import DatWriter, DatMultiWriter
+except ImportError:
+    logging.warning('Failed to load DAT support')
+else:
+    DATA_WRITERS.extend([
+        (DatWriter, ('.dat', '.DAT'), "Sam's dat file", DatMultiWriter),
+    ])
+
 logging.info('Loading Excel support')
 try:
     from rastools.xlswrite import XlsWriter, XlsMulti

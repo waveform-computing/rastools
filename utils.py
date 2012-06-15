@@ -22,6 +22,7 @@ import re
 import sys
 
 def require_python(minimum):
+    "Throws an exception if Python interpreter is below minimum"
     if sys.hexversion < minimum:
         parts = []
         while minimum:
@@ -34,6 +35,7 @@ def require_python(minimum):
         raise Exception(error)
 
 def get_version(filename):
+    "Simple parser to extract a __version__ variable from a source file"
     version_re = re.compile(r'(\d\.\d(\.\d+)?)')
     with open(filename) as source:
         for line_num, line in enumerate(source):
@@ -47,13 +49,13 @@ def get_version(filename):
     raise Exception('No __version__ line found in %s' % filename)
 
 def description(filename):
-    """Returns the first non-heading paragraph from filename"""
+    "Returns the first non-heading paragraph from a ReStructuredText file"
     state = 'before_header'
     result = []
     # We use a simple DFA to parse the file which looks for blank, non-blank,
     # and heading-delimiter lines.
-    with open(filename) as f:
-        for line in f:
+    with open(filename) as rst_file:
+        for line in rst_file:
             line = line.rstrip()
             # Manipulate state based on line content
             if line == '':

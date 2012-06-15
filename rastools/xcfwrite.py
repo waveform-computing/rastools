@@ -28,102 +28,36 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 GIMP_EXECUTABLE = 'gimp'
 
-# Test launch the GIMP executable. We do this on import because without GIMP
-# being available this entire module is basically useless!
-try:
-    p = subprocess.Popen([
-        GIMP_EXECUTABLE, '-i', '-b', '(gimp-quit 0)'],
-        stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        shell=False)
-    # Read all the process' output but only print it if an error occurs.
-    # Otherwise, we don't care about any warnings - just that GIMP launched and
-    # quit successfully
-    output = p.communicate()[0]
-    if p.returncode != 0:
-        for line in output.splitlines():
-            logging.error(line.rstrip())
-        raise Exception()
-except:
-    raise ImportError('Unable to test-launch GIMP executable "%s"' %
-        GIMP_EXECUTABLE)
-
-
-class FigureCanvasXcf(FigureCanvasAgg):
-    def print_xcf(self, filename_or_obj, *args, **kwargs):
-        # If filename_or_obj is a file-like object we need a temporary file for
-        # GIMP's output too...
-        if isinstance(filename_or_obj, basestring):
-            out_temp_handle, out_temp_name = None, filename_or_obj
-        else:
-            out_temp_handle, out_temp_name = tempfile.mkstemp(suffix='.xcf')
-        try:
-            # Create a temporary file and write the "layer" to it as a PNG
-            in_temp_handle, in_temp_name = tempfile.mkstemp(suffix='.png')
-            try:
-                FigureCanvasAgg.print_png(self, in_temp_name, *args, **kwargs)
-                scheme = """\
+# A simple GIMP script to generate a .xcf file from a single input image.
+# Substitutions:
+#
+#   {input} -- double-quoted input filename
+#   {output} -- double-quoted output filename
+UNILAYER_SCRIPT = """
 (let*
   (
-    (im (car (file-png-load RUN-NONINTERACTIVE "%(input)s" "%(input)s")))
+    (im (car (file-png-load RUN-NONINTERACTIVE {input} {input})))
     (layer (car (gimp-image-get-active-layer im)))
   )
-  (gimp-file-save RUN-NONINTERACTIVE im layer "%(output)s" "%(output)s")
+  (gimp-file-save RUN-NONINTERACTIVE im layer {output} {output})
   (gimp-image-delete im)
 )
-""" % {'input': in_temp_name, 'output': out_temp_name}
-                p = subprocess.Popen([
-                    GIMP_EXECUTABLE,       # self-explanatory...
-                    '-i',                  # run in non-interactive mode
-                    '-b', scheme,          # run batch to generate layered XCF
-                    '-b', '(gimp-quit 0)', # ensure we terminate GIMP afterward
-                    ], stdin=None, stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT, shell=False)
-                output = p.communicate()[0]
-                # As with the test at the start, only log GIMP's output if an
-                # error occurs - otherwise we don't care
-                if p.returncode != 0:
-                    for line in output.splitlines():
-                        logging.error(line.rstrip())
-                    raise Exception('GIMP XCF generation failed with return code %d - see above for further details' % p.returncode)
-            finally:
-                os.close(in_temp_handle)
-                os.unlink(in_temp_name)
-        finally:
-            if out_temp_handle:
-                os.close(out_temp_handle)
-                # If we wrote the XCF to a temporary file, write its content to
-                # the file-like object we were given
-                # XXX What if it's a gigabyte file?!
-                with open(out_temp_name, 'rb') as f:
-                    filename_or_obj.write(f.read())
-                os.unlink(out_temp_name)
+"""
 
-
-class XcfLayers(object):
-    def __init__(self, filename):
-        self.filename = filename
-        self.width = None
-        self.height = None
-        self._layers = []
-
-    def close(self):
-        try:
-            # Use GIMP's batch mode with some Scheme to merge all the temporary
-            # files into a single XCF image
-            subst = {
-                # XXX What about filenames that contain quotes?
-                'layers': ' '.join('"%s"' % s for (s, _) in self._layers),
-                'titles': ' '.join('"%s"' % s for (_, s) in self._layers),
-                'width':  self.width,
-                'height': self.height,
-                'output': '"%s"' % self.filename
-            }
-            scheme = """\
+# A more complex GIMP script to generate a multi-layer .xcf file from a list of
+# input images. Substitutions:
+#
+#   {layers} -- a space-separated list of quoted input filenames
+#   {titles} -- a space-separated list of quoted layer titles
+#   {width} -- the width of the output image in pixels
+#   {height} -- the height of the output image in pixels
+#   {output} -- the output filename
+MULTILAYER_SCRIPT = """
 (let*
   (
-    (images '(%(layers)s))
-    (titles '(%(titles)s))
-    (im (car (gimp-image-new %(width)d %(height)d RGB)))
+    (images '({layers}))
+    (titles '({titles}))
+    (im (car (gimp-image-new {width} {height} RGB)))
   )
   (gimp-image-undo-disable im)
   (while (not (null? images))
@@ -144,42 +78,94 @@ class XcfLayers(object):
     (
       (layer (car (gimp-image-get-active-layer im)))
     )
-    (gimp-file-save RUN-NONINTERACTIVE im layer %(output)s %(output)s)
+    (gimp-file-save RUN-NONINTERACTIVE im layer {output} {output})
   )
   (gimp-image-delete im)
 )
-""" % subst
-            # If the output file already exists, remove it first
+"""
+
+def quote_string(s):
+    "Quotes a string for use in a GIMP script"
+    return '"%s"' % s.replace(r'"', r'\"')
+
+def run_gimp_script(script=None):
+    "Launches the provided scheme script with GIMP"
+    cmdline = [GIMP_EXECUTABLE, '-i']
+    if script:
+        cmdline.extend(['-b', script])
+    # Ensure GIMP always quits
+    cmdline.extend(['-b', '(gimp-quit 0)'])
+    process = subprocess.Popen(
+        cmdline,
+        stdin=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=False)
+    # Read all the process' output but only print it if an error occurs.
+    # Otherwise, we don't care about any warnings - just that GIMP launched and
+    # quit successfully
+    output = process.communicate()[0]
+    if process.returncode != 0:
+        for line in output.splitlines():
+            logging.error(line.rstrip())
+        raise Exception('GIMP script failed with return code %d - see '
+            'above for further details' % process.returncode)
+
+# Test launch the GIMP executable. We do this on import because without GIMP
+# being available this entire module is basically useless!
+try:
+    run_gimp_script()
+except:
+    raise ImportError('Unable to test-launch GIMP executable "%s"' %
+        GIMP_EXECUTABLE)
+
+
+class FigureCanvasXcf(FigureCanvasAgg):
+    """A matplotlib canvas capable of writing GIMP images"""
+
+    def print_xcf(self, filename_or_obj, *args, **kwargs):
+        "Writes the figure to a GIMP XCF image file"
+        # If filename_or_obj is a file-like object we need a temporary file for
+        # GIMP's output too...
+        if isinstance(filename_or_obj, basestring):
+            out_temp_handle, out_temp_name = None, filename_or_obj
+        else:
+            out_temp_handle, out_temp_name = tempfile.mkstemp(suffix='.xcf')
+        try:
+            # Create a temporary file and write the "layer" to it as a PNG
+            in_temp_handle, in_temp_name = tempfile.mkstemp(suffix='.png')
             try:
-                os.unlink(self.filename)
-            except OSError:
-                pass
-            p = subprocess.Popen([
-                GIMP_EXECUTABLE,       # self-explanatory...
-                '-i',                  # run in non-interactive mode
-                '-b', scheme,          # run batch to generate layered XCF
-                '-b', '(gimp-quit 0)', # ensure we terminate GIMP afterward
-            ], stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
-            output = p.communicate()[0]
-            # As with the test at the start, only log GIMP's output if an error
-            # occurs - otherwise we don't care
-            if p.returncode != 0:
-                for line in output.splitlines():
-                    logging.error(line.rstrip())
-                raise Exception('GIMP XCF generation failed with return code %d - see above for further details' % p.returncode)
-            # Check that the output file exists
-            if not os.path.exists(self.filename):
-                for line in output.splitlines():
-                    logging.error(line.rstrip())
-                raise IOError('GIMP succeeded but cannot find XCF file "%s" - see above for details' % self.filename)
+                FigureCanvasAgg.print_png(self, in_temp_name, *args, **kwargs)
+                run_gimp_script(
+                    UNILAYER_SCRIPT.format(
+                        input=quote_string(in_temp_name),
+                        output=quote_string(out_temp_name)))
+            finally:
+                os.close(in_temp_handle)
+                os.unlink(in_temp_name)
         finally:
-            # Remove all the temporary files we generated
-            while self._layers:
-                filename, name = self._layers.pop()
-                os.unlink(filename)
+            if out_temp_handle:
+                os.close(out_temp_handle)
+                # If we wrote the XCF to a temporary file, write its content to
+                # the file-like object we were given (the copy is chunked as
+                # XCF files can get pretty big)
+                with open(out_temp_name, 'rb') as source:
+                    for chunk in iter(lambda: source.read(131072), ''):
+                        filename_or_obj.write(chunk)
+                os.unlink(out_temp_name)
+
+
+class XcfLayers(object):
+    """Multi-writer class capable of producing layered GIMP images"""
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.width = None
+        self.height = None
+        self._layers = []
 
     def savefig(self, figure, **kwargs):
-        # Create a temporary file and write the "layer" to it as a PNG
+        "Saves a figure to a temporary file"
         temp_handle, temp_name = tempfile.mkstemp(suffix='.png')
         try:
             self._layers.append((temp_name, kwargs.get('title')))
@@ -192,3 +178,28 @@ class XcfLayers(object):
                 self.width, self.height = img.size
         finally:
             os.close(temp_handle)
+
+    def close(self):
+        "Combines the written figuers into a multi-layer GIMP file"
+        try:
+            # If the output file already exists, remove it first to avoid GIMP
+            # complaining
+            try:
+                os.unlink(self.filename)
+            except OSError:
+                pass
+            run_gimp_script(
+                MULTILAYER_SCRIPT.format(
+                    layers=' '.join(
+                        quote_string(s) for (s, _) in self._layers),
+                    titles=' '.join(
+                        quote_string(s) for (_, s) in self._layers),
+                    width=self.width,
+                    height=self.height,
+                    output=quote_string(self.filename)))
+        finally:
+            # Remove all the temporary files we generated
+            while self._layers:
+                os.unlink(self._layers.pop()[0])
+
+
