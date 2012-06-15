@@ -67,7 +67,7 @@ class MDIWindow(QtGui.QWidget):
         self._info_dialog = None
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
-            from rastools.parsers import PARSERS
+            from rastools.data_parsers import DATA_PARSERS
         finally:
             QtGui.QApplication.instance().restoreOverrideCursor()
         # Open the selected file
@@ -79,7 +79,7 @@ class MDIWindow(QtGui.QWidget):
                 files = (data_file,)
             parsers = dict(
                 (ext, klass)
-                for (klass, exts, _) in PARSERS
+                for (klass, exts, _) in DATA_PARSERS
                 for ext in exts
             )
             try:

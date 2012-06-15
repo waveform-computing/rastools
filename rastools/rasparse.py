@@ -253,11 +253,13 @@ class RasFileReader(object):
         strip_chars = '\t\r\n \0'
         self.filename = self._file.name
         self.filename_root = self.filename_root.rstrip(strip_chars)
-        self.header['version_string'] = self.header['version_string'].rstrip(strip_chars)
-        self.header['x_motor'] = self.header['x_motor'].rstrip(strip_chars)
-        self.header['y_motor'] = self.header['y_motor'].rstrip(strip_chars)
-        self.header['region_filename'] = self.header['region_filename'].rstrip(strip_chars)
-        self.header['filename_original'] = self.header['filename_original'].rstrip(strip_chars)
+        for field in (
+                'version_string',
+                'x_motor',
+                'y_motor',
+                'region_filename',
+                'filename_original'):
+            self.header[field] = self.header[field].rstrip(strip_chars)
         # Convert comments to a simple string
         self.comments = '\n'.join(
             line.rstrip(strip_chars)

@@ -16,19 +16,34 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Module implementing the template substitutions dialog"""
+
 import os
-from PyQt4 import QtCore, QtGui, uic
+
+from PyQt4 import QtGui, uic
+
 
 class TitleInfoDialog(QtGui.QDialog):
+    "Implements the template substitutions dialog"
+
     def __init__(self, parent):
         super(TitleInfoDialog, self).__init__(parent)
-        self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'title_info_dialog.ui')), self)
+        self.ui = uic.loadUi(
+            os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    'title_info_dialog.ui'
+                )), self)
         self.ui.template_list.setHeaderLabels(['Template', 'Substitution'])
         self.ui.template_list.itemDoubleClicked.connect(self.insert_template)
 
     def reject(self):
+        "Called when the dialog is closed"
         super(TitleInfoDialog, self).reject()
         self.parent()._info_dialog = None
 
     def insert_template(self, item, t):
+        "Called when a template is double-clicked"
+        # Insert the template into the parent's title editor
         self.parent().ui.title_edit.textCursor().insertText(item.text(0))
+

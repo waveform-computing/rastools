@@ -20,7 +20,7 @@
 import sys
 import logging
 from PyQt4 import QtCore, QtGui, uic
-from rastools.main import __version__
+from rastools import __version__
 
 def excepthook(type, value, tb):
     # XXX Need to expand this to display a complete stack trace and add an

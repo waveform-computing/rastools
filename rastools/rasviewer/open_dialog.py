@@ -16,13 +16,24 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Module implementing the file open dialog"""
+
 import os
+
 from PyQt4 import QtCore, QtGui, uic
 
+
 class OpenDialog(QtGui.QDialog):
+    "Implements the file/open dialog"
+
     def __init__(self, parent=None):
         super(OpenDialog, self).__init__(parent)
-        self.ui = uic.loadUi(os.path.abspath(os.path.join(os.path.dirname(__file__), 'open_dialog.ui')), self)
+        self.ui = uic.loadUi(
+            os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    'open_dialog.ui'
+                )), self)
         # Read the last-used lists
         self.settings = self.parent().settings
         self.settings.beginGroup('last_used')
@@ -31,18 +42,22 @@ class OpenDialog(QtGui.QDialog):
             try:
                 for i in range(count):
                     self.settings.setArrayIndex(i)
-                    self.ui.data_file_combo.addItem(self.settings.value('path').toString())
+                    self.ui.data_file_combo.addItem(
+                        self.settings.value('path').toString())
             finally:
                 self.settings.endArray()
-            self.ui.data_file_combo.setEditText(self.settings.value('data_file', '').toString())
+            self.ui.data_file_combo.setEditText(
+                self.settings.value('data_file', '').toString())
             count = self.settings.beginReadArray('channel_files')
             try:
                 for i in range(count):
                     self.settings.setArrayIndex(i)
-                    self.ui.channel_file_combo.addItem(self.settings.value('path').toString())
+                    self.ui.channel_file_combo.addItem(
+                        self.settings.value('path').toString())
             finally:
                 self.settings.endArray()
-            self.ui.channel_file_combo.setEditText(self.settings.value('channel_file', '').toString())
+            self.ui.channel_file_combo.setEditText(
+                self.settings.value('channel_file', '').toString())
         finally:
             self.settings.endGroup()
         # Connect up signals
@@ -52,54 +67,70 @@ class OpenDialog(QtGui.QDialog):
         self.data_file_changed()
 
     def accept(self):
+        "Called when the user closes the dialog to open a file"
         super(OpenDialog, self).accept()
         # When the dialog is accepted insert the current filenames at the top
         # of the combos or, if the entry already exists, move it to the top of
         # the combo list
-        i = self.ui.data_file_combo.findText(self.ui.data_file_combo.currentText())
+        i = self.ui.data_file_combo.findText(
+            self.ui.data_file_combo.currentText())
         if i == -1:
-            self.ui.data_file_combo.addItem(self.ui.data_file_combo.currentText())
+            self.ui.data_file_combo.addItem(
+                self.ui.data_file_combo.currentText())
         else:
-            self.ui.data_file_combo.insertItem(0, self.ui.data_file_combo.currentText())
+            self.ui.data_file_combo.insertItem(
+                0, self.ui.data_file_combo.currentText())
             self.ui.data_file_combo.setCurrentIndex(0)
             self.ui.data_file_combo.removeItem(i + 1)
         while self.ui.data_file_combo.count() > self.ui.data_file_combo.maxCount():
-            self.ui.data_file_combo.removeItem(self.ui.data_file_combo.count() - 1)
+            self.ui.data_file_combo.removeItem(
+                self.ui.data_file_combo.count() - 1)
         if str(self.ui.channel_file_combo.currentText()) != '':
-            i = self.ui.channel_file_combo.findText(self.ui.channel_file_combo.currentText())
+            i = self.ui.channel_file_combo.findText(
+                self.ui.channel_file_combo.currentText())
             if i == -1:
-                self.ui.channel_file_combo.addItem(self.ui.channel_file_combo.currentText())
+                self.ui.channel_file_combo.addItem(
+                    self.ui.channel_file_combo.currentText())
             else:
-                self.ui.channel_file_combo.insertItem(0, self.ui.channel_file_combo.currentText())
+                self.ui.channel_file_combo.insertItem(
+                    0, self.ui.channel_file_combo.currentText())
                 self.ui.channel_file_combo.setCurrentIndex(0)
                 self.ui.channel_file_combo.removeItem(i + 1)
         while self.ui.channel_file_combo.count() > self.ui.channel_file_combo.maxCount():
-            self.ui.channel_file_combo.removeItem(self.ui.channel_file_combo.count() - 1)
+            self.ui.channel_file_combo.removeItem(
+                self.ui.channel_file_combo.count() - 1)
         # Only write the last-used lists when the dialog is accepted (not when
         # cancelled or just closed)
         self.settings.beginGroup('last_used')
         try:
-            self.settings.beginWriteArray('data_files', self.ui.data_file_combo.count())
+            self.settings.beginWriteArray(
+                'data_files', self.ui.data_file_combo.count())
             try:
                 for i in range(self.ui.data_file_combo.count()):
                     self.settings.setArrayIndex(i)
-                    self.settings.setValue('path', self.ui.data_file_combo.itemText(i))
+                    self.settings.setValue(
+                        'path', self.ui.data_file_combo.itemText(i))
             finally:
                 self.settings.endArray()
-            self.settings.setValue('data_file', self.ui.data_file_combo.currentText())
-            self.settings.beginWriteArray('channel_files', self.ui.channel_file_combo.count())
+            self.settings.setValue(
+                'data_file', self.ui.data_file_combo.currentText())
+            self.settings.beginWriteArray(
+                'channel_files', self.ui.channel_file_combo.count())
             try:
                 for i in range(self.ui.channel_file_combo.count()):
                     self.settings.setArrayIndex(i)
-                    self.settings.setValue('path', self.ui.channel_file_combo.itemText(i))
+                    self.settings.setValue(
+                        'path', self.ui.channel_file_combo.itemText(i))
             finally:
                 self.settings.endArray()
-            self.settings.setValue('channel_file', self.ui.channel_file_combo.currentText())
+            self.settings.setValue(
+                'channel_file', self.ui.channel_file_combo.currentText())
         finally:
             self.settings.endGroup()
 
     @property
     def data_file(self):
+        "Returns the current content of the data_file combo"
         result = str(self.ui.data_file_combo.currentText())
         if result:
             return result
@@ -108,6 +139,7 @@ class OpenDialog(QtGui.QDialog):
 
     @property
     def channel_file(self):
+        "Returns the current content of the channel_file combo"
         result = str(self.ui.channel_file_combo.currentText())
         if result:
             return result
@@ -115,31 +147,42 @@ class OpenDialog(QtGui.QDialog):
             return None
 
     def data_file_changed(self, value=None):
+        "Called to update the dialog buttons when the data_file changes"
         if value is None:
             value = self.ui.data_file_combo.currentText()
-        self.ui.button_box.button(QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
+        self.ui.button_box.button(
+            QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
 
     def data_file_select(self):
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
-            from rastools.parsers import PARSERS
+            from rastools.data_parsers import DATA_PARSERS
         finally:
             QtGui.QApplication.instance().restoreOverrideCursor()
         filters = ';;'.join(
             [
-                str(self.tr('All data files (%s)')) % ' '.join('*' + ext for (_, exts, _) in PARSERS for ext in exts)
+                str(self.tr('All data files (%s)')) % ' '.join(
+                    '*' + ext
+                    for (_, exts, _) in DATA_PARSERS
+                    for ext in exts
+                )
             ] + [
-                '%s (%s)' % (self.tr(label), ' '.join('*' + ext for ext in exts))
-                for (klass, exts, label) in PARSERS
+                '%s (%s)' % (self.tr(label), ' '.join(
+                    '*' + ext
+                    for ext in exts
+                ))
+                for (klass, exts, label) in DATA_PARSERS
             ]
         )
-        f = QtGui.QFileDialog.getOpenFileName(self, self.tr('Select data file'), os.getcwd(), filters)
+        f = QtGui.QFileDialog.getOpenFileName(
+            self, self.tr('Select data file'), os.getcwd(), filters)
         if f:
             os.chdir(os.path.dirname(str(f)))
             self.ui.data_file_combo.setEditText(f)
 
     def channel_file_select(self):
-        f = QtGui.QFileDialog.getOpenFileName(self, self.tr('Select channel file'), os.getcwd(),
+        f = QtGui.QFileDialog.getOpenFileName(
+            self, self.tr('Select channel file'), os.getcwd(),
             self.tr('Text files (*.txt *.TXT);;All files (*)'))
         if f:
             os.chdir(os.path.dirname(str(f)))
