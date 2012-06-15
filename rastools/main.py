@@ -18,20 +18,20 @@
 
 """Defines a base class for command line utilities.
 
-This module define a Utility class which provides common facilities to command
-line applications: a help screen, universal file globbing, response file
-handling, and common logging configuration and options.
+This module define a TerminalApplication class which provides common facilities
+to command line applications: a help screen, universal file globbing, response
+file handling, and common logging configuration and options.
 """
 
 import sys
 import os
 import optparse
-import ConfigParser
 import logging
 import locale
 import traceback
 import glob
 from itertools import chain
+
 
 __version__ = '0.2'
 
@@ -92,7 +92,8 @@ class OptionParser(optparse.OptionParser):
     def error(self, msg):
         raise optparse.OptParseError(msg)
 
-class Utility(object):
+
+class TerminalApplication(object):
     """Base class for command line utilities.
 
     This class provides command line parsing, file globbing, response file
@@ -110,7 +111,7 @@ class Utility(object):
     # parser, console pretty-printing, logging and exception handling
 
     def __init__(self, usage=None, version=None, description=None):
-        super(Utility, self).__init__()
+        super(TerminalApplication, self).__init__()
         if usage is None:
             usage = self.__doc__.split('\n')[0]
         if version is None:
@@ -143,12 +144,12 @@ class Utility(object):
 
     def __call__(self, args=None):
         sys.excepthook = self.handle
-        if args is None:
-            args = sys.argv[1:]
         console = logging.StreamHandler(sys.stderr)
         console.setFormatter(logging.Formatter('%(message)s'))
         console.setLevel(logging.DEBUG)
         logging.getLogger().addHandler(console)
+        if args is None:
+            args = sys.argv[1:]
         (options, args) = self.parser.parse_args(expand_args(args))
         console.setLevel(options.loglevel)
         if options.logfile:
@@ -170,12 +171,12 @@ class Utility(object):
             return self.main(options, args) or 0
 
     def handle(self, exc_type, exc_value, exc_trace):
-        "Exception hook for non-debug mode"
+        "Global application exception handler"
         if issubclass(exc_type, (SystemExit, KeyboardInterrupt)):
             # Just ignore system exit and keyboard interrupt errors (after all,
             # they're user generated)
             return 130
-        elif issubclass(exc_type, (ValueError, IOError, ConfigParser.Error)):
+        elif issubclass(exc_type, (ValueError, IOError)):
             # For simple errors like IOError just output the message which
             # should be sufficient for the end user (no need to confuse them
             # with a full stack trace)
@@ -217,3 +218,4 @@ class Utility(object):
     def main(self, options, args):
         "Called as the main body of the utility"
         raise NotImplementedError
+
