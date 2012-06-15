@@ -115,8 +115,8 @@ class DatFileReader(object):
         self.comments = ''
         self.channel_names = []
         self.channel_count = 0
-        data_line = self.read_header()
         self.header['energy_points'] = 0.0
+        data_line = self.read_header()
         self.header['x_from'] = self.x_coords[0]
         self.header['x_to'] = self.x_coords[-1]
         self.header['y_from'] = self.y_coords[0]
@@ -163,7 +163,8 @@ class DatFileReader(object):
                 re.compile(r'^\* *Energy points requested *:'),
                 ('energy_points',)),
             'energy_points': DatParseState(
-                re.compile(r'^\* *([-+]?\d+(\.\d+)?)$'), ('data',)),
+                re.compile(r'^\* *([-+]?\d+(\.\d+)?)$'),
+                ('data',)),
             'data': DatParseState(
                 re.compile(r'^\* *DATA'), ()),
         }
@@ -291,7 +292,7 @@ class DatFileReader(object):
     def _state_energy_points(self, match, line):
         """Parse the energy points value"""
         try:
-            self.energy_points = float(match.group(1))
+            self.header['energy_points'] = float(match.group(1))
         except ValueError:
             raise DatFileError(
                 'non-float energy points requested value (%s) found '

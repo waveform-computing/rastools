@@ -18,16 +18,18 @@
 
 """Writer for Sam's dat files"""
 
+import numpy as np
 
-DEFAULT_ENERGY_POINTS = 0.0
+
+DEFAULT_ENERGY_POINTS = 10000.0
 
 DAT_HEADER = """\
 * Abscissa points : {x_size:5d}
 * Ordinate points : {y_size:5d}
 * BLANK LINE
-* Data Channels : {channel_count:5d}
-* Data Labels : {channel_names}
-* Comments:
+* Data Channels : {channel_count:4d}
+# Data Labels : {channel_names}
+* Comments: 
 {comments}* BLANK LINE
 * Abscissa points requested :
 * {x_coords}
@@ -37,7 +39,7 @@ DAT_HEADER = """\
 * {y_coords}
 * BLANK LINE
 * BLANK LINE
-* Energy points requested:
+* Energy points requested: 
 * {energy_points:9.1f}
 * BLANK LINE
 * DATA
@@ -68,7 +70,7 @@ class DatWriter(object):
             channel_count=1,
             channel_names=self._channel.name,
             comments=''.join(
-                '* %s\n' for line in data_file.comments.split('\n')),
+                '* %s\n' % line for line in data_file.comments.split('\n')),
             x_coords='\t'.join('%.4f' % i for i in x_coords),
             y_coords='\t'.join('%.4f' % i for i in y_coords),
             energy_points=data_file.header.get(
@@ -91,7 +93,7 @@ class DatMultiWriter(object):
         self._data = None
         self._names = []
 
-    def write(self, data, channel):
+    def write_page(self, data, channel):
         "Write the channel to the output file"
         if self._data is None:
             self._data = np.dstack((data,))
@@ -110,9 +112,9 @@ class DatMultiWriter(object):
             x_size=len(self._data[..., 0][0]),
             y_size=len(self._data[..., 0]),
             channel_count=len(self._data[0, 0]),
-            channel_names='\t'.join(self._names),
+            channel_names=''.join('%s\t' % s for s in self._names),
             comments=''.join(
-                '* %s\n' for line in data_file.comments.split('\n')),
+                '* %s\n' % line for line in data_file.comments.split('\n')),
             x_coords='\t'.join('%.4f' % i for i in x_coords),
             y_coords='\t'.join('%.4f' % i for i in y_coords),
             energy_points=data_file.header.get(

@@ -24,7 +24,7 @@ __all__ = ['DATA_WRITERS']
 
 DATA_WRITERS = []
 
-logging.info('Loading CSV renderer')
+logging.info('Loading CSV writer')
 try:
     from rastools.csvwrite import CsvWriter, TsvWriter
 except ImportError:
@@ -38,7 +38,7 @@ else:
         (TsvWriter, ('.tsv', '.TSV'), 'Tab Separated Values',   None),
     ])
 
-logging.info('Loading RAS support')
+logging.info('Loading RAS writer')
 try:
     from rastools.raswrite import (
         RasWriter, RasAsciiWriter, RasMultiWriter, RasAsciiMultiWriter
@@ -52,7 +52,7 @@ else:
             RasAsciiMultiWriter),
     ])
 
-logging.info('Loading DAT support')
+logging.info('Loading DAT writer')
 try:
     from rastools.datwrite import DatWriter, DatMultiWriter
 except ImportError:
@@ -62,7 +62,7 @@ else:
         (DatWriter, ('.dat', '.DAT'), "Sam's dat file", DatMultiWriter),
     ])
 
-logging.info('Loading Excel support')
+logging.info('Loading Excel writer')
 try:
     from rastools.xlswrite import XlsWriter, XlsMulti
 except ImportError:
