@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # vim: set et sw=4 sts=4:
 
 # Copyright 2012 Dave Hughes.
@@ -19,14 +18,17 @@
 
 """Module providing a common base for ras command line utilities"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 import sys
 import logging
-from collections import namedtuple
 
 import numpy as np
 
 from rastools.terminal import TerminalApplication
+from rastools.collections import Percentile, Range, Crop
 
 class RasUtility(TerminalApplication):
     """Base class for ras terminal utilities.
@@ -189,10 +191,6 @@ class RasUtility(TerminalApplication):
         "Called to clean up the display at the end of a long operation"
         sys.stderr.write('\n')
 
-
-Percentile = namedtuple('Percentile', ('low', 'high'))
-Range = namedtuple('Range', ('low', 'high'))
-Crop = namedtuple('Crop', ('top', 'left', 'bottom', 'right'))
 
 class RasError(Exception):
     "Base class for processing errors"

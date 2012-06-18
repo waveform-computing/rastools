@@ -19,6 +19,9 @@
 
 """Main module for the rasextract utility."""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 import sys
 import logging
@@ -30,6 +33,7 @@ import matplotlib.image
 
 from rastools.rasutility import (
     RasUtility, RasChannelEmptyError, RasChannelProcessor)
+from rastools.collections import BoundingBox
 
 
 DPI = 72.0
@@ -49,7 +53,6 @@ class RasExtractUtility(RasUtility):
     def __init__(self):
         super(RasExtractUtility, self).__init__()
         self._image_writers = None
-        self.renderer = RasRenderer()
         self.parser.set_defaults(
             list_colormaps=False,
             list_formats=False,
@@ -133,19 +136,20 @@ class RasExtractUtility(RasUtility):
             return 0
         # Configure the renderer from the command line options
         data_file = self.parse_files(options, args)
-        self.renderer.colormap = self.parse_colormap_option(options)
-        self.renderer.crop = self.parse_crop_option(options)
-        self.renderer.clip = self.parse_range_options(options)
-        self.renderer.colorbar = options.show_colorbar
-        self.renderer.histogram = options.show_histogram
-        self.renderer.axes = options.show_axes
-        self.renderer.title = options.title
-        self.renderer.empty = options.empty
+        renderer = RasRenderer()
+        renderer.colormap = self.parse_colormap_option(options)
+        renderer.crop = self.parse_crop_option(options)
+        renderer.clip = self.parse_range_options(options)
+        renderer.colorbar = options.show_colorbar
+        renderer.histogram = options.show_histogram
+        renderer.axes = options.show_axes
+        renderer.title = options.title
+        renderer.empty = options.empty
         (   canvas_method,
             multi_class,
             default_interpolation
         ) = self.parse_output_options(options)
-        self.renderer.interpolation = self.parse_interpolation_option(
+        renderer.interpolation = self.parse_interpolation_option(
             options, default_interpolation)
         # Extract the specified channels
         logging.info(
@@ -159,7 +163,7 @@ class RasExtractUtility(RasUtility):
         )
         if options.multi:
             filename = options.output.format(
-                **self.renderer.format_dict(data_file))
+                **renderer.format_dict(data_file))
             logging.warning('Writing all channels to %s',  filename)
             output = multi_class(filename)
         try:
@@ -171,11 +175,11 @@ class RasExtractUtility(RasUtility):
                             channel.index, channel.name)
                     else:
                         filename = options.output.format(
-                            **self.renderer.format_dict(channel))
+                            **renderer.format_dict(channel))
                         logging.warning(
                             'Writing channel %d (%s) to %s',
                             channel.index, channel.name, filename)
-                    figure = self.renderer.draw(channel)
+                    figure = renderer.draw(channel)
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
@@ -260,53 +264,6 @@ class RasExtractUtility(RasUtility):
         if not options.interpolation in matplotlib.image.AxesImage._interpd:
             self.parser.error('interpolation algorithm %s is unknown')
         return options.interpolation
-
-
-class BoundingBox(object):
-    "Represents a bounding-box in a matplotlib figure"
-
-    def __init__(self, left, bottom, width, height):
-        self.left = left
-        self.bottom = bottom
-        self.width = width
-        self.height = height
-
-    @property
-    def top(self):
-        "Returns the top coordinate of the bounding box"
-        return self.bottom + self.height
-
-    @property
-    def right(self):
-        "Returns the right coordinate of the bounding box"
-        return self.left + self.width
-
-    def relative_to(self, container):
-        "Returns the bounding-box as a proportion of container"
-        return BoundingBox(
-            self.left / container.width,
-            self.bottom / container.height,
-            self.width / container.width,
-            self.height / container.height
-        )
-
-    def __len__(self):
-        return 4
-
-    def __getitem__(self, index):
-        return (
-            self.left,
-            self.bottom,
-            self.width,
-            self.height,
-        )[index]
-
-    def __iter__(self):
-        for i in (self.left, self.bottom, self.width, self.height):
-            yield i
-
-    def __contains__(self, value):
-        return value in (self.left, self.bottom, self.width, self.height)
 
 
 class RasRenderer(RasChannelProcessor):
