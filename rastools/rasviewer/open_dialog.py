@@ -18,6 +18,9 @@
 
 """Module implementing the file open dialog"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 
 from PyQt4 import QtCore, QtGui, uic
@@ -82,9 +85,6 @@ class OpenDialog(QtGui.QDialog):
                 0, self.ui.data_file_combo.currentText())
             self.ui.data_file_combo.setCurrentIndex(0)
             self.ui.data_file_combo.removeItem(i + 1)
-        while self.ui.data_file_combo.count() > self.ui.data_file_combo.maxCount():
-            self.ui.data_file_combo.removeItem(
-                self.ui.data_file_combo.count() - 1)
         if str(self.ui.channel_file_combo.currentText()) != '':
             i = self.ui.channel_file_combo.findText(
                 self.ui.channel_file_combo.currentText())
@@ -96,6 +96,10 @@ class OpenDialog(QtGui.QDialog):
                     0, self.ui.channel_file_combo.currentText())
                 self.ui.channel_file_combo.setCurrentIndex(0)
                 self.ui.channel_file_combo.removeItem(i + 1)
+        # Keep the drop-downs to a reasonable size
+        while self.ui.data_file_combo.count() > self.ui.data_file_combo.maxCount():
+            self.ui.data_file_combo.removeItem(
+                self.ui.data_file_combo.count() - 1)
         while self.ui.channel_file_combo.count() > self.ui.channel_file_combo.maxCount():
             self.ui.channel_file_combo.removeItem(
                 self.ui.channel_file_combo.count() - 1)
@@ -154,6 +158,7 @@ class OpenDialog(QtGui.QDialog):
             QtGui.QDialogButtonBox.Ok).setEnabled(value != '')
 
     def data_file_select(self):
+        "Called when the user clicks on Browse... next to Data file"
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             from rastools.data_parsers import DATA_PARSERS
@@ -171,20 +176,21 @@ class OpenDialog(QtGui.QDialog):
                     '*' + ext
                     for ext in exts
                 ))
-                for (klass, exts, label) in DATA_PARSERS
+                for (_, exts, label) in DATA_PARSERS
             ]
         )
-        f = QtGui.QFileDialog.getOpenFileName(
+        filename = QtGui.QFileDialog.getOpenFileName(
             self, self.tr('Select data file'), os.getcwd(), filters)
-        if f:
-            os.chdir(os.path.dirname(str(f)))
-            self.ui.data_file_combo.setEditText(f)
+        if filename:
+            os.chdir(os.path.dirname(str(filename)))
+            self.ui.data_file_combo.setEditText(filename)
 
     def channel_file_select(self):
-        f = QtGui.QFileDialog.getOpenFileName(
+        "Called when the user clicks on Browse... next to Channel file"
+        filename = QtGui.QFileDialog.getOpenFileName(
             self, self.tr('Select channel file'), os.getcwd(),
             self.tr('Text files (*.txt *.TXT);;All files (*)'))
-        if f:
-            os.chdir(os.path.dirname(str(f)))
-            self.ui.channel_file_combo.setEditText(f)
+        if filename:
+            os.chdir(os.path.dirname(str(filename)))
+            self.ui.channel_file_combo.setEditText(filename)
 

@@ -17,10 +17,18 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Main module for the rasviewer application."""
+
 import sys
-import logging
-from PyQt4 import QtCore, QtGui, uic
+
+from PyQt4 import QtCore, QtGui
+
 from rastools import __version__
+from rastools.rasviewer.main_window import MainWindow
+
+
+APPLICATION = None
+MAIN_WINDOW = None
 
 def excepthook(type, value, tb):
     # XXX Need to expand this to display a complete stack trace and add an
@@ -31,21 +39,17 @@ def excepthook(type, value, tb):
         str(value))
 
 def main(args=None):
+    global APPLICATION, MAIN_WINDOW
     if args is None:
         args = sys.argv
-    app = QtGui.QApplication(args)
-    app.setApplicationName('rasviewer')
-    app.setApplicationVersion(__version__)
-    app.setOrganizationName('Waveform')
-    app.setOrganizationDomain('waveform.org.uk')
-    app.setOverrideCursor(QtCore.Qt.WaitCursor)
-    try:
-        from rastools.rasviewer.main_window import MainWindow
-    finally:
-        app.restoreOverrideCursor()
-    win = MainWindow()
-    win.show()
-    return app.exec_()
+    APPLICATION = QtGui.QApplication(args)
+    APPLICATION.setApplicationName('rasviewer')
+    APPLICATION.setApplicationVersion(__version__)
+    APPLICATION.setOrganizationName('Waveform')
+    APPLICATION.setOrganizationDomain('waveform.org.uk')
+    MAIN_WINDOW = MainWindow()
+    MAIN_WINDOW.show()
+    return APPLICATION.exec_()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

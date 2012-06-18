@@ -286,9 +286,9 @@ class RasRenderer(RasChannelProcessor):
             data, data_domain, data_range = self.process(channel)
         except RasChannelEmptyError:
             return None
-        # Copy the data into a floating-point array (matplotlib's
-        # image module won't play with uint32 data - only uint8 or
-        # float32) and crop it as necessary
+        # Copy the data into a floating-point array (matplotlib's image module
+        # won't play with uint32 data - only uint8 or float32) and crop it as
+        # necessary
         data = np.array(data, np.float)
         # Calculate the figure dimensions and margins. The layout of objects in
         # the final image is roughly as illustrated below. Objects which are

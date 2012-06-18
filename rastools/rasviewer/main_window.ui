@@ -67,7 +67,17 @@
     <addaction name="about_action"/>
     <addaction name="about_qt_action"/>
    </widget>
+   <widget class="QMenu" name="view_menu">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="reset_zoom_action"/>
+    <addaction name="reset_origin_action"/>
+    <addaction name="separator"/>
+    <addaction name="status_bar_action"/>
+   </widget>
    <addaction name="file_menu"/>
+   <addaction name="view_menu"/>
    <addaction name="help_menu"/>
   </widget>
   <widget class="QStatusBar" name="status_bar"/>
@@ -175,6 +185,33 @@
    </property>
    <property name="text">
     <string>&amp;Document...</string>
+   </property>
+  </action>
+  <action name="reset_zoom_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Reset Zoom</string>
+   </property>
+  </action>
+  <action name="reset_origin_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Reset Origin</string>
+   </property>
+  </action>
+  <action name="status_bar_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Status Bar</string>
    </property>
   </action>
  </widget>
