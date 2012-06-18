@@ -669,15 +669,31 @@ Value range: {value_from} to {value_to}""")
             return Range(
                 self.ui.value_from_spinbox.value(),
                 self.ui.value_to_spinbox.value())
+
+    @property
+    def x_limits(self):
+        "Returns a tuple of the X-axis limits after scaling and offset"
+        if self.data_cropped is not None:
             return Range(
-                self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_from_spinbox.value() / 100.0
-                ],
-                self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_to_spinbox.value() / 100.0
-                ],
+                self.ui.x_scale_spinbox.value() * (
+                    self.ui.x_offset_spinbox.value() +
+                    self.ui.crop_left_spinbox.value()),
+                self.ui.x_scale_spinbox.value() * (
+                    self.ui.x_offset_spinbox.value() +
+                    self._file.x_size - self.ui.crop_right_spinbox.value())
+            )
+
+    @property
+    def y_limits(self):
+        "Returns a tuple of the Y-axis limits after scaling and offset"
+        if self.data_cropped is not None:
+            return Range(
+                self.ui.y_scale_spinbox.value() * (
+                    self.ui.y_offset_spinbox.value() +
+                    self._file.y_size - self.ui.crop_bottom_spinbox.value()),
+                self.ui.y_scale_spinbox.value() * (
+                    self.ui.y_offset_spinbox.value() +
+                    self.ui.crop_top_spinbox.value())
             )
 
     @property
@@ -726,27 +742,102 @@ Value range: {value_from} to {value_to}""")
     def redraw_timeout(self):
         "Handler for the redraw_timer's timeout event"
         self.redraw_timer.stop()
-        self.redraw_image()
+        self.redraw_figure()
 
-    def redraw_image(self):
+    def draw_image(self, box):
+        "Draws the image of the data within the specified figure"
+        # Position the axes in which to draw the channel data
+        self.image_axes.clear()
+        self.image_axes.set_position(box)
+        # Configure the x and y axes appearance
+        self.image_axes.set_frame_on(
+            self.ui.axes_check.isChecked()
+            or self.ui.grid_check.isChecked()
+        )
+        self.image_axes.set_axis_on()
+        if self.ui.grid_check.isChecked():
+            self.image_axes.grid(color='k', linestyle='-')
+        else:
+            self.image_axes.grid(False)
+        if self.ui.axes_check.isChecked():
+            if unicode(self.ui.x_label_edit.text()):
+                self.image_axes.set_xlabel(unicode(self.ui.x_label_edit.text()))
+            if unicode(self.ui.y_label_edit.text()):
+                self.image_axes.set_ylabel(unicode(self.ui.y_label_edit.text()))
+        else:
+            self.image_axes.set_xticklabels([])
+            self.image_axes.set_yticklabels([])
+        # The imshow() call takes care of clamping values with data_range and
+        # color-mapping
+        return self.image_axes.imshow(
+            self.data_cropped,
+            vmin=self.data_range.low, vmax=self.data_range.high,
+            origin='upper',
+            extent=self.x_limits + self.y_limits,
+            cmap=matplotlib.cm.get_cmap(
+                unicode(self.ui.colormap_combo.currentText()) +
+                ('_r' if self.ui.reverse_check.isChecked() else '')
+            ),
+            interpolation=unicode(self.ui.interpolation_combo.currentText()))
+
+    def draw_histogram(self, box):
+        "Draws the data's historgram within the figure"
+        if self.ui.histogram_check.isChecked():
+            if self.histogram_axes is None:
+                self.histogram_axes = self.figure.add_axes(box)
+            else:
+                self.histogram_axes.clear()
+                self.histogram_axes.set_position(box)
+            self.histogram_axes.grid(True)
+            self.histogram_axes.hist(self.data_cropped.flat,
+                bins=self.ui.histogram_bins_spinbox.value(),
+                range=self.data_range)
+        elif self.histogram_axes:
+            self.figure.delaxes(self.histogram_axes)
+            self.histogram_axes = None
+
+    def draw_colorbar(self, image, box):
+        "Draws a range color-bar within the figure"
+        if self.ui.colorbar_check.isChecked():
+            if self.colorbar_axes is None:
+                self.colorbar_axes = self.figure.add_axes(box)
+            else:
+                self.colorbar_axes.clear()
+                self.colorbar_axes.set_position(box)
+            self.figure.colorbar(
+                image, cax=self.colorbar_axes,
+                orientation='horizontal',
+                extend=
+                'both' if self.data_range.low > self.data_domain.low and
+                          self.data_range.high < self.data_domain.high else
+                'max' if self.data_range.high < self.data_domain.high else
+                'min' if self.data_range.low > self.data_domain.low else
+                'neither')
+        elif self.colorbar_axes:
+            self.figure.delaxes(self.colorbar_axes)
+            self.colorbar_axes = None
+
+    def draw_title(self, title, box):
+        "Draws a title within the specified figure"
+        if bool(title):
+            if self.title_axes is None:
+                self.title_axes = self.figure.add_axes(box)
+            else:
+                self.title_axes.clear()
+                self.title_axes.set_position(box)
+            self.title_axes.set_axis_off()
+            # Render the title
+            self.title_axes.text(0.5, 0, title,
+                horizontalalignment='center', verticalalignment='baseline',
+                multialignment='center', size='medium', family='sans-serif',
+                transform=self.title_axes.transAxes)
+        elif self.title_axes:
+            self.figure.delaxes(self.title_axes)
+            self.title_axes = None
+
+    def redraw_figure(self):
         "Called to redraw the channel image"
         if self.channel is not None:
-            vmin = self.data_sorted[0]
-            vmax = self.data_sorted[-1]
-            pmin = self.ui.value_from_spinbox.value()
-            pmax = self.ui.value_to_spinbox.value()
-            crop_l = self.ui.crop_left_spinbox.value()
-            crop_r = self.ui.crop_right_spinbox.value()
-            crop_t = self.ui.crop_top_spinbox.value()
-            crop_b = self.ui.crop_bottom_spinbox.value()
-            offset_x = self.ui.x_offset_spinbox.value()
-            offset_y = self.ui.y_offset_spinbox.value()
-            scale_x = self.ui.x_scale_spinbox.value()
-            scale_y = self.ui.y_scale_spinbox.value()
-            label_x = unicode(self.ui.x_label_edit.text())
-            label_y = unicode(self.ui.y_label_edit.text())
-            img_w = self._file.x_size
-            img_h = self._file.y_size
             # Generate the title text. This is done up here as we need to know
             # if there's going to be anything to render, and whether or not to
             # reserve space for it
@@ -763,127 +854,56 @@ Value range: {value_from} to {value_to}""")
                 self.ui.title_error_label.show()
             else:
                 self.ui.title_error_label.hide()
-            # Calculate the figure dimensions and margins (in inches unlike the
-            # values above which are all pixel based), and construct the
-            # necessary objects
-            (img_width, img_height) = (img_w / FIGURE_DPI, img_h / FIGURE_DPI)
-            (hist_width, hist_height) = ((0.0, 0.0), (img_width, img_height))[self.ui.histogram_check.isChecked()]
-            (cbar_width, cbar_height) = ((0.0, 0.0), (img_width, 1.0))[self.ui.colorbar_check.isChecked()]
-            (head_width, head_height) = ((0.0, 0.0), (img_width, 0.75))[bool(title)]
-            margin = (0.0, 0.5)[
+            # Calculate the figure dimensions and margins. See RasRenderer.draw
+            # in the rastools.rasextract module for more information about this
+            # stuff...
+            margin = (0.0, 0.75)[
                 self.ui.axes_check.isChecked()
                 or self.ui.colorbar_check.isChecked()
                 or self.ui.histogram_check.isChecked()
-                or bool(title)]
-            fig_width = img_width + margin * 2
-            fig_height = img_height + hist_height + cbar_height + head_height + margin * 2
-            # Position the axes in which to draw the channel data
-            self.image_axes.clear()
-            self.image_axes.set_position((
-                margin / fig_width,      # left
-                (margin + hist_height + cbar_height) / fig_height, # bottom
-                img_width / fig_width,   # width
-                img_height / fig_height, # height
-            ))
-            # Configure the x and y axes appearance
-            self.image_axes.set_frame_on(
-                self.ui.axes_check.isChecked()
-                or self.ui.grid_check.isChecked()
+                or bool(title)
+            ]
+            image_box = BoundingBox(
+                margin,
+                0.0,
+                self.data_cropped.shape[0] / FIGURE_DPI,
+                self.data_cropped.shape[1] / FIGURE_DPI
             )
-            self.image_axes.set_axis_on()
-            if self.ui.grid_check.isChecked():
-                self.image_axes.grid(color='k', linestyle='-')
-            else:
-                self.image_axes.grid(False)
-            if self.ui.axes_check.isChecked():
-                if label_x:
-                    self.image_axes.set_xlabel(label_x)
-                if label_y:
-                    self.image_axes.set_ylabel(label_y)
-            else:
-                self.image_axes.set_xticklabels([])
-                self.image_axes.set_yticklabels([])
-            # Draw the image. This call takes care of clamping values with vmin
-            # and vmax, as well as color-mapping
-            img = self.image_axes.imshow(
-                self.data_cropped,
-                vmin=pmin, vmax=pmax,
-                origin='upper',
-                extent=(
-                    scale_x * (offset_x + crop_l),
-                    scale_x * (offset_x + img_w - crop_r),
-                    scale_y * (offset_y + img_h - crop_b),
-                    scale_y * (offset_y + crop_t),
-                ),
-                cmap=matplotlib.cm.get_cmap(
-                    unicode(self.ui.colormap_combo.currentText()) +
-                    ('_r' if self.ui.reverse_check.isChecked() else '')
-                ),
-                interpolation=unicode(self.ui.interpolation_combo.currentText())
+            colorbar_box = BoundingBox(
+                margin,
+                [0.0, margin][self.ui.colorbar_check.isChecked()],
+                image_box.width,
+                [0.0, 0.3][self.ui.colorbar_check.isChecked()]
             )
-            # Construct an axis for the histogram, if requested
-            if self.ui.histogram_check.isChecked():
-                r = (
-                    margin / fig_width,               # left
-                    (margin + cbar_height) / fig_height, # bottom
-                    hist_width / fig_width,           # width
-                    (hist_height * 0.8) / fig_height, # height
-                )
-                if self.histogram_axes is None:
-                    self.histogram_axes = self.figure.add_axes(r)
-                else:
-                    self.histogram_axes.clear()
-                    self.histogram_axes.set_position(r)
-                self.histogram_axes.grid(True)
-                self.histogram_axes.hist(self.data_cropped.flat,
-                    bins=self.ui.histogram_bins_spinbox.value(),
-                    range=(pmin, pmax))
-            elif self.histogram_axes:
-                self.figure.delaxes(self.histogram_axes)
-                self.histogram_axes = None
-            # Construct an axis for the colorbar, if requested
-            if self.ui.colorbar_check.isChecked():
-                r = (
-                    margin / fig_width,               # left
-                    margin / fig_height,              # bottom
-                    cbar_width / fig_width,           # width
-                    (cbar_height * 0.3) / fig_height, # height
-                )
-                if self.colorbar_axes is None:
-                    self.colorbar_axes = self.figure.add_axes(r)
-                else:
-                    self.colorbar_axes.clear()
-                    self.colorbar_axes.set_position(r)
-                self.figure.colorbar(img, cax=self.colorbar_axes,
-                    orientation='horizontal',
-                    extend=
-                    'both' if pmin > vmin and pmax < vmax else
-                    'max' if pmax < vmax else
-                    'min' if pmin > vmin else
-                    'neither')
-            elif self.colorbar_axes:
-                self.figure.delaxes(self.colorbar_axes)
-                self.colorbar_axes = None
-            # Construct an axis for the title, if requested
-            if title:
-                r = (
-                    0, (margin + cbar_height + hist_height + img_height) / fig_height, # left, bottom
-                    1, head_height / fig_height, # width, height
-                )
-                if self.title_axes is None:
-                    self.title_axes = self.figure.add_axes(r)
-                else:
-                    self.title_axes.clear()
-                    self.title_axes.set_position(r)
-                self.title_axes.set_axis_off()
-                # Render the title
-                self.title_axes.text(0.5, 0.5, title,
-                    horizontalalignment='center', verticalalignment='baseline',
-                    multialignment='center', size='medium', family='sans-serif',
-                    transform=self.title_axes.transAxes)
-            elif self.title_axes:
-                self.figure.delaxes(self.title_axes)
-                self.title_axes = None
+            histogram_box = BoundingBox(
+                margin,
+                [0.0, margin + colorbar_box.top][
+                    self.ui.histogram_check.isChecked()],
+                image_box.width,
+                [0.0, image_box.height * 0.8][
+                    self.ui.histogram_check.isChecked()]
+            )
+            image_box.bottom = (
+                margin + max(histogram_box.top, colorbar_box.top)
+            )
+            title_box = BoundingBox(
+                0.0,
+                [0.0, margin + image_box.top][bool(title)],
+                image_box.width + (margin * 2),
+                [0.0, 0.75][bool(title)]
+            )
+            figure_box = BoundingBox(
+                0.0,
+                0.0,
+                image_box.width + (margin * 2),
+                title_box.top if bool(title) else image_box.top
+            )
+            # Draw the various image elements within bounding boxes calculated
+            # from the metrics above
+            image = self.draw_image(image_box.relative_to(figure_box))
+            self.draw_histogram(histogram_box.relative_to(figure_box))
+            self.draw_colorbar(image, colorbar_box.relative_to(figure_box))
+            self.draw_title(title, title_box.relative_to(figure_box))
             self.canvas.draw()
 
     def format_dict(self, source, **kwargs):

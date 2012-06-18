@@ -298,9 +298,9 @@ class RasRenderer(RasChannelProcessor):
         #   +-----------------+
         #   |     margin      |
         #   |                 |
-        #   | m   TITLE     m |
+        #   | m    TITLE    m |
         #   | a             a |
-        #   | r   IMAGE     r |
+        #   | r    IMAGE    r |
         #   | g             g |
         #   | i  HISTOGRAM  i |
         #   | n             n |
