@@ -1,8 +1,9 @@
 debian/rasviewer.desktop /usr/share/applications/
-debian/rasviewer.svg /usr/share/icons/hicolor/scalable/apps/rasviewer.svg
-debian/rasviewer.xpm /usr/share/pixmaps/rasviewer.xpm
-debian/rasviewer_128x128.png /usr/share/icons/hicolor/128x128/apps/rasviewer.png
-debian/rasviewer_64x64.png /usr/share/icons/hicolor/64x64/apps/rasviewer.png
-debian/rasviewer_48x48.png /usr/share/icons/hicolor/48x48/apps/rasviewer.png
-debian/rasviewer_32x32.png /usr/share/icons/hicolor/32x32/apps/rasviewer.png
-debian/rasviewer_16x16.png /usr/share/icons/hicolor/16x16/apps/rasviewer.png
+icons/xpm/rasviewer.xpm /usr/share/pixmaps/
+icons/scalable/rasviewer.svg /usr/share/icons/hicolor/scalable/apps/
+icons/128x128/rasviewer.png /usr/share/icons/hicolor/128x128/apps/
+icons/64x64/rasviewer.png /usr/share/icons/hicolor/64x64/apps/
+icons/48x48/rasviewer.png /usr/share/icons/hicolor/48x48/apps/
+icons/32x32/rasviewer.png /usr/share/icons/hicolor/32x32/apps/
+icons/24x24/rasviewer.png /usr/share/icons/hicolor/24x24/apps/
+icons/16x16/rasviewer.png /usr/share/icons/hicolor/16x16/apps/
