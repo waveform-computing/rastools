@@ -96,6 +96,9 @@ class MDIWindow(QtGui.QWidget):
         self._progress_update = None
         self._progress_dialog = None
         self._info_dialog = None
+        self._zoom_id = None
+        self._zoom_start = None
+        self._zoom_coords = None
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             from rastools.data_parsers import DATA_PARSERS
@@ -177,7 +180,7 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.crop_reset_button.clicked.connect(self.crop_reset_clicked)
+        self.ui.crop_reset_button.clicked.connect(self.reset_zoom)
         self.ui.axes_check.toggled.connect(self.invalidate_image)
         self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
         self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
@@ -202,9 +205,7 @@ class MDIWindow(QtGui.QWidget):
             'button_release_event', self.canvas_release)
         self.motion_id = self.canvas.mpl_connect(
             'motion_notify_event', self.canvas_motion)
-        self.zoom_id = None
         self.setWindowTitle(os.path.basename(data_file))
-        self.channel.data
         self.channel_changed()
 
     def canvas_popup(self, pos):
@@ -251,7 +252,7 @@ class MDIWindow(QtGui.QWidget):
             try:
                 self.window().ui.value_label.setText(
                     'Value: {0:.2f}'.format(
-                        self.data[event.ydata, event.xdata]))
+                        float(self.data[event.ydata, event.xdata])))
             except IndexError:
                 self.window().ui.value_label.setText('')
             self.canvas.setCursor(QtCore.Qt.CrossCursor)
@@ -267,8 +268,8 @@ class MDIWindow(QtGui.QWidget):
             return
         if event.inaxes != self.image_axes:
             return
-        self.zoom_start = Coord(event.x, event.y)
-        self.zoom_id = self.canvas.mpl_connect(
+        self._zoom_start = Coord(event.x, event.y)
+        self._zoom_id = self.canvas.mpl_connect(
             'motion_notify_event', self.canvas_zoom_motion)
 
     def canvas_zoom_motion(self, event):
@@ -276,10 +277,10 @@ class MDIWindow(QtGui.QWidget):
         # Calculate the display coordinates of the selection
         box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
         height = self.figure.bbox.height
-        band_left   = max(min(self.zoom_start.x, event.x), box_left)
-        band_right  = min(max(self.zoom_start.x, event.x), box_right)
-        band_top    = max(min(self.zoom_start.y, event.y), box_top)
-        band_bottom = min(max(self.zoom_start.y, event.y), box_bottom)
+        band_left   = max(min(self._zoom_start.x, event.x), box_left)
+        band_right  = min(max(self._zoom_start.x, event.x), box_right)
+        band_top    = max(min(self._zoom_start.y, event.y), box_top)
+        band_bottom = min(max(self._zoom_start.y, event.y), box_bottom)
         self.canvas.drawRectangle((
             band_left,
             height - band_top,
@@ -292,7 +293,7 @@ class MDIWindow(QtGui.QWidget):
         height = self._file.y_size
         data_left, data_bottom = inverse.transform_point((band_left, band_top))
         data_right, data_top = inverse.transform_point((band_right, band_bottom))
-        self.zoom_coords = (data_left, data_top, data_right, data_bottom)
+        self._zoom_coords = (data_left, data_top, data_right, data_bottom)
         self.window().statusBar().showMessage(
             unicode(self.tr(
                 'Crop from ({left:.0f}, {top:.0f}) to '
@@ -302,14 +303,14 @@ class MDIWindow(QtGui.QWidget):
 
     def canvas_release(self, event):
         "Handler for mouse release on graph canvas"
-        if self.zoom_id:
-            self.canvas.mpl_disconnect(self.zoom_id)
-            self.zoom_id = None
+        if self._zoom_id:
+            self.canvas.mpl_disconnect(self._zoom_id)
+            self._zoom_id = None
             (   data_left,
                 data_top,
                 data_right,
                 data_bottom,
-            ) = self.zoom_coords
+            ) = self._zoom_coords
             self.ui.crop_left_spinbox.setValue(data_left)
             self.ui.crop_top_spinbox.setValue(data_top)
             self.ui.crop_right_spinbox.setValue(self._file.x_size - data_right)
@@ -503,12 +504,18 @@ class MDIWindow(QtGui.QWidget):
             self.ui.x_size_label.setText(str(x_size))
             self.ui.y_size_label.setText(str(y_size))
 
-    def crop_reset_clicked(self):
-        "Handler for crop_reset_button click event"
+    def reset_zoom(self):
+        "Handler for reset_zoom_action triggered event"
         self.ui.crop_left_spinbox.setValue(0)
         self.ui.crop_right_spinbox.setValue(0)
         self.ui.crop_top_spinbox.setValue(0)
         self.ui.crop_bottom_spinbox.setValue(0)
+
+    def reset_origin(self):
+        "Handler for reset_origin_action triggered event"
+        self.ui.offset_locked_check.setChecked(False)
+        self.ui.x_offset_spinbox.setValue(-self.ui.crop_left_spinbox.value())
+        self.ui.y_offset_spinbox.setValue(-self.ui.crop_top_spinbox.value())
 
     def x_scale_changed(self, value):
         "Handler for x_scale_spinbox change event"
@@ -540,7 +547,7 @@ class MDIWindow(QtGui.QWidget):
 Channel {channel:02d} - {channel_name}
 {start_time:%A, %d %b %Y %H:%M:%S}
 Percentile range: {percentile_from} to {percentile_to}
-Value range: {value_from} to {value_to}""")
+Value range: {range_from} to {range_to}""")
 
     def clear_title_clicked(self):
         "Handler for clear_title_button click event"
@@ -635,7 +642,6 @@ Value range: {value_from} to {value_to}""")
         "Returns the data of the currently selected channel"
         if (self._data is None) and (self.channel is not None):
             self._data = self.channel.data.copy()
-            #self._data = np.array(self.channel.data, np.float)
         return self._data
 
     @property
@@ -696,24 +702,6 @@ Value range: {value_from} to {value_to}""")
                     self.ui.crop_top_spinbox.value())
             )
 
-    @property
-    def data_export(self):
-        "Returns the cropped channel data after percentile clipping"
-        # XXX Erm, shouldn't this be a lot simpler?
-        # result = self.data_cropped.copy()
-        # pmin, pmax = self.data_range
-        result = np.array(self.channel.data, np.float)
-        result = result[
-            self.ui.crop_top_spinbox.value():self._data.shape[0] - self.ui.crop_bottom_spinbox.value(),
-            self.ui.crop_left_spinbox.value():self._data.shape[1] - self.ui.crop_right_spinbox.value()
-        ]
-        s = np.sort(result, None)
-        pmin = s[(len(s) - 1) * self.ui.percentile_from_spinbox.value() / 100.0]
-        pmax = s[(len(s) - 1) * self.ui.percentile_to_spinbox.value() / 100.0]
-        result[result < pmin] = pmin
-        result[result > pmax] = pmax
-        return result
-
     def invalidate_data(self):
         "Invalidate our copy of the channel data"
         self._data = None
@@ -743,6 +731,78 @@ Value range: {value_from} to {value_to}""")
         "Handler for the redraw_timer's timeout event"
         self.redraw_timer.stop()
         self.redraw_figure()
+
+    def redraw_figure(self):
+        "Called to redraw the channel image"
+        if self.channel is not None:
+            # Generate the title text. This is done up here as we need to know
+            # if there's going to be anything to render, and whether or not to
+            # reserve space for it
+            title = None
+            try:
+                if unicode(self.ui.title_edit.toPlainText()):
+                    title = unicode(self.ui.title_edit.toPlainText()).format(
+                        **self.format_dict(self.channel))
+            except KeyError as exc:
+                self.ui.title_error_label.setText(
+                    'Unknown template "{}"'.format(exc))
+                self.ui.title_error_label.show()
+            except ValueError as exc:
+                self.ui.title_error_label.setText(unicode(exc))
+                self.ui.title_error_label.show()
+            else:
+                self.ui.title_error_label.hide()
+            # Calculate the figure dimensions and margins. See RasRenderer.draw
+            # in the rastools.rasextract module for more information about this
+            # stuff...
+            margin = (0.0, 0.75)[
+                self.ui.axes_check.isChecked()
+                or self.ui.colorbar_check.isChecked()
+                or self.ui.histogram_check.isChecked()
+                or bool(title)
+            ]
+            image_box = BoundingBox(
+                margin,
+                0.0,
+                self.data_cropped.shape[0] / FIGURE_DPI,
+                self.data_cropped.shape[1] / FIGURE_DPI
+            )
+            colorbar_box = BoundingBox(
+                margin,
+                [0.0, margin][self.ui.colorbar_check.isChecked()],
+                image_box.width,
+                [0.0, 0.3][self.ui.colorbar_check.isChecked()]
+            )
+            histogram_box = BoundingBox(
+                margin,
+                [0.0, margin + colorbar_box.top][
+                    self.ui.histogram_check.isChecked()],
+                image_box.width,
+                [0.0, image_box.height * 0.8][
+                    self.ui.histogram_check.isChecked()]
+            )
+            image_box.bottom = (
+                margin + max(histogram_box.top, colorbar_box.top)
+            )
+            title_box = BoundingBox(
+                0.0,
+                [0.0, margin + image_box.top][bool(title)],
+                image_box.width + (margin * 2),
+                [0.0, 0.75][bool(title)]
+            )
+            figure_box = BoundingBox(
+                0.0,
+                0.0,
+                image_box.width + (margin * 2),
+                margin + (title_box.top if bool(title) else image_box.top)
+            )
+            # Draw the various image elements within bounding boxes calculated
+            # from the metrics above
+            image = self.draw_image(image_box.relative_to(figure_box))
+            self.draw_histogram(histogram_box.relative_to(figure_box))
+            self.draw_colorbar(image, colorbar_box.relative_to(figure_box))
+            self.draw_title(title, title_box.relative_to(figure_box))
+            self.canvas.draw()
 
     def draw_image(self, box):
         "Draws the image of the data within the specified figure"
@@ -835,86 +895,13 @@ Value range: {value_from} to {value_to}""")
             self.figure.delaxes(self.title_axes)
             self.title_axes = None
 
-    def redraw_figure(self):
-        "Called to redraw the channel image"
-        if self.channel is not None:
-            # Generate the title text. This is done up here as we need to know
-            # if there's going to be anything to render, and whether or not to
-            # reserve space for it
-            title = None
-            try:
-                if unicode(self.ui.title_edit.toPlainText()):
-                    title = unicode(self.ui.title_edit.toPlainText()).format(
-                        **self.format_dict(self.channel))
-            except KeyError, e:
-                self.ui.title_error_label.setText('Unknown template "{}"'.format(e))
-                self.ui.title_error_label.show()
-            except ValueError, e:
-                self.ui.title_error_label.setText(unicode(e))
-                self.ui.title_error_label.show()
-            else:
-                self.ui.title_error_label.hide()
-            # Calculate the figure dimensions and margins. See RasRenderer.draw
-            # in the rastools.rasextract module for more information about this
-            # stuff...
-            margin = (0.0, 0.75)[
-                self.ui.axes_check.isChecked()
-                or self.ui.colorbar_check.isChecked()
-                or self.ui.histogram_check.isChecked()
-                or bool(title)
-            ]
-            image_box = BoundingBox(
-                margin,
-                0.0,
-                self.data_cropped.shape[0] / FIGURE_DPI,
-                self.data_cropped.shape[1] / FIGURE_DPI
-            )
-            colorbar_box = BoundingBox(
-                margin,
-                [0.0, margin][self.ui.colorbar_check.isChecked()],
-                image_box.width,
-                [0.0, 0.3][self.ui.colorbar_check.isChecked()]
-            )
-            histogram_box = BoundingBox(
-                margin,
-                [0.0, margin + colorbar_box.top][
-                    self.ui.histogram_check.isChecked()],
-                image_box.width,
-                [0.0, image_box.height * 0.8][
-                    self.ui.histogram_check.isChecked()]
-            )
-            image_box.bottom = (
-                margin + max(histogram_box.top, colorbar_box.top)
-            )
-            title_box = BoundingBox(
-                0.0,
-                [0.0, margin + image_box.top][bool(title)],
-                image_box.width + (margin * 2),
-                [0.0, 0.75][bool(title)]
-            )
-            figure_box = BoundingBox(
-                0.0,
-                0.0,
-                image_box.width + (margin * 2),
-                title_box.top if bool(title) else image_box.top
-            )
-            # Draw the various image elements within bounding boxes calculated
-            # from the metrics above
-            image = self.draw_image(image_box.relative_to(figure_box))
-            self.draw_histogram(histogram_box.relative_to(figure_box))
-            self.draw_colorbar(image, colorbar_box.relative_to(figure_box))
-            self.draw_title(title, title_box.relative_to(figure_box))
-            self.canvas.draw()
-
     def format_dict(self, source, **kwargs):
         "Returns UI settings in a dict for use in format substitutions"
         return source.format_dict(
             percentile_from=self.ui.percentile_from_spinbox.value(),
             percentile_to=self.ui.percentile_to_spinbox.value(),
-            percentile=(self.ui.percentile_from_spinbox.value(), self.ui.percentile_to_spinbox.value()),
-            value_from=self.ui.value_from_spinbox.value(),
-            value_to=self.ui.value_to_spinbox.value(),
-            range=(self.ui.value_from_spinbox.value(), self.ui.value_to_spinbox.value()),
+            range_from=self.ui.value_from_spinbox.value(),
+            range_to=self.ui.value_to_spinbox.value(),
             interpolation=self.interpolation_combo.currentText(),
             colormap=self.ui.colormap_combo.currentText() +
                 ('_r' if self.ui.reverse_check.isChecked() else ''),
@@ -922,12 +909,6 @@ Value range: {value_from} to {value_to}""")
             crop_top=self.ui.crop_top_spinbox.value(),
             crop_right=self.ui.crop_right_spinbox.value(),
             crop_bottom=self.ui.crop_bottom_spinbox.value(),
-            crop=','.join(str(i) for i in (
-                self.ui.crop_left_spinbox.value(),
-                self.ui.crop_top_spinbox.value(),
-                self.ui.crop_right_spinbox.value(),
-                self.ui.crop_bottom_spinbox.value(),
-            )),
             **kwargs
         )
 

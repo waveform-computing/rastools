@@ -102,10 +102,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def reset_zoom(self):
         "Handler for the View/Reset Zoom action"
-        self.ui.mdi_area.currentSubWindow().widget().crop_reset_clicked()
+        self.ui.mdi_area.currentSubWindow().widget().reset_zoom()
 
     def reset_origin(self):
         "Handler for the View/Reset Origin action"
+        self.ui.mdi_area.currentSubWindow().widget().reset_origin()
         pass
 
     def update_status(self):
@@ -213,12 +214,12 @@ class MainWindow(QtGui.QMainWindow):
             os.chdir(os.path.dirname(filename))
             ext = os.path.splitext(filename)[1]
             writers = dict(
-                (ext, klass)
-                for (klass, exts, _, _) in DATA_WRITERS
+                (ext, cls)
+                for (cls, exts, _, _) in DATA_WRITERS
                 for ext in exts
             )
             try:
-                klass = writers[ext]
+                cls = writers[ext]
             except KeyError:
                 QtGui.QMessageBox.warning(
                     self, self.tr('Warning'),
@@ -231,7 +232,7 @@ class MainWindow(QtGui.QMainWindow):
                 start, finish = mdi_window.percentile_range
                 data[data < start] = start
                 data[data > finish] = finish
-                klass(filename, mdi_window.channel).write(data)
+                cls(filename, mdi_window.channel).write(data)
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
 

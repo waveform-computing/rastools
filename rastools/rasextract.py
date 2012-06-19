@@ -350,7 +350,7 @@ class RasRenderer(RasChannelProcessor):
             0.0,
             0.0,
             image_box.width + (margin * 2),
-            title_box.top if bool(self.title) else image_box.top
+            margin + (title_box.top if bool(self.title) else image_box.top)
         )
         figure = matplotlib.figure.Figure(
             figsize=(figure_box.width, figure_box.height), dpi=DPI,
