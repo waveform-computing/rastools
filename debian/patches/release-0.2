@@ -1,0 +1,38 @@
+Description: New version 0.2 release
+ .
+ rastools (0.2-1~ppa1) precise; urgency=low
+ .
+   * New reset-zoom action is slightly more intuitive than the old reset-crop
+     action
+   * New rasdump utility permits easy conversion between different data
+     formats, including the .RAS and .dat formats as well as CSV and Excel
+   * Fixed bug in .dat parsing: the system on longer assumes that abscissa and
+     ordinate lists are sorted (.dat parser is also a bit faster)
+   * The rasviewer application now correctly displays progress while performing
+     long loads
+Author: Dave Hughes <dave@waveform.org.uk>
+
+--- rastools-0.2.orig/build/sphinx/man/rasextract.1
++++ rastools-0.2/build/sphinx/man/rasextract.1
+@@ -1,4 +1,4 @@
+-.TH "RASEXTRACT" "1" "May 08, 2012" "0.1" "rastools"
++.TH "RASEXTRACT" "1" "June 19, 2012" "0.1" "rastools"
+ .SH NAME
+ rasextract \- rasextract utility
+ .
+--- rastools-0.2.orig/build/sphinx/man/rasdump.1
++++ rastools-0.2/build/sphinx/man/rasdump.1
+@@ -1,4 +1,4 @@
+-.TH "RASDUMP" "1" "May 08, 2012" "0.1" "rastools"
++.TH "RASDUMP" "1" "June 19, 2012" "0.1" "rastools"
+ .SH NAME
+ rasdump \- rasdump utility
+ .
+--- rastools-0.2.orig/build/sphinx/man/rasinfo.1
++++ rastools-0.2/build/sphinx/man/rasinfo.1
+@@ -1,4 +1,4 @@
+-.TH "RASINFO" "1" "May 08, 2012" "0.1" "rastools"
++.TH "RASINFO" "1" "June 19, 2012" "0.1" "rastools"
+ .SH NAME
+ rasinfo \- rasinfo utility
+ .
