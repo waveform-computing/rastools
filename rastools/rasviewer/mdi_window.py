@@ -24,6 +24,7 @@ from __future__ import (
 import os
 import time
 import datetime as dt
+import traceback
 
 import numpy as np
 import matplotlib
@@ -82,6 +83,7 @@ class MDIWindow(QtGui.QWidget):
 
     def __init__(self, data_file, channel_file=None):
         super(MDIWindow, self).__init__(None)
+        self.ui = None
         self.ui = uic.loadUi(
             os.path.abspath(
                 os.path.join(
@@ -90,8 +92,8 @@ class MDIWindow(QtGui.QWidget):
                 )), self)
         self._file = None
         self._data = None
-        self._data_cropped = None
         self._data_sorted = None
+        self._data_cropped = None
         self._progress = 0
         self._progress_update = None
         self._progress_dialog = None
@@ -119,6 +121,7 @@ class MDIWindow(QtGui.QWidget):
                     self.tr('Unrecognized file extension "{0}"').format(ext))
             self._file = parser(
                 data_file, channel_file,
+                delay_load=False,
                 progress=(
                     self.progress_start,
                     self.progress_update,
@@ -633,7 +636,11 @@ Value range: {range_from} to {range_to}""")
     @property
     def channel(self):
         "Returns the currently selected channel object"
-        if self.ui.channel_combo.currentIndex() != -1:
+        # We test self.ui here as during ui loading something
+        # (connectSlotsByName) seems to iterate over all the properties
+        # querying their value. As self.ui wasn't assigned at this point it led
+        # to several annoying exceptions...
+        if self.ui and (self.ui.channel_combo.currentIndex() != -1):
             return self.ui.channel_combo.itemData(
                 self.ui.channel_combo.currentIndex()).toPyObject()
 
@@ -734,7 +741,9 @@ Value range: {range_from} to {range_to}""")
 
     def redraw_figure(self):
         "Called to redraw the channel image"
-        if self.channel is not None:
+        # The following tests ensure we don't try and draw anything while we're
+        # still loading the file
+        if self._file and self.channel is not None:
             # Generate the title text. This is done up here as we need to know
             # if there's going to be anything to render, and whether or not to
             # reserve space for it

@@ -177,14 +177,15 @@ class MainWindow(QtGui.QMainWindow):
                 QtGui.QMessageBox.warning(
                     self, self.tr('Warning'),
                     str(self.tr('Unknown file extension "{0}"')).format(ext))
-            fig = self.ui.mdi_area.currentSubWindow().widget().figure
-            QtGui.QApplication.instance().setOverrideCursor(
-                QtCore.Qt.WaitCursor)
-            try:
-                canvas = method.im_class(fig)
-                method(canvas, filename, dpi=fig.dpi)
-            finally:
-                QtGui.QApplication.instance().restoreOverrideCursor()
+            else:
+                fig = self.ui.mdi_area.currentSubWindow().widget().figure
+                QtGui.QApplication.instance().setOverrideCursor(
+                    QtCore.Qt.WaitCursor)
+                try:
+                    canvas = method.im_class(fig)
+                    method(canvas, filename, dpi=fig.dpi)
+                finally:
+                    QtGui.QApplication.instance().restoreOverrideCursor()
 
     def export_channel(self):
         "Handler for the File/Export Channel action"
@@ -224,17 +225,18 @@ class MainWindow(QtGui.QMainWindow):
                 QtGui.QMessageBox.warning(
                     self, self.tr('Warning'),
                     str(self.tr('Unknown file extension "{0}"')).format(ext))
-            mdi_window = self.ui.mdi_area.currentSubWindow().widget()
-            QtGui.QApplication.instance().setOverrideCursor(
-                QtCore.Qt.WaitCursor)
-            try:
-                data = mdi_window.data_cropped
-                start, finish = mdi_window.percentile_range
-                data[data < start] = start
-                data[data > finish] = finish
-                cls(filename, mdi_window.channel).write(data)
-            finally:
-                QtGui.QApplication.instance().restoreOverrideCursor()
+            else:
+                mdi_window = self.ui.mdi_area.currentSubWindow().widget()
+                QtGui.QApplication.instance().setOverrideCursor(
+                    QtCore.Qt.WaitCursor)
+                try:
+                    data = mdi_window.data_cropped
+                    start, finish = mdi_window.percentile_range
+                    data[data < start] = start
+                    data[data > finish] = finish
+                    cls(filename, mdi_window.channel).write(data)
+                finally:
+                    QtGui.QApplication.instance().restoreOverrideCursor()
 
     def export_document(self):
         "Handler for the File/Export Document action"

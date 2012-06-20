@@ -18,6 +18,9 @@
 
 """Parser for Sam's dat files"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 import re
 import logging
@@ -86,7 +89,8 @@ class DatFileReader(object):
     # ...
     header_version = 1
 
-    def __init__(self, data_file, channels_file=None, **kwargs):
+    def __init__(
+            self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(DatFileReader, self).__init__()
         self.progress_start, self.progress_update, self.progress_finish = \
@@ -122,6 +126,8 @@ class DatFileReader(object):
         self.header['y_from'] = self.y_coords[0]
         self.header['y_to'] = self.y_coords[-1]
         self.channels = DatChannels(self, data_line)
+        if not kwargs.get('delay_load', True):
+            self.channels._read_data()
 
     def read_header(self):
         """Parses the dat header"""
@@ -323,18 +329,18 @@ class DatChannels(object):
     def __init__(self, parent, data_line):
         super(DatChannels, self).__init__()
         self.parent = parent
-        self._read_channels = False
+        self._done_data = False
         self._data_line = data_line
         self._items = [
             DatChannel(self, i, name)
             for (i, name) in enumerate(self.parent.channel_names)
         ]
 
-    def read_channels(self):
+    def _read_data(self):
         """Read the channel data from a dat file"""
         # XXX Parse optional channels file
-        if not self._read_channels:
-            self._read_channels = True
+        if not self._done_data:
+            self._done_data = True
             logging.debug('Allocating channel array')
             data = np.zeros((self.parent.y_size, self.parent.x_size,
                 self.parent.channel_count), np.float)
@@ -419,7 +425,7 @@ class DatChannel(object):
     @property
     def data(self):
         """Returns the channel data as a numpy array"""
-        self._channels.read_channels()
+        self._channels._read_data()
         return self._data
 
     def format_dict(self, **kwargs):

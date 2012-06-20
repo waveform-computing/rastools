@@ -18,6 +18,9 @@
 
 """Parser for QSCAN RAS files"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import logging
 import struct
 import datetime as dt
@@ -147,7 +150,7 @@ class RasFileReader(object):
     datetime_format = '%a %b %d %H:%M:%S %Y'
     header_version = 1
     header_string = 'Raster Scan V.0.1'
-    header_struct = struct.Struct(
+    header_struct = struct.Struct(str(
         '<'       # little-endian
         + '80s'   # version
         + 'i'     # ver_num
@@ -174,9 +177,10 @@ class RasFileReader(object):
         + 'i'*4   # command1..command4
         + 'd'*6   # offsets0..offsets5
         + 'i'     # run_num
-    )
+    ))
 
-    def __init__(self, data_file, channels_file=None, **kwargs):
+    def __init__(
+            self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
         super(RasFileReader, self).__init__()
         (   self.progress_start,
@@ -271,6 +275,8 @@ class RasFileReader(object):
         self.stop_time = dt.datetime.strptime(
             self.stop_time.rstrip(strip_chars), self.datetime_format)
         self.channels = RasChannels(self, channels_file)
+        if not kwargs.get('delay_load', True):
+            self.channels._read_data()
 
     def format_dict(self, **kwargs):
         """Returns a dictionary suitable for use with the format method.
