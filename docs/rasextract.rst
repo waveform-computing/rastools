@@ -60,6 +60,25 @@ The :program:`rasextract` utility has several options:
 
    list the available interpolation algorithms
 
+.. option:: -p PERCENTILE, --percentile=PERCENTILE
+
+   clip values in the output image to the specified low-high percentile range
+   (mutually exclusive with :option:`-r`)
+
+.. option:: -r RANGE, --range=RANGE
+
+   clip values in the output image to the specified low-high count range
+   (mutually exclusive with :option:`-p`)
+
+.. option:: -C CROP, --crop=CROP
+
+   crop the input data by left,top,right,bottom points
+
+.. option:: -e, --empty
+
+   if specified, include empty channels in the output (by default empty
+   channels are ignored)
+
 .. option:: -a, --axes
 
    draw the coordinate axes in the output
@@ -69,38 +88,59 @@ The :program:`rasextract` utility has several options:
    draw a color-bar showing the range of the color-map to the right of the
    output
 
+.. option:: -g, --grid
+
+   draw grid-lines overlayed on top of the image
+
+.. option:: -R RESIZE, --resize=RESIZE
+
+   resize the image; if specified as a single it is considered a multiplier for
+   the original dimensions, otherwise two comma-separated numbers are expected
+   which will be treated as new X,Y dimensions for the image data (note: only
+   the image data will be resized to these dimensions, auxilliary elements like
+   the histogram will be continue to be sized relative to the image data)
+
 .. option:: -H, --histogram
 
    draw a histogram of the channel values below the output
+
+.. option:: --histogram-bins=BINS
+
+   specify the number of bins to use when constructing the histogram
+   (default=32)
 
 .. option:: -c CMAP, --colormap=CMAP
 
    the colormap to use in output (e.g. gray, jet, hot); see
    :option:`--help-colormaps` for listing
 
-.. option:: -p PERCENTILE, --percentile=PERCENTILE
-
-   clip values in the output image to the specified low,high percentile range
-   (mutually exclusive with :option:`-r`)
-
-.. option:: -r RANGE, --range=RANGE
-
-   clip values in the output image to the specified low,high count range
-   (mutually exclusive with :option:`-p`)
-
-.. option:: -C CROP, --crop=CROP
-
-   crop the input data by left,top,right,bottom points
-
 .. option:: -i INTERPOLATION, --interpolation=INTERPOLATION
 
    force the use of the specified interpolation algorithm; see
    :option:`--help-interpolations` for listing
 
+.. option:: -O AXES_OFFSET, --offset=AXES_OFFSET
+
+   specify the X,Y offset of the coordinates displayed on the axes; if one
+   value is specified it is used for both axes
+
+.. option:: -S AXES_SCALE, --scale=AXES_SCALE
+
+   specify the X,Y multipliers to apply to the post-offset axes coordinates
+   (see --offset); if one value is specified it is used for both axes
+
 .. option:: -t TITLE, --title=TITLE
 
    specify the template used to display a title at the top of the output;
    supports ``{variables}`` produced by :option:`rasinfo -t`
+
+.. option:: --x-title=TITLE_X
+
+   specify the title for the X-axis; implies --axes
+
+.. option:: --y-title=TITLE_Y
+
+   specify the title for the Y-axis; implies --axes
 
 .. option:: -o OUTPUT, --output=OUTPUT
 
@@ -112,11 +152,6 @@ The :program:`rasextract` utility has several options:
 
    if specified, produce a single output file with multiple layers or pages,
    one per channel (only available with certain formats)
-
-.. option:: -e, --empty
-
-   if specified, empty channels in the output (by default empty channels are
-   ignored)
 
 Examples
 ========

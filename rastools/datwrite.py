@@ -18,6 +18,9 @@
 
 """Writer for Sam's dat files"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import numpy as np
 
 

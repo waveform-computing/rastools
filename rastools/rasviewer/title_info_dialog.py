@@ -18,6 +18,9 @@
 
 """Module implementing the title info substitutions dialog"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 
 from PyQt4 import QtCore, QtGui, uic

@@ -63,11 +63,11 @@ class RasUtility(TerminalApplication):
         self.parser.set_defaults(percentile=None, range=None)
         self.parser.add_option(
             '-p', '--percentile', dest='percentile', action='store',
-            help='clip values in the output to the specified low,high '
+            help='clip values in the output to the specified low-high '
             'percentile range (mutually exclusive with --range)')
         self.parser.add_option(
             '-r', '--range', dest='range', action='store',
-            help='clip values in the output to the specified low,high '
+            help='clip values in the output to the specified low-high '
             'count range (mutually exclusive with --percentile)')
 
     def parse_range_options(self, options):
@@ -87,13 +87,15 @@ class RasUtility(TerminalApplication):
                 result = Percentile(float(low), float(high))
             except ValueError:
                 self.parser.error(
-                    '%s is not a valid percentile range' % options.percentile)
+                    '%s is not a valid --percentile range' %
+                    options.percentile)
             if result.low > result.high:
-                self.parser.error('percentile range must be specified low-high')
+                self.parser.error('--percentile range must be specified '
+                    'low to high')
             for i in result:
                 if not (0.0 <= i <= 100.0):
                     self.parser.error(
-                        'percentile must be between 0 and 100 (%f '
+                        '--percentile must be between 0 and 100 (%f '
                         'specified)' % i)
             return result
         elif options.range:
@@ -110,7 +112,7 @@ class RasUtility(TerminalApplication):
                 self.parser.error(
                     '%s is not a valid count range' % options.range)
             if result.low > result.high:
-                self.parser.error('count range must be specified low-high')
+                self.parser.error('--range must be specified low-high')
             return result
 
     def add_crop_option(self):

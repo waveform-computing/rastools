@@ -20,6 +20,9 @@
 (mpl's default JEPG support comes from GDK, but that doesn't play nice with
 things like Qt)"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 try:

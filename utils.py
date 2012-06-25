@@ -18,6 +18,9 @@
 
 """Installation utility functions"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import re
 import sys
 

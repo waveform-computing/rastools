@@ -18,6 +18,9 @@
 
 """Centralized loader for image-writing modules"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import logging
 import matplotlib
 

@@ -18,3 +18,6 @@
 
 """2D data plugins for the Veusz package"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+

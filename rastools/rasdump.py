@@ -19,6 +19,9 @@
 
 """Main module for the rasdump command line utility"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 import sys
 import logging

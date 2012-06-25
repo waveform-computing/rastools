@@ -24,7 +24,6 @@ from __future__ import (
 import os
 import time
 import datetime as dt
-import traceback
 
 import numpy as np
 import matplotlib

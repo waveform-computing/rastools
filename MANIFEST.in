@@ -1,3 +1,5 @@
 prune debian
 prune docs
+prune icons
+prune etc
 exclude Makefile

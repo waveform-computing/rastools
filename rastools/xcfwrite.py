@@ -18,6 +18,9 @@
 
 """This module uses GIMP's batch mode to support multi-layered XCF output"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import os
 import tempfile
 import subprocess

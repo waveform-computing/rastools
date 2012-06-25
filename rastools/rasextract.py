@@ -33,7 +33,7 @@ import matplotlib.image
 
 from rastools.rasutility import (
     RasUtility, RasChannelEmptyError, RasChannelProcessor)
-from rastools.collections import BoundingBox
+from rastools.collections import BoundingBox, Coord, Range
 
 
 DPI = 72.0
@@ -57,12 +57,19 @@ class RasExtractUtility(RasUtility):
             list_colormaps=False,
             list_formats=False,
             list_interpolations=False,
+            resize='1.0',
             show_axes=False,
+            axes_offset='0.0,0.0',
+            axes_scale='1.0,1.0',
             show_colorbar=False,
             show_histogram=False,
+            bins=32,
             colormap='gray',
             output='{filename_root}_{channel:02d}_{channel_name}.png',
+            grid=False,
             title='',
+            title_x='',
+            title_y='',
             interpolation=None,
             multi=False,
         )
@@ -87,8 +94,21 @@ class RasExtractUtility(RasUtility):
             help='draw a color-bar showing the range of the colormap to the '
             'right of the output')
         self.parser.add_option(
+            '-g', '--grid', dest='show_grid', action='store_true',
+            help='draw grid-lines overlayed on top of the image')
+        self.parser.add_option(
+            '-R', '--resize', dest='resize', action='store',
+            help='resize the image; if specified as a single number it is '
+            'considered a multiplier for the original dimensions, otherwise '
+            'two comma-separated numbers are expected which will be treated '
+            'as new X,Y dimensions')
+        self.parser.add_option(
             '-H', '--histogram', dest='show_histogram', action='store_true',
             help='draw a histogram of the channel values below the output')
+        self.parser.add_option(
+            '--histogram-bins', dest='bins', action='store',
+            help='specify the number of bins to use when constructing the '
+            'histogram (default=%default)')
         self.parser.add_option(
             '-C', '--colormap', dest='colormap', action='store',
             help='the colormap to use in output (e.g. gray, jet, hot); '
@@ -98,9 +118,23 @@ class RasExtractUtility(RasUtility):
             help='force the use of the specified interpolation algorithm; see '
             '--help-interpolation for listing')
         self.parser.add_option(
+            '-O', '--offset', dest='axes_offset', action='store',
+            help='specify the X,Y offset of the coordinates displayed on the '
+            'axes; if one value is specified it is used for both axes')
+        self.parser.add_option(
+            '-S', '--scale', dest='axes_scale', action='store',
+            help='specify X,Y multipliers to apply to the post-offset axes '
+            'coordinates; if one value is specified it is used for both axes')
+        self.parser.add_option(
             '-t', '--title', dest='title', action='store',
             help='specify the template used to display a title at the top of '
             'the output; supports {variables} produced by rasinfo -t')
+        self.parser.add_option(
+            '--x-title', dest='title_x', action='store',
+            help='specify the title for the X-axis; implies --axes')
+        self.parser.add_option(
+            '--y-title', dest='title_y', action='store',
+            help='specify the title for the Y-axis; imples --axes')
         self.parser.add_option(
             '-o', '--output', dest='output', action='store',
             help='specify the template used to generate the output filenames; '
@@ -140,10 +174,17 @@ class RasExtractUtility(RasUtility):
         renderer.colormap = self.parse_colormap_option(options)
         renderer.crop = self.parse_crop_option(options)
         renderer.clip = self.parse_range_options(options)
+        renderer.offset = self.parse_axes_offset_option(options)
+        renderer.scale = self.parse_axes_scale_option(options)
+        renderer.resize = self.parse_resize_option(options)
         renderer.colorbar = options.show_colorbar
         renderer.histogram = options.show_histogram
-        renderer.axes = options.show_axes
+        renderer.histogram_bins = options.bins
         renderer.title = options.title
+        renderer.title_x = options.title_x
+        renderer.title_y = options.title_y
+        renderer.axes = options.show_axes or options.title_x or options.title_y
+        renderer.grid = options.grid
         renderer.empty = options.empty
         (   canvas_method,
             multi_class,
@@ -230,6 +271,62 @@ class RasExtractUtility(RasUtility):
             self.parser.error('color-map %s is unknown' % options.colormap)
         return options.colormap
 
+    def parse_resize_option(self, option):
+        "Checks the validity of the --offset option"
+        if options.resize:
+            s = options.resize
+            try:
+                if not (',' in s or 'x' in s):
+                    result = float(s)
+                    if result == 0.0:
+                        self.parser.error('--resize multiplier cannot be 0.0')
+                else:
+                    if ',' in s:
+                        result = s.split(',', 1)
+                    else:
+                        result = s.split('x', 1)
+                    result = Coord(float(x), float(y))
+            except ValueError:
+                self.parser.error(
+                    '%s is not a valid --resize setting' % options.resize)
+            return result
+
+    def parse_axes_offset_option(self, option):
+        "Checks the validity of the --offset option"
+        if options.axes_offset:
+            s = options.axes_offset
+            if ',' in s:
+                x, y = s.split(',', 1)
+            elif '-' in s:
+                x, y = s.split('-', 1)
+            else:
+                x, y = s, s
+            try:
+                result = Coord(float(x), float(y))
+            except ValueError:
+                self.parser.error(
+                    '%s is not a valid --offset setting' % options.offset)
+            return result
+
+    def parse_scale_option(self, option):
+        "Checks the validity of the --scale option"
+        if options.axes_scale:
+            s = options.axes_scale
+            if ',' in s:
+                x, y = s.split(',', 1)
+            elif '-' in s:
+                x, y = s.split('-', 1)
+            else:
+                x, y = s, s
+            try:
+                result = Coord(float(x), float(y))
+            except ValueError:
+                self.parser.error(
+                    '%s is not a valid --scale setting' % options.scale)
+            if result.x == 0.0 or result.y == 0.0:
+                self.parser.error('--scale multiplier cannot be 0.0')
+            return result
+
     def parse_output_options(self, options):
         "Checks the validity of the --output and --multi options"
         ext = os.path.splitext(options.output)[1]
@@ -279,6 +376,10 @@ class RasRenderer(RasChannelProcessor):
         self.grid = False
         self.axes = False
         self.title = None
+        self.axes_titles = Coord(None, None)
+        self.axes_offsets = Coord(0.0, 0.0)
+        self.axes_scales = Coord(1.0, 1.0)
+        self.resize = 1.0
 
     def draw(self, channel):
         "Draw the specified channel, returning the matplotlib figure"
@@ -319,12 +420,22 @@ class RasRenderer(RasChannelProcessor):
             self.histogram or
             bool(self.title)
         ]
-        image_box = BoundingBox(
-            margin,
-            0.0,
-            (channel.parent.x_size - self.crop.left - self.crop.right) / DPI,
-            (channel.parent.y_size - self.crop.top - self.crop.bottom) / DPI
-        )
+        if isinstance(self.resize, Coord):
+            image_box = BoundingBox(
+                margin,
+                0.0,
+                self.resize.x / DPI,
+                self.resize.y / DPI
+            )
+        else:
+            image_box = BoundingBox(
+                margin,
+                0.0,
+                self.resize / DPI * (
+                    channel.parent.x_size - self.crop.left - self.crop.right),
+                self.resize / DPI * (
+                    channel.parent.y_size - self.crop.top - self.crop.bottom)
+            )
         colorbar_box = BoundingBox(
             margin,
             [0.0, margin][self.colorbar],
@@ -355,10 +466,26 @@ class RasRenderer(RasChannelProcessor):
         figure = matplotlib.figure.Figure(
             figsize=(figure_box.width, figure_box.height), dpi=DPI,
             facecolor='w', edgecolor='w')
+        # Figure out the axis extents
+        extent = Coord(
+            Range(
+                self.axes_scales.x * (
+                    self.axes_offsets.x + self.crop.left),
+                self.axes_scales.x * (
+                    self.axes_offsets.x + channel.parent.x_size - self.crop.right)
+            ),
+            Range(
+                self.axes_scales.y * (
+                    self.axes_offsets.y + channel.parent.y_size - self.crop.bottom),
+                self.axes_scales.y * (
+                    self.axes_offset.y + self.crop.top)
+            )
+        )
         # Draw the various image elements within bounding boxes calculated from
         # the metrics above
         image = self.draw_image(
-            data, data_range, figure, image_box.relative_to(figure_box))
+            data, data_range, extent, figure,
+            image_box.relative_to(figure_box))
         if self.histogram:
             self.draw_histogram(
                 data, data_range, figure,
@@ -372,15 +499,27 @@ class RasRenderer(RasChannelProcessor):
                 channel, figure, title_box.relative_to(figure_box))
         return figure
 
-    def draw_image(self, data, data_range, figure, box):
+    def draw_image(self, data, data_range, extent, figure, box):
         "Draws the image of the data within the specified figure"
+        axes = figure.add_axes(box, frame_on=self.axes or self.grid)
+        # Configure the x and y axes appearance
+        if self.grid:
+            axes.grid(color='k', linestyle='-')
+        else:
+            axes.grid(False)
+        if self.axes:
+            if self.axes_titles.x:
+                axes.set_xlabel(self.axes_titles.x.decode('string_escape'))
+            if self.axes_titles.y:
+                axes.set_ylabel(self.axes_titles.y.decode('string_escape'))
+        else:
+            axes.set_xticklabels([])
+            axes.set_yticklabels([])
         # The imshow() call takes care of clamping values with data_range and
         # color-mapping
-        axes = figure.add_axes(box, frame_on=self.axes)
-        if not self.axes:
-            axes.set_axis_off()
         return axes.imshow(
             data, cmap=matplotlib.cm.get_cmap(self.colormap),
+            origin='upper', extent=extent.x + extent.y,
             vmin=data_range.low, vmax=data_range.high,
             interpolation=self.interpolation)
 

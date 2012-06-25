@@ -19,6 +19,9 @@
 
 """Main module for the rasinfo utility."""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import sys
 
 from rastools.rasutility import RasUtility

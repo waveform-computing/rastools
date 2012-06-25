@@ -19,7 +19,7 @@ optional *channel-file* defines the indices and names of the channels to dump.
 If the *channel-file* is omitted all channels are extracted and channels in
 .RAS files will be unnamed.
 
-Options:
+The :program:`rasdump` utility has several options:
 
 .. program:: rasdump
 
@@ -53,11 +53,22 @@ Options:
 
 .. option:: -p PERCENTILE, --percentile=PERCENTILE
 
-   clip values in the output image to the specified percentile
+   clip values in the output image to the specified low-high percentile range
+   (mutually exclusive with :option:`-r`)
+
+.. option:: -r RANGE, --range=RANGE
+
+   clip values in the output image to the specified low-high count range
+   (mutually exclusive with :option:`-p`)
 
 .. option:: -C CROP, --crop=CROP
 
-   crop the input data by top,left,bottom,right points
+   crop the input data by left,top,right,bottom points
+
+.. option:: -e, --empty
+
+   if specified, include empty channels in the output (by default empty
+   channels are ignored)
 
 .. option:: -o OUTPUT, --output=OUTPUT
 
@@ -69,11 +80,6 @@ Options:
 
    if specified, produce a single output file with multiple pages or sheets,
    one per channel (only available with certain formats)
-
-.. option:: -e, --empty
-
-   if specified, empty channels in the output (by default empty channels are
-   ignored)
 
 Examples
 ========

@@ -18,6 +18,9 @@
 
 """Microsoft Excel writer module for rasdump and rasviewer"""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import xlwt
 
 class XlsWriter(object):

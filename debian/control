@@ -9,7 +9,7 @@ X-Python-Version: >= 2.5
 
 Package: rastools
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-matplotlib, python-qt4
+Depends: ${misc:Depends}, ${python:Depends}, python-matplotlib, python-qt4, python-optcomplete
 Suggests: gimp, python-xlwt
 Description: Tools for converting scans from the SSRL to images.
  rastools is a small suite of utilities for converting data files obtained from

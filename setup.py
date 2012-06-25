@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
@@ -60,7 +63,7 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
         packages             = find_packages(exclude=['distribute_setup', 'utils']),
-        install_requires     = ['matplotlib'],
+        install_requires     = ['matplotlib', 'optcomplete'],
         extras_require       = {'XLS': ['xlwt']},
         include_package_data = True,
         platforms            = 'ALL',

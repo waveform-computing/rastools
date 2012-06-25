@@ -1,0 +1,3 @@
+complete -F _optcomplete rasdump
+complete -F _optcomplete rasextract
+complete -F _optcomplete rasinfo

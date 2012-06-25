@@ -23,6 +23,9 @@ to command line applications: a help screen, universal file globbing, response
 file handling, and common logging configuration and options.
 """
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import sys
 import os
 import optparse
@@ -31,6 +34,12 @@ import locale
 import traceback
 import glob
 from itertools import chain
+
+try:
+    # Optionally import optcomplete (for auto-completion) if it's installed
+    import optcomplete
+except ImportError:
+    optcomplete = None
 
 from rastools import __version__
 
@@ -148,6 +157,10 @@ class TerminalApplication(object):
         logging.getLogger().addHandler(console)
         if args is None:
             args = sys.argv[1:]
+        if optcomplete:
+            optcomplete.autocomplete(self.parser)
+        elif 'COMP_LINE' in os.environ:
+            return 0
         (options, args) = self.parser.parse_args(expand_args(args))
         console.setLevel(options.loglevel)
         if options.logfile:

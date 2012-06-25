@@ -46,14 +46,20 @@ The :program:`rasinfo` utility has several options:
 
    run under PDB (debug mode)
 
+.. option:: -e, --empty
+
+   if specified, include empty channels in the output (by default empty
+   channels are ignored)
+
 .. option:: -t, --templates
 
    output substitution templates use with :option:`rasextract --title` and
    :option:`rasextract --output`
 
-.. option:: -r, --ranges
+.. option:: -c, --channels
 
-   read each channel in the file and output its range of values
+   output information about individual channels in addition to header details
+   (note: this requires reading the entire file which can take some time)
 
 Examples
 ========

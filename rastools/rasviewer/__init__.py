@@ -19,6 +19,9 @@
 
 """Main module for the rasviewer application."""
 
+from __future__ import (
+    unicode_literals, print_function, absolute_import, division)
+
 import sys
 
 from PyQt4 import QtCore, QtGui
