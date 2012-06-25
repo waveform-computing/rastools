@@ -146,6 +146,16 @@ class MainWindow(QtGui.QMainWindow):
             from rastools.image_writers import IMAGE_WRITERS
         finally:
             QtGui.QApplication.instance().restoreOverrideCursor()
+        # Build a map of filter string labels to (method, default_ext)
+        filter_map = dict(
+            ('{name} ({exts})'.format(
+                name=self.tr(label),
+                exts=' '.join('*' + ext for ext in exts)),
+                (method, exts[0]))
+            for (method, exts, label, _, _) in IMAGE_WRITERS
+        )
+        # Construct the filter list by prefixing the list with an "All images"
+        # entry which includes all possible extensions
         filters = ';;'.join(
             [
                 str(self.tr('All images ({0})')).format(
@@ -153,39 +163,46 @@ class MainWindow(QtGui.QMainWindow):
                         '*' + ext
                         for (_, exts, _, _, _) in IMAGE_WRITERS
                         for ext in exts))
-            ] + [
-                '{name} ({exts})'.format(
-                    name=self.tr(label),
-                    exts=' '.join('*' + ext for ext in exts))
-                for (_, exts, label, _, _) in IMAGE_WRITERS
-            ]
+            ] + sorted(filter_map.iterkeys())
         )
-        filename = QtGui.QFileDialog.getSaveFileName(
+        # Use the new getSaveFileNameAndFilter method to retrieve both the
+        # filename and the filter the user selected
+        (filename, filter_) = QtGui.QFileDialog.getSaveFileNameAndFilter(
             self, self.tr('Export image'), os.getcwd(), filters)
         if filename:
             filename = str(filename)
+            filter_ = str(filter_)
             os.chdir(os.path.dirname(filename))
             ext = os.path.splitext(filename)[1]
-            writers = dict(
-                (ext, method)
-                for (method, exts, _, _, _) in IMAGE_WRITERS
-                for ext in exts
-            )
-            try:
-                method = writers[ext]
-            except KeyError:
-                QtGui.QMessageBox.warning(
-                    self, self.tr('Warning'),
-                    str(self.tr('Unknown file extension "{0}"')).format(ext))
-            else:
-                fig = self.ui.mdi_area.currentSubWindow().widget().figure
-                QtGui.QApplication.instance().setOverrideCursor(
-                    QtCore.Qt.WaitCursor)
+            if ext:
+                # If the user has explicitly specified an extension then lookup
+                # the method associated with the extension (if any)
+                writers = dict(
+                    (ext, method)
+                    for (method, exts, _, _, _) in IMAGE_WRITERS
+                    for ext in exts
+                )
                 try:
-                    canvas = method.im_class(fig)
-                    method(canvas, filename, dpi=fig.dpi)
-                finally:
-                    QtGui.QApplication.instance().restoreOverrideCursor()
+                    method = writers[ext]
+                except KeyError:
+                    QtGui.QMessageBox.warning(
+                        self, self.tr('Warning'),
+                        str(self.tr('Unknown file extension "{0}"')).format(ext))
+                    return
+            else:
+                # Otherwise, use the filter label map we built earlier to
+                # lookup the selected filter string and retrieve the default
+                # extension which we append to the filename
+                (method, ext) = filter_map[filter_]
+                filename = filename + ext
+            fig = self.ui.mdi_area.currentSubWindow().widget().figure
+            QtGui.QApplication.instance().setOverrideCursor(
+                QtCore.Qt.WaitCursor)
+            try:
+                canvas = method.im_class(fig)
+                method(canvas, filename, dpi=fig.dpi)
+            finally:
+                QtGui.QApplication.instance().restoreOverrideCursor()
 
     def export_channel(self):
         "Handler for the File/Export Channel action"

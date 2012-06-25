@@ -298,7 +298,7 @@ class MDIWindow(QtGui.QWidget):
             (band_right, band_bottom))
         # Ignore the drag operation until the total number of data-points in
         # the selection exceeds the threshold
-        threshold = 100
+        threshold = 49
         if (abs(data_right - data_left) * abs(data_bottom - data_top)) > threshold:
             self._zoom_coords = (data_left, data_top, data_right, data_bottom)
             self.window().statusBar().showMessage(
