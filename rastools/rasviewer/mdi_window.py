@@ -283,42 +283,55 @@ class MDIWindow(QtGui.QWidget):
         band_right  = min(max(self._zoom_start.x, event.x), box_right)
         band_top    = max(min(self._zoom_start.y, event.y), box_top)
         band_bottom = min(max(self._zoom_start.y, event.y), box_bottom)
-        self.canvas.drawRectangle((
+        rectangle = (
             band_left,
             height - band_top,
             band_right - band_left,
-            band_top - band_bottom,
-        ))
-        # Calculate the data coordinates of the selection. Note that top and
-        # bottom are reversed by this conversion
-        inverse = self.image_axes.transData.inverted()
-        height = self._file.y_size
-        data_left, data_bottom = inverse.transform_point((band_left, band_top))
-        data_right, data_top = inverse.transform_point((band_right, band_bottom))
-        self._zoom_coords = (data_left, data_top, data_right, data_bottom)
-        self.window().statusBar().showMessage(
-            unicode(self.tr(
-                'Crop from ({left:.0f}, {top:.0f}) to '
-                '({right:.0f}, {bottom:.0f})')).format(
-                    left=data_left, top=data_top,
-                    right=data_right, bottom=data_bottom))
+            band_top - band_bottom
+        )
+        # Ignore the drag operation until the total number of pixels in the
+        # selection exceeds the threshold
+        threshold = 100
+        if (abs(rectangle[2]) * abs(rectangle[3])) > threshold:
+            self.canvas.drawRectangle(rectangle)
+            # Calculate the data coordinates of the selection. Note that top and
+            # bottom are reversed by this conversion
+            inverse = self.image_axes.transData.inverted()
+            data_left, data_bottom = inverse.transform_point(
+                (band_left, band_top))
+            data_right, data_top = inverse.transform_point(
+                (band_right, band_bottom))
+            self._zoom_coords = (data_left, data_top, data_right, data_bottom)
+            self.window().statusBar().showMessage(
+                unicode(self.tr(
+                    'Crop from ({left:.0f}, {top:.0f}) to '
+                    '({right:.0f}, {bottom:.0f})')).format(
+                        left=data_left, top=data_top,
+                        right=data_right, bottom=data_bottom))
+        else:
+            self._zoom_coords = None
+            self.window().statusBar().clearMessage()
+            self.canvas.draw()
 
     def canvas_release(self, event):
         "Handler for mouse release on graph canvas"
         if self._zoom_id:
+            self.window().statusBar().clearMessage()
             self.canvas.mpl_disconnect(self._zoom_id)
             self._zoom_id = None
-            (   data_left,
-                data_top,
-                data_right,
-                data_bottom,
-            ) = self._zoom_coords
-            self.ui.crop_left_spinbox.setValue(data_left)
-            self.ui.crop_top_spinbox.setValue(data_top)
-            self.ui.crop_right_spinbox.setValue(self._file.x_size - data_right)
-            self.ui.crop_bottom_spinbox.setValue(self._file.y_size - data_bottom)
-            self.window().statusBar().clearMessage()
-            self.canvas.draw()
+            if self._zoom_coords:
+                (   data_left,
+                    data_top,
+                    data_right,
+                    data_bottom,
+                ) = self._zoom_coords
+                self.ui.crop_left_spinbox.setValue(data_left)
+                self.ui.crop_top_spinbox.setValue(data_top)
+                self.ui.crop_right_spinbox.setValue(
+                    self._file.x_size - data_right)
+                self.ui.crop_bottom_spinbox.setValue(
+                    self._file.y_size - data_bottom)
+                self.canvas.draw()
 
     def focus_changed(self, old_widget, new_widget):
         "Handler for control focus changed event"
