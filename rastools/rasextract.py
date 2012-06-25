@@ -271,7 +271,7 @@ class RasExtractUtility(RasUtility):
             self.parser.error('color-map %s is unknown' % options.colormap)
         return options.colormap
 
-    def parse_resize_option(self, option):
+    def parse_resize_option(self, options):
         "Checks the validity of the --offset option"
         if options.resize:
             s = options.resize
@@ -291,7 +291,7 @@ class RasExtractUtility(RasUtility):
                     '%s is not a valid --resize setting' % options.resize)
             return result
 
-    def parse_axes_offset_option(self, option):
+    def parse_axes_offset_option(self, options):
         "Checks the validity of the --offset option"
         if options.axes_offset:
             s = options.axes_offset
@@ -308,7 +308,7 @@ class RasExtractUtility(RasUtility):
                     '%s is not a valid --offset setting' % options.offset)
             return result
 
-    def parse_scale_option(self, option):
+    def parse_scale_option(self, options):
         "Checks the validity of the --scale option"
         if options.axes_scale:
             s = options.axes_scale
