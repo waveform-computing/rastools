@@ -289,18 +289,17 @@ class MDIWindow(QtGui.QWidget):
             band_right - band_left,
             band_top - band_bottom
         )
-        # Ignore the drag operation until the total number of pixels in the
-        # selection exceeds the threshold
+        # Calculate the data coordinates of the selection. Note that top and
+        # bottom are reversed by this conversion
+        inverse = self.image_axes.transData.inverted()
+        data_left, data_bottom = inverse.transform_point(
+            (band_left, band_top))
+        data_right, data_top = inverse.transform_point(
+            (band_right, band_bottom))
+        # Ignore the drag operation until the total number of data-points in
+        # the selection exceeds the threshold
         threshold = 100
-        if (abs(rectangle[2]) * abs(rectangle[3])) > threshold:
-            self.canvas.drawRectangle(rectangle)
-            # Calculate the data coordinates of the selection. Note that top and
-            # bottom are reversed by this conversion
-            inverse = self.image_axes.transData.inverted()
-            data_left, data_bottom = inverse.transform_point(
-                (band_left, band_top))
-            data_right, data_top = inverse.transform_point(
-                (band_right, band_bottom))
+        if (abs(data_right - data_left) * abs(data_bottom - data_top)) > threshold:
             self._zoom_coords = (data_left, data_top, data_right, data_bottom)
             self.window().statusBar().showMessage(
                 unicode(self.tr(
@@ -308,6 +307,7 @@ class MDIWindow(QtGui.QWidget):
                     '({right:.0f}, {bottom:.0f})')).format(
                         left=data_left, top=data_top,
                         right=data_right, bottom=data_bottom))
+            self.canvas.drawRectangle(rectangle)
         else:
             self._zoom_coords = None
             self.window().statusBar().clearMessage()
