@@ -47,6 +47,14 @@ from rastools import __version__
 # Use the user's default locale instead of C
 locale.setlocale(locale.LC_ALL, '')
 
+# Set up a console logging handler which just prints messages without any other
+# adornments
+CONSOLE = logging.StreamHandler(sys.stderr)
+CONSOLE.setFormatter(logging.Formatter('%(message)s'))
+CONSOLE.setLevel(logging.DEBUG)
+logging.getLogger().addHandler(CONSOLE)
+
+
 def normalize_path(path):
     "Eliminates symlinks, makes path absolute and normalizes case"
     return os.path.normcase(os.path.realpath(os.path.abspath(
@@ -144,25 +152,24 @@ class TerminalApplication(object):
         self.parser.add_option('-v', '--verbose', dest='loglevel',
             action='store_const', const=logging.INFO,
             help="""produce more console output""")
-        self.parser.add_option('-l', '--log-file', dest='logfile',
+        opt = self.parser.add_option('-l', '--log-file', dest='logfile',
             help="""log messages to the specified file""")
+        if optcomplete:
+            opt.completer = optcomplete.RegexCompleter(['.*\.log', '.*\.txt'])
         self.parser.add_option('-P', '--pdb', dest='debug',
             action='store_true', help="""run under PDB (debug mode)""")
+        self.arg_completer = None
 
     def __call__(self, args=None):
         sys.excepthook = self.handle
-        console = logging.StreamHandler(sys.stderr)
-        console.setFormatter(logging.Formatter('%(message)s'))
-        console.setLevel(logging.DEBUG)
-        logging.getLogger().addHandler(console)
         if args is None:
             args = sys.argv[1:]
         if optcomplete:
-            optcomplete.autocomplete(self.parser)
+            optcomplete.autocomplete(self.parser, self.arg_completer)
         elif 'COMP_LINE' in os.environ:
             return 0
         (options, args) = self.parser.parse_args(expand_args(args))
-        console.setLevel(options.loglevel)
+        CONSOLE.setLevel(options.loglevel)
         if options.logfile:
             logfile = logging.FileHandler(options.logfile)
             logfile.setFormatter(
@@ -171,7 +178,6 @@ class TerminalApplication(object):
             logfile.setLevel(logging.DEBUG)
             logging.getLogger().addHandler(logfile)
         if options.debug:
-            console.setLevel(logging.DEBUG)
             logging.getLogger().setLevel(logging.DEBUG)
         else:
             logging.getLogger().setLevel(logging.INFO)

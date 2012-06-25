@@ -23,13 +23,21 @@ from __future__ import (
     unicode_literals, print_function, absolute_import, division)
 
 import os
+import re
 import sys
 import logging
+from operator import methodcaller
 
 import numpy as np
 import matplotlib
 import matplotlib.cm
 import matplotlib.image
+
+try:
+    # Optionally import optcomplete (for auto-completion) if it's installed
+    import optcomplete
+except ImportError:
+    optcomplete = None
 
 from rastools.rasutility import (
     RasUtility, RasChannelEmptyError, RasChannelProcessor)
@@ -61,12 +69,12 @@ class RasExtractUtility(RasUtility):
             show_axes=False,
             axes_offset='0.0,0.0',
             axes_scale='1.0,1.0',
+            show_grid=False,
             show_colorbar=False,
             show_histogram=False,
             bins=32,
             colormap='gray',
             output='{filename_root}_{channel:02d}_{channel_name}.png',
-            grid=False,
             title='',
             title_x='',
             title_y='',
@@ -78,7 +86,7 @@ class RasExtractUtility(RasUtility):
             help='list the available colormaps')
         self.parser.add_option(
             '--help-formats', dest='list_formats', action='store_true',
-            help='list the available file output formats')
+            help='list the available file formats')
         self.parser.add_option(
             '--help-interpolations', dest='list_interpolations',
             action='store_true', help='list the available interpolation '
@@ -109,14 +117,19 @@ class RasExtractUtility(RasUtility):
             '--histogram-bins', dest='bins', action='store',
             help='specify the number of bins to use when constructing the '
             'histogram (default=%default)')
-        self.parser.add_option(
+        opt = self.parser.add_option(
             '-C', '--colormap', dest='colormap', action='store',
             help='the colormap to use in output (e.g. gray, jet, hot); '
             'see --help-colormaps for listing')
-        self.parser.add_option(
+        if optcomplete:
+            opt.completer = optcomplete.ListCompleter(self.list_colormaps())
+        opt = self.parser.add_option(
             '-i', '--interpolation', dest='interpolation', action='store',
             help='force the use of the specified interpolation algorithm; see '
             '--help-interpolation for listing')
+        if optcomplete:
+            opt.completer = optcomplete.ListCompleter(
+                self.list_interpolations())
         self.parser.add_option(
             '-O', '--offset', dest='axes_offset', action='store',
             help='specify the X,Y offset of the coordinates displayed on the '
@@ -135,16 +148,26 @@ class RasExtractUtility(RasUtility):
         self.parser.add_option(
             '--y-title', dest='title_y', action='store',
             help='specify the title for the Y-axis; imples --axes')
-        self.parser.add_option(
+        opt = self.parser.add_option(
             '-o', '--output', dest='output', action='store',
             help='specify the template used to generate the output filenames; '
             'supports {variables}, see --help-formats for supported file '
             'formats. Default: %default')
+        if optcomplete:
+            opt.completer = optcomplete.RegexCompleter(
+                re.compile('.*' + ext.replace('.', '\.'))
+                for (ext, _) in self.list_output_formats()
+            )
         self.parser.add_option(
             '-m', '--multi', dest='multi', action='store_true',
             help='if specified, produce a single output file with multiple '
             'layers or pages, one per channel (only available with certain '
             'formats)')
+        if optcomplete:
+            self.arg_completer = optcomplete.RegexCompleter(
+                re.compile('.*' + ext.replace('.', '\.'))
+                for (ext, _) in self.list_input_formats()
+            )
 
     @property
     def image_writers(self):
@@ -161,12 +184,38 @@ class RasExtractUtility(RasUtility):
     def main(self, options, args):
         if options.list_colormaps:
             self.list_colormaps()
+            sys.stdout.write('The following colormaps are available:\n\n')
+            sys.stdout.write('\n'.join(
+                name for name in self.list_colormaps()
+                if not name.endswith('_r')
+            ))
+            sys.stdout.write('\n\n')
+            sys.stdout.write(
+                'Append _r to any colormap name to reverse it. Previews at:\n')
+            sys.stdout.write(
+                'http://matplotlib.sourceforge.net/examples/pylab_examples/'
+                'show_colormaps.html\n\n')
             return 0
         if options.list_interpolations:
-            self.list_interpolations()
+            sys.stdout.write(
+                'The following image interpolation algorithms are '
+                'available:\n\n')
+            sys.stdout.write('\n'.join(self.list_interpolations()))
+            sys.stdout.write('\n\n')
             return 0
         if options.list_formats:
-            self.list_formats()
+            sys.stdout.write('The following input formats are supported:\n\n')
+            sys.stdout.write('\n'.join(
+                '{0:<8} - {1}'.format(ext, desc)
+                for (ext, desc) in self.list_input_formats()
+            ))
+            sys.stdout.write('\n\n')
+            sys.stdout.write('The following output formats are supported:\n\n')
+            sys.stdout.write('\n'.join(
+                '{0:<8} - {1}'.format(ext, desc)
+                for (ext, desc) in self.list_output_formats()
+            ))
+            sys.stdout.write('\n\n')
             return 0
         # Configure the renderer from the command line options
         data_file = self.parse_files(options, args)
@@ -183,7 +232,7 @@ class RasExtractUtility(RasUtility):
         renderer.axes_offsets = self.parse_axes_offset_option(options)
         renderer.axes_scales = self.parse_axes_scale_option(options)
         renderer.axes_titles = Coord(options.title_x, options.title_y)
-        renderer.grid = options.grid
+        renderer.grid = options.show_grid
         renderer.empty = options.empty
         (   canvas_method,
             multi_class,
@@ -235,39 +284,36 @@ class RasExtractUtility(RasUtility):
                 output.close()
 
     def list_colormaps(self):
-        "Prints the list of available colormaps to stdout"
-        sys.stdout.write('The following colormaps are available:\n\n')
-        sys.stdout.write('\n'.join(sorted(
-            name for name in matplotlib.cm.datad
-            if not name.endswith('_r')
-        )))
-        sys.stdout.write('\n\n')
-        sys.stdout.write(
-            'Append _r to any colormap name to reverse it. Previews at:\n')
-        sys.stdout.write(
-            'http://matplotlib.sourceforge.net/examples/pylab_examples/'
-            'show_colormaps.html\n\n')
+        "List the available colormaps"
+        return sorted(matplotlib.cm.datad)
 
     def list_interpolations(self):
-        "Prints the list of supported interpolations to stdout"
-        sys.stdout.write(
-            'The following image interpolation algorithms are available:\n\n')
-        sys.stdout.write('\n'.join(sorted(
-            alg for alg in matplotlib.image.AxesImage._interpd
-        )))
-        sys.stdout.write('\n\n')
+        "List the supported interpolations"
+        return (
+            alg for alg in sorted(matplotlib.image.AxesImage._interpd)
+        )
 
-    def list_formats(self):
-        "Prints the list of supported image formats to stdout"
-        sys.stdout.write('The following file formats are available:\n\n')
-        for ext in sorted(self.image_writers.iterkeys()):
-            sys.stdout.write('%-8s - %s\n' % (ext, self.image_writers[ext][-1]))
-        sys.stdout.write('\n')
+    def list_input_formats(self):
+        "List the supported data formats"
+        return (
+            (ext, self.data_parsers[ext][-1])
+            for ext in sorted(self.data_parsers.iterkeys(),
+                key=methodcaller('lower'))
+        )
+
+    def list_output_formats(self):
+        "List the supported image formats"
+        return (
+            (ext, self.image_writers[ext][-1])
+            for ext in sorted(self.image_writers.iterkeys(),
+                key=methodcaller('lower'))
+        )
 
     def parse_colormap_option(self, options):
         "Checks the validity of the --colormap option"
         if not matplotlib.cm.get_cmap(options.colormap):
-            self.parser.error('color-map %s is unknown' % options.colormap)
+            self.parser.error(
+                'color-map {} is unknown'.format(options.colormap))
         return options.colormap
 
     def parse_resize_option(self, options):
@@ -287,7 +333,7 @@ class RasExtractUtility(RasUtility):
                     result = Coord(float(x), float(y))
             except ValueError:
                 self.parser.error(
-                    '%s is not a valid --resize setting' % options.resize)
+                    '{} is not a valid --resize value'.format(options.resize))
             return result
 
     def parse_axes_offset_option(self, options):
@@ -304,7 +350,7 @@ class RasExtractUtility(RasUtility):
                 result = Coord(float(x), float(y))
             except ValueError:
                 self.parser.error(
-                    '%s is not a valid --offset setting' % options.offset)
+                    '{} is not a valid --offset'.format(options.offset))
             return result
 
     def parse_axes_scale_option(self, options):
@@ -321,7 +367,7 @@ class RasExtractUtility(RasUtility):
                 result = Coord(float(x), float(y))
             except ValueError:
                 self.parser.error(
-                    '%s is not a valid --scale setting' % options.scale)
+                    '{} is not a valid --scale'.format(options.scale))
             if result.x == 0.0 or result.y == 0.0:
                 self.parser.error('--scale multiplier cannot be 0.0')
             return result
@@ -336,7 +382,7 @@ class RasExtractUtility(RasUtility):
                 _
             ) = self.image_writers[ext]
         except KeyError:
-            self.parser.error('unknown image format "%s"' % ext)
+            self.parser.error('unknown image format "{}"'.format(ext))
         if options.multi and not multi_class:
             multi_ext = [
                 ext
@@ -345,8 +391,8 @@ class RasExtractUtility(RasUtility):
             ]
             if multi_ext:
                 self.parser.error(
-                    'output filename must end with %s when --multi '
-                    'is specified' % ','.join(multi_ext))
+                    'output filename must end with {} when --multi '
+                    'is specified'.format(','.join(multi_ext)))
             else:
                 self.parser.error(
                     '--multi is not supported by any registered '
@@ -358,7 +404,9 @@ class RasExtractUtility(RasUtility):
         if options.interpolation is None:
             options.interpolation = default_interpolation
         if not options.interpolation in matplotlib.image.AxesImage._interpd:
-            self.parser.error('interpolation algorithm %s is unknown')
+            self.parser.error(
+                'interpolation algorithm {} is unknown'.format(
+                    options.interpolation))
         return options.interpolation
 
 

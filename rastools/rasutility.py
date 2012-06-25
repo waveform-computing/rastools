@@ -27,6 +27,12 @@ import logging
 
 import numpy as np
 
+try:
+    # Optionally import optcomplete (for auto-completion) if it's installed
+    import optcomplete
+except ImportError:
+    optcomplete = None
+
 from rastools.terminal import TerminalApplication
 from rastools.collections import Percentile, Range, Crop
 
@@ -52,8 +58,8 @@ class RasUtility(TerminalApplication):
             # Re-arrange the array into a more useful dictionary keyed by
             # extension
             self._data_parsers = dict(
-                (ext, cls)
-                for (cls, exts, _) in DATA_PARSERS
+                (ext, (cls, desc))
+                for (cls, exts, desc) in DATA_PARSERS
                 for ext in exts
             )
         return self._data_parsers
@@ -61,14 +67,18 @@ class RasUtility(TerminalApplication):
     def add_range_options(self):
         "Add --percentile and --range options to the command line parser"
         self.parser.set_defaults(percentile=None, range=None)
-        self.parser.add_option(
+        opt = self.parser.add_option(
             '-p', '--percentile', dest='percentile', action='store',
             help='clip values in the output to the specified low-high '
             'percentile range (mutually exclusive with --range)')
-        self.parser.add_option(
+        if optcomplete:
+            opt.completer = optcomplete.ListCompleter(['low-high'])
+        opt = self.parser.add_option(
             '-r', '--range', dest='range', action='store',
             help='clip values in the output to the specified low-high '
             'count range (mutually exclusive with --percentile)')
+        if optcomplete:
+            opt.completer = optcomplete.ListCompleter(['low-high'])
 
     def parse_range_options(self, options):
         "Parses the --percentile and --range options"
@@ -118,9 +128,11 @@ class RasUtility(TerminalApplication):
     def add_crop_option(self):
         "Add a --crop option to the command line parser"
         self.parser.set_defaults(crop='0,0,0,0')
-        self.parser.add_option(
+        opt = self.parser.add_option(
             '-c', '--crop', dest='crop', action='store',
             help='crop the input data by top,left,bottom,right points')
+        if optcomplete:
+            opt.completer = optcomplete.ListCompleter(['top,left,bottom,right'])
 
     def parse_crop_option(self, options):
         "Parses the --crop option"
@@ -169,7 +181,7 @@ class RasUtility(TerminalApplication):
         else:
             progress = (None, None, None)
         try:
-            parser = self.data_parsers[ext]
+            parser = self.data_parsers[ext][0]
         except KeyError:
             self.parser.error('unrecognized file extension %s' % ext)
         return parser(data_file, channels_file, progress=progress)

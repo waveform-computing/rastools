@@ -114,13 +114,17 @@ def run_gimp_script(script=None):
         raise Exception('GIMP script failed with return code %d - see '
             'above for further details' % process.returncode)
 
-# Test launch the GIMP executable. We do this on import because without GIMP
-# being available this entire module is basically useless!
-try:
-    run_gimp_script()
-except:
-    raise ImportError('Unable to test-launch GIMP executable "%s"' %
-        GIMP_EXECUTABLE)
+# We used to test-launch the GIMP executable here, but this was causing severe
+# slow-downs on startup of various tools. Now instead we simply attempt to
+# locate the executable and test the permissions would potentially allow us to
+# execute it
+if not any(
+        True for path in os.environ['PATH'].split(os.pathsep)
+        if os.path.exists(os.path.join(path, GIMP_EXECUTABLE))
+        and os.access(os.path.join(path, GIMP_EXECUTABLE), os.X_OK)
+    ):
+    raise ImportError('Unable to find GIMP executable "{}" in PATH'.format(
+        GIMP_EXECUTABLE))
 
 
 class FigureCanvasXcf(FigureCanvasAgg):
