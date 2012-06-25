@@ -174,16 +174,15 @@ class RasExtractUtility(RasUtility):
         renderer.colormap = self.parse_colormap_option(options)
         renderer.crop = self.parse_crop_option(options)
         renderer.clip = self.parse_range_options(options)
-        renderer.offset = self.parse_axes_offset_option(options)
-        renderer.scale = self.parse_axes_scale_option(options)
         renderer.resize = self.parse_resize_option(options)
         renderer.colorbar = options.show_colorbar
         renderer.histogram = options.show_histogram
         renderer.histogram_bins = options.bins
         renderer.title = options.title
-        renderer.title_x = options.title_x
-        renderer.title_y = options.title_y
         renderer.axes = options.show_axes or options.title_x or options.title_y
+        renderer.axes_offsets = self.parse_axes_offset_option(options)
+        renderer.axes_scales = self.parse_axes_scale_option(options)
+        renderer.axes_titles = Coord(options.title_x, options.title_y)
         renderer.grid = options.grid
         renderer.empty = options.empty
         (   canvas_method,
@@ -282,9 +281,9 @@ class RasExtractUtility(RasUtility):
                         self.parser.error('--resize multiplier cannot be 0.0')
                 else:
                     if ',' in s:
-                        result = s.split(',', 1)
+                        x, y = s.split(',', 1)
                     else:
-                        result = s.split('x', 1)
+                        x, y = s.split('x', 1)
                     result = Coord(float(x), float(y))
             except ValueError:
                 self.parser.error(
@@ -308,7 +307,7 @@ class RasExtractUtility(RasUtility):
                     '%s is not a valid --offset setting' % options.offset)
             return result
 
-    def parse_scale_option(self, options):
+    def parse_axes_scale_option(self, options):
         "Checks the validity of the --scale option"
         if options.axes_scale:
             s = options.axes_scale
@@ -478,7 +477,7 @@ class RasRenderer(RasChannelProcessor):
                 self.axes_scales.y * (
                     self.axes_offsets.y + channel.parent.y_size - self.crop.bottom),
                 self.axes_scales.y * (
-                    self.axes_offset.y + self.crop.top)
+                    self.axes_offsets.y + self.crop.top)
             )
         )
         # Draw the various image elements within bounding boxes calculated from
