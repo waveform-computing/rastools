@@ -1,3 +1,14 @@
+rastools (0.3-1~ppa1) precise; urgency=low
+
+  * Extended rasextract to maintain feature parity with rasviewer
+  * Fixed a nasty crashing bug in rasviewer
+  * Updated the documentation to correctly reflect new rasdump/rasextract
+    options
+  * Added bash-completion support to the command line utilities, courtesy of
+    optcomplete
+
+ -- Dave Hughes <dave@morpheus.lan>  Mon, 25 Jun 2012 14:53:12 +0100
+
 rastools (0.2-1~ppa1) precise; urgency=low
 
   * New reset-zoom action is slightly more intuitive than the old reset-crop

@@ -23,6 +23,15 @@ from __future__ import (
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
+# Workaround <http://bugs.python.org/issue10945>
+import codecs
+try:
+    codecs.lookup('mbcs')
+except LookupError:
+    ascii = codecs.lookup('ascii')
+    func = lambda name, enc=ascii: {True: enc}.get(name=='mbcs')
+    codecs.register(func)
+
 require_python(0x020600f0)
 
 classifiers = [
