@@ -211,6 +211,14 @@ class MainWindow(QtGui.QMainWindow):
             from rastools.data_writers import DATA_WRITERS
         finally:
             QtGui.QApplication.instance().restoreOverrideCursor()
+        # See export_image above for commentary on this map
+        filter_map = dict(
+            ('{name} ({exts})'.format(
+                name=self.tr(label),
+                exts=' '.join('*' + ext for ext in exts)),
+                (cls, exts[0]))
+            for (cls, exts, label, _) in DATA_WRITERS
+        )
         filters = ';;'.join(
             [
                 str(self.tr('All data files ({0})')).format(
@@ -218,42 +226,42 @@ class MainWindow(QtGui.QMainWindow):
                         '*' + ext
                         for (_, exts, _, _) in DATA_WRITERS
                         for ext in exts))
-            ] + [
-                '{name} ({exts})'.format(
-                    name=self.tr(label),
-                    exts=' '.join('*' + ext for ext in exts))
-                for (_, exts, label, _) in DATA_WRITERS
-            ]
+            ] + sorted(filter_map.iterkeys())
         )
-        filename = QtGui.QFileDialog.getSaveFileName(
+        (filename, filter_) = QtGui.QFileDialog.getSaveFileNameAndFilter(
             self, self.tr('Export channel'), os.getcwd(), filters)
         if filename:
             filename = str(filename)
+            filter_ = str(filter_)
             os.chdir(os.path.dirname(filename))
             ext = os.path.splitext(filename)[1]
-            writers = dict(
-                (ext, cls)
-                for (cls, exts, _, _) in DATA_WRITERS
-                for ext in exts
-            )
-            try:
-                cls = writers[ext]
-            except KeyError:
-                QtGui.QMessageBox.warning(
-                    self, self.tr('Warning'),
-                    str(self.tr('Unknown file extension "{0}"')).format(ext))
-            else:
-                mdi_window = self.ui.mdi_area.currentSubWindow().widget()
-                QtGui.QApplication.instance().setOverrideCursor(
-                    QtCore.Qt.WaitCursor)
+            if ext:
+                writers = dict(
+                    (ext, cls)
+                    for (cls, exts, _, _) in DATA_WRITERS
+                    for ext in exts
+                )
                 try:
-                    data = mdi_window.data_cropped
-                    start, finish = mdi_window.percentile_range
-                    data[data < start] = start
-                    data[data > finish] = finish
-                    cls(filename, mdi_window.channel).write(data)
-                finally:
-                    QtGui.QApplication.instance().restoreOverrideCursor()
+                    cls = writers[ext]
+                except KeyError:
+                    QtGui.QMessageBox.warning(
+                        self, self.tr('Warning'),
+                        str(self.tr('Unknown file extension "{0}"')).format(ext))
+                return
+            else:
+                (cls, ext) = filter_map[filter_]
+                filename = filename + ext
+            mdi_window = self.ui.mdi_area.currentSubWindow().widget()
+            QtGui.QApplication.instance().setOverrideCursor(
+                QtCore.Qt.WaitCursor)
+            try:
+                data = mdi_window.data_cropped
+                start, finish = mdi_window.data_range
+                data[data < start] = start
+                data[data > finish] = finish
+                cls(filename, mdi_window.channel).write(data)
+            finally:
+                QtGui.QApplication.instance().restoreOverrideCursor()
 
     def export_document(self):
         "Handler for the File/Export Document action"
