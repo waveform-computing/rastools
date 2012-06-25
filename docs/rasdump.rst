@@ -17,7 +17,7 @@ Usage::
 Where *data-file* is the file containing the channel data to dump and the
 optional *channel-file* defines the indices and names of the channels to dump.
 If the *channel-file* is omitted all channels are extracted and channels in
-.RAS files will be unnamed.
+RAS files will be unnamed.
 
 The :program:`rasdump` utility has several options:
 
