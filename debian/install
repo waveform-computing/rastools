@@ -1,5 +1,5 @@
 debian/rasviewer.desktop /usr/share/applications/
-etc/bash_completion.d/rastools /etc/bash_completion.d/rastools
+etc/bash_completion.d/rastools /etc/bash_completion.d/
 icons/xpm/rasviewer.xpm /usr/share/pixmaps/
 icons/scalable/rasviewer.svg /usr/share/icons/hicolor/scalable/apps/
 icons/128x128/rasviewer.png /usr/share/icons/hicolor/128x128/apps/
