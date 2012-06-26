@@ -377,7 +377,7 @@ class RasChannels(object):
                     (self.parent.y_size, self.parent.x_size), np.uint32)
             # Read a line at a time and extract the specified channel
             input_struct = struct.Struct(
-                'I' * self.parent.x_size * len(self))
+                str('I' * self.parent.x_size * len(self)))
             if self.parent.progress_start:
                 self.parent.progress_start()
             try:
