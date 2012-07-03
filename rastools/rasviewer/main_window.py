@@ -61,15 +61,25 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().addWidget(self.ui.value_label)
         # Connect up signals to methods
         self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
+        self.ui.quit_action.setIcon(QtGui.QIcon.fromTheme('application-exit'))
         self.ui.about_action.triggered.connect(self.about)
+        self.ui.about_action.setIcon(QtGui.QIcon.fromTheme('help-about'))
         self.ui.about_qt_action.triggered.connect(self.about_qt)
+        self.ui.about_qt_action.setIcon(QtGui.QIcon.fromTheme('help-about'))
+        self.ui.open_action.setIcon(QtGui.QIcon.fromTheme('document-open'))
         self.ui.open_action.triggered.connect(self.open_file)
         self.ui.close_action.triggered.connect(self.close_file)
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
         self.ui.export_document_action.triggered.connect(self.export_document)
+        self.ui.zoom_in_action.triggered.connect(self.zoom_in)
+        self.ui.zoom_in_action.setIcon(QtGui.QIcon.fromTheme('zoom-in'))
+        self.ui.zoom_out_action.triggered.connect(self.zoom_out)
+        self.ui.zoom_out_action.setIcon(QtGui.QIcon.fromTheme('zoom-out'))
         self.ui.reset_zoom_action.triggered.connect(self.reset_zoom)
+        self.ui.reset_zoom_action.setIcon(QtGui.QIcon.fromTheme('zoom-original'))
         self.ui.reset_origin_action.triggered.connect(self.reset_origin)
+        self.ui.reset_origin_action.setIcon(QtGui.QIcon.fromTheme('go-home'))
         self.ui.status_bar_action.triggered.connect(self.toggle_status)
         self.ui.view_menu.aboutToShow.connect(self.update_status)
 
@@ -100,6 +110,14 @@ class MainWindow(QtGui.QMainWindow):
         "Handler for the File/Close action"
         self.ui.mdi_area.currentSubWindow().close()
 
+    def zoom_in(self):
+        "Handler for the View/Zoom In action"
+        pass
+
+    def zoom_out(self):
+        "Handler for the View/Zoom Out action"
+        pass
+
     def reset_zoom(self):
         "Handler for the View/Reset Zoom action"
         self.ui.mdi_area.currentSubWindow().widget().reset_zoom()
@@ -129,7 +147,8 @@ class MainWindow(QtGui.QMainWindow):
 <b>{application}</b>
 <p>Version {version}</p>
 <p>{application} is a visual previewer for the content of .RAS and
-.DAT files from the SSRL facility</p>
+.DAT files from the SSRL facility. Project homepage is at
+<a href="http://www.waveform.org.uk/trac/rastools/">http://www.waveform.org.uk/trac/rastools/</a></p>
 <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""")).format(
                 application=QtGui.QApplication.instance().applicationName(),
                 version=QtGui.QApplication.instance().applicationVersion(),

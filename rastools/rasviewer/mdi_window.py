@@ -182,7 +182,6 @@ class MDIWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.crop_reset_button.clicked.connect(self.reset_zoom)
         self.ui.axes_check.toggled.connect(self.invalidate_image)
         self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
         self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
@@ -700,10 +699,10 @@ Value range: {range_from} to {range_to}""")
         "Returns a tuple of the X-axis limits after scaling and offset"
         if self.data_cropped is not None:
             return Range(
-                self.ui.x_scale_spinbox.value() * (
+                (self.ui.x_scale_spinbox.value() or 1.0) * (
                     self.ui.x_offset_spinbox.value() +
                     self.ui.crop_left_spinbox.value()),
-                self.ui.x_scale_spinbox.value() * (
+                (self.ui.x_scale_spinbox.value() or 1.0) * (
                     self.ui.x_offset_spinbox.value() +
                     self._file.x_size - self.ui.crop_right_spinbox.value())
             )
@@ -713,10 +712,10 @@ Value range: {range_from} to {range_to}""")
         "Returns a tuple of the Y-axis limits after scaling and offset"
         if self.data_cropped is not None:
             return Range(
-                self.ui.y_scale_spinbox.value() * (
+                (self.ui.y_scale_spinbox.value() or 1.0) * (
                     self.ui.y_offset_spinbox.value() +
                     self._file.y_size - self.ui.crop_bottom_spinbox.value()),
-                self.ui.y_scale_spinbox.value() * (
+                (self.ui.y_scale_spinbox.value() or 1.0) * (
                     self.ui.y_offset_spinbox.value() +
                     self.ui.crop_top_spinbox.value())
             )

@@ -315,13 +315,6 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="crop_reset_button">
-            <property name="text">
-             <string>Reset</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
         <item row="8" column="0" colspan="2">
@@ -649,7 +642,7 @@
              <number>3</number>
             </property>
             <property name="minimum">
-             <double>0.001000000000000</double>
+             <double>-1000.000000000000000</double>
             </property>
             <property name="maximum">
              <double>1000.000000000000000</double>
@@ -684,7 +677,7 @@
              <number>3</number>
             </property>
             <property name="minimum">
-             <double>0.001000000000000</double>
+             <double>-1000.000000000000000</double>
             </property>
             <property name="maximum">
              <double>1000.000000000000000</double>
@@ -866,7 +859,6 @@
   <tabstop>value_to_spinbox</tabstop>
   <tabstop>crop_top_spinbox</tabstop>
   <tabstop>crop_left_spinbox</tabstop>
-  <tabstop>crop_reset_button</tabstop>
   <tabstop>crop_right_spinbox</tabstop>
   <tabstop>crop_bottom_spinbox</tabstop>
   <tabstop>title_edit</tabstop>

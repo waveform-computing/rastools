@@ -370,25 +370,19 @@ class RasChannels(object):
         # operation).
         if not self._done_data:
             self._done_data = True
-            # Initialize a list of zero-filled arrays
-            logging.debug('Allocating channel arrays')
-            for channel in self:
-                channel._data = np.zeros(
-                    (self.parent.y_size, self.parent.x_size), np.uint32)
-            # Read a line at a time and extract the specified channel
-            input_struct = struct.Struct(
-                str('I' * self.parent.x_size * len(self)))
+            # Read all data in one go and chop it into the required channels
             if self.parent.progress_start:
                 self.parent.progress_start()
             try:
-                for y in xrange(self.parent.y_size):
-                    data = input_struct.unpack(
-                        self.parent._file.read(input_struct.size))
-                    for channel in self:
-                        channel._data[y] = data[channel.index::len(self)]
-                    if self.parent.progress_update:
-                        self.parent.progress_update(
-                            round(y * 100.0 / self.parent.y_size))
+                data = np.fromfile(
+                    self.parent._file, dtype=np.uint32,
+                    count=self.parent.x_size * self.parent.y_size * len(self))
+                for channel in self:
+                    channel._data = data[channel.index::len(self)].reshape(
+                        (self.parent.y_size, self.parent.x_size))
+                if self.parent.progress_update:
+                    self.parent.progress_update(
+                        round(channel.index * 100.0 / len(self)))
             finally:
                 if self.parent.progress_finish:
                     self.parent.progress_finish()
