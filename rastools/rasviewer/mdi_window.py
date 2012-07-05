@@ -219,7 +219,7 @@ class MDIWindow(QtGui.QWidget):
     def progress_start(self):
         "Handler for loading progress start event"
         self._progress = 0
-        self._progress_dialog = ProgressDialog(None)
+        self._progress_dialog = ProgressDialog(self.window())
         self._progress_dialog.show()
         self._progress_dialog.task = self.tr('Opening file')
         QtGui.QApplication.instance().setOverrideCursor(QtCore.Qt.WaitCursor)
