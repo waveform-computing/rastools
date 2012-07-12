@@ -146,18 +146,20 @@ class TerminalApplication(object):
             logfile='',
             loglevel=logging.WARNING
         )
-        self.parser.add_option('-q', '--quiet', dest='loglevel',
-            action='store_const', const=logging.ERROR,
-            help="""produce less console output""")
-        self.parser.add_option('-v', '--verbose', dest='loglevel',
-            action='store_const', const=logging.INFO,
-            help="""produce more console output""")
-        opt = self.parser.add_option('-l', '--log-file', dest='logfile',
+        self.parser.add_option(
+            '-q', '--quiet', dest='loglevel', action='store_const',
+            const=logging.ERROR, help="""produce less console output""")
+        self.parser.add_option(
+            '-v', '--verbose', dest='loglevel', action='store_const',
+            const=logging.INFO, help="""produce more console output""")
+        opt = self.parser.add_option(
+            '-l', '--log-file', dest='logfile',
             help="""log messages to the specified file""")
         if optcomplete:
             opt.completer = optcomplete.RegexCompleter(['.*\.log', '.*\.txt'])
-        self.parser.add_option('-P', '--pdb', dest='debug',
-            action='store_true', help="""run under PDB (debug mode)""")
+        self.parser.add_option(
+            '-P', '--pdb', dest='debug', action='store_true',
+            help="""run under PDB (debug mode)""")
         self.arg_completer = None
 
     def __call__(self, args=None):
@@ -173,8 +175,7 @@ class TerminalApplication(object):
         if options.logfile:
             logfile = logging.FileHandler(options.logfile)
             logfile.setFormatter(
-                logging.Formatter('%(asctime)s, %(levelname)s, %(message)s')
-            )
+                logging.Formatter('%(asctime)s, %(levelname)s, %(message)s'))
             logfile.setLevel(logging.DEBUG)
             logging.getLogger().addHandler(logfile)
         if options.debug:

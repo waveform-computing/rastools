@@ -164,6 +164,13 @@ class OpenDialog(QtGui.QDialog):
             from rastools.data_parsers import DATA_PARSERS
         finally:
             QtGui.QApplication.instance().restoreOverrideCursor()
+        filter_map = dict(
+            ('{name} ({exts})'.format(
+                    name=self.tr(label),
+                    exts=' '.join('*' + ext for ext in exts)),
+                exts[0])
+            for (_, exts, label) in DATA_PARSERS
+        )
         filters = ';;'.join(
             [
                 str(self.tr('All data files (%s)')) % ' '.join(
@@ -171,13 +178,7 @@ class OpenDialog(QtGui.QDialog):
                     for (_, exts, _) in DATA_PARSERS
                     for ext in exts
                 )
-            ] + [
-                '%s (%s)' % (self.tr(label), ' '.join(
-                    '*' + ext
-                    for ext in exts
-                ))
-                for (_, exts, label) in DATA_PARSERS
-            ]
+            ] + sorted(filter_map.iterkeys())
         )
         filename = QtGui.QFileDialog.getOpenFileName(
             self, self.tr('Select data file'), os.getcwd(), filters)

@@ -37,8 +37,8 @@ except ImportError:
 else:
     DATA_WRITERS.extend([
         # class     extensions        description               multi-class
-        (CsvWriter, ('.csv', '.CSV'), 'Comma Separated Values', None),
-        (TsvWriter, ('.tsv', '.TSV'), 'Tab Separated Values',   None),
+        (CsvWriter, ('.csv', '.CSV'), 'CSV - Comma Separated Values', None),
+        (TsvWriter, ('.tsv', '.TSV'), 'TSV - Tab Separated Values',   None),
     ])
 
 logging.info('Loading RAS writer')
@@ -50,8 +50,8 @@ except ImportError:
     logging.warning('Failed to load RAS support')
 else:
     DATA_WRITERS.extend([
-        (RasWriter, ('.ras', '.RAS'), 'QSCAN raster file', RasMultiWriter),
-        (RasAsciiWriter, ('.ras_a', '.RAS_A'), 'QSCAN ASCII output',
+        (RasWriter, ('.ras', '.RAS'), 'RAS - QSCAN binary raster format', RasMultiWriter),
+        (RasAsciiWriter, ('.ras_a', '.RAS_A'), 'RAS_A - QSCAN ASCII format',
             RasAsciiMultiWriter),
     ])
 
@@ -62,7 +62,7 @@ except ImportError:
     logging.warning('Failed to load DAT support')
 else:
     DATA_WRITERS.extend([
-        (DatWriter, ('.dat', '.DAT'), "Sam's dat file", DatMultiWriter),
+        (DatWriter, ('.dat', '.DAT'), "DAT - Sam's data format", DatMultiWriter),
     ])
 
 logging.info('Loading Excel writer')
@@ -72,5 +72,5 @@ except ImportError:
     logging.warning('Failed to load Excel support')
 else:
     DATA_WRITERS.extend([
-        (XlsWriter, ('.xls', '.XLS'), 'Excel workbook', XlsMulti),
+        (XlsWriter, ('.xls', '.XLS'), 'XLS - Excel workbook', XlsMulti),
     ])

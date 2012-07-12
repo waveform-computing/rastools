@@ -233,8 +233,8 @@ class MainWindow(QtGui.QMainWindow):
         # See export_image above for commentary on this map
         filter_map = dict(
             ('{name} ({exts})'.format(
-                name=self.tr(label),
-                exts=' '.join('*' + ext for ext in exts)),
+                    name=self.tr(label),
+                    exts=' '.join('*' + ext for ext in exts)),
                 (cls, exts[0]))
             for (cls, exts, label, _) in DATA_WRITERS
         )

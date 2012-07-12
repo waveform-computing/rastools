@@ -34,7 +34,7 @@ except ImportError:
     logging.warning('Failed to load RAS parser')
 else:
     DATA_PARSERS.extend([
-        (RasFileReader, ('.ras', '.RAS'), 'QSCAN raster file'),
+        (RasFileReader, ('.ras', '.RAS'), 'RAS - QSCAN binary raster format'),
     ])
 
 logging.info('Loading DAT parser')
@@ -44,6 +44,6 @@ except ImportError:
     logging.warning('Failed to load DAT parser')
 else:
     DATA_PARSERS.extend([
-        (DatFileReader, ('.dat', '.DAT'), "Sam's DAT file"),
+        (DatFileReader, ('.dat', '.DAT'), "DAT - Sam's data format"),
     ])
 
