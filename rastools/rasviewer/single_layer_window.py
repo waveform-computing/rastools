@@ -27,7 +27,6 @@ import datetime as dt
 
 import numpy as np
 import matplotlib
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
@@ -35,59 +34,25 @@ from PyQt4 import QtCore, QtGui, uic
 
 from rastools.collections import Coord, Range, BoundingBox
 from rastools.rasviewer.progress_dialog import ProgressDialog
+from rastools.rasviewer.figure_canvas import FigureCanvas
 
 
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
-COMPOSITION_SUPPORTED = True
 
 
-class FigureCanvas(FigureCanvasQTAgg):
-    "FigureCanvas derivative with better rubber-banding"
-
-    composition_supported = True
-
-    def paintEvent(self, evt):
-        # This version of paintEvent is a bit of a hack to work-around the
-        # parent class' crappy selection of drawing mode. The parent class
-        # always paints a white line, but on light images this is almost
-        # impossible to see. Here we force the parent not to draw the rect,
-        # then switch to difference-composition and draw it ourselves (if
-        # required).
-        #
-        # There doesn't appear to be a (reliable) way to tell in advance if
-        # difference compsition is supported so to avoid spamming the console
-        # with thousands of errors we keep a track of whether the composition
-        # mode is supported with a global variable
-        if self.drawRect:
-            self.drawRect = False
-            super(FigureCanvas, self).paintEvent(evt)
-            painter = QtGui.QPainter(self)
-            painter.setPen(QtGui.QPen(QtCore.Qt.white, 1, QtCore.Qt.SolidLine))
-            if self.composition_supported:
-                painter.setCompositionMode(
-                    QtGui.QPainter.CompositionMode_Difference)
-                self.composition_supported = (painter.compositionMode() ==
-                    QtGui.QPainter.CompositionMode_Difference)
-            painter.drawRect(
-                self.rect[0], self.rect[1], self.rect[2], self.rect[3])
-            painter.end()
-        else:
-            super(FigureCanvas, self).paintEvent(evt)
-
-
-class MDIWindow(QtGui.QWidget):
+class SingleLayerWindow(QtGui.QWidget):
     "The rasviewer document window"
 
     def __init__(self, data_file, channel_file=None):
-        super(MDIWindow, self).__init__(None)
+        super(SingleLayerWindow, self).__init__(None)
         self.ui = None
         self.ui = uic.loadUi(
             os.path.abspath(
                 os.path.join(
                     os.path.dirname(__file__),
-                    'mdi_window.ui'
+                    'single_layer_window.ui'
                 )), self)
         self._file = None
         self._data = None

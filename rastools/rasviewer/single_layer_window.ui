@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MDIWindow</class>
- <widget class="QWidget" name="MDIWindow">
+ <class>SingleLayerWindow</class>
+ <widget class="QWidget" name="SingleLayerWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -121,7 +121,7 @@
          </widget>
         </item>
         <item row="4" column="0">
-         <widget class="QLabel" name="percentile_from_label">
+         <widget class="QLabel" name="percentile_label">
           <property name="text">
            <string>Percentile</string>
           </property>
@@ -196,7 +196,7 @@
          </layout>
         </item>
         <item row="5" column="0">
-         <widget class="QLabel" name="range_from_label">
+         <widget class="QLabel" name="range_label">
           <property name="text">
            <string>Value</string>
           </property>
@@ -332,6 +332,9 @@
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
           </property>
+          <property name="buddy">
+           <cstring>title_edit</cstring>
+          </property>
          </widget>
         </item>
         <item row="9" column="1">
@@ -425,6 +428,9 @@
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
           </property>
+          <property name="buddy">
+           <cstring>axes_check</cstring>
+          </property>
          </widget>
         </item>
         <item row="12" column="1">
@@ -442,6 +448,9 @@
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
           </property>
+          <property name="buddy">
+           <cstring>x_label_edit</cstring>
+          </property>
          </widget>
         </item>
         <item row="13" column="1">
@@ -454,6 +463,9 @@
           </property>
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>y_label_edit</cstring>
           </property>
          </widget>
         </item>
@@ -528,6 +540,9 @@
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
           </property>
+          <property name="buddy">
+           <cstring>x_offset_spinbox</cstring>
+          </property>
          </widget>
         </item>
         <item row="16" column="1">
@@ -545,6 +560,9 @@
             </property>
             <property name="textFormat">
              <enum>Qt::PlainText</enum>
+            </property>
+            <property name="buddy">
+             <cstring>x_offset_spinbox</cstring>
             </property>
            </widget>
           </item>
@@ -574,6 +592,9 @@
             </property>
             <property name="textFormat">
              <enum>Qt::PlainText</enum>
+            </property>
+            <property name="buddy">
+             <cstring>y_offset_spinbox</cstring>
             </property>
            </widget>
           </item>
@@ -616,6 +637,9 @@
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
           </property>
+          <property name="buddy">
+           <cstring>x_scale_spinbox</cstring>
+          </property>
          </widget>
         </item>
         <item row="17" column="1">
@@ -633,6 +657,9 @@
             </property>
             <property name="textFormat">
              <enum>Qt::PlainText</enum>
+            </property>
+            <property name="buddy">
+             <cstring>x_scale_spinbox</cstring>
             </property>
            </widget>
           </item>
@@ -668,6 +695,9 @@
             </property>
             <property name="textFormat">
              <enum>Qt::PlainText</enum>
+            </property>
+            <property name="buddy">
+             <cstring>y_scale_spinbox</cstring>
             </property>
            </widget>
           </item>
@@ -722,6 +752,9 @@
           </property>
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>grid_check</cstring>
           </property>
          </widget>
         </item>
@@ -789,6 +822,9 @@
               <property name="textFormat">
                <enum>Qt::PlainText</enum>
               </property>
+              <property name="buddy">
+               <cstring>histogram_bins_spinbox</cstring>
+              </property>
              </widget>
             </item>
            </layout>
@@ -816,8 +852,8 @@
        <zorder>interpolation_label</zorder>
        <zorder>interpolation_combo</zorder>
        <zorder>percentile_line</zorder>
-       <zorder>percentile_from_label</zorder>
-       <zorder>range_from_label</zorder>
+       <zorder>percentile_label</zorder>
+       <zorder>range_label</zorder>
        <zorder>crop_line</zorder>
        <zorder>crop_label</zorder>
        <zorder>title_line</zorder>

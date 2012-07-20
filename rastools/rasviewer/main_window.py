@@ -26,7 +26,8 @@ import os
 from PyQt4 import QtCore, QtGui, uic
 
 from rastools.rasviewer.open_dialog import OpenDialog
-from rastools.rasviewer.mdi_window import MDIWindow
+from rastools.rasviewer.single_layer_window import SingleLayerWindow
+from rastools.rasviewer.multi_layer_window import MultiLayerWindow
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -99,8 +100,12 @@ class MainWindow(QtGui.QMainWindow):
         if dialog.exec_():
             window = None
             try:
-                window = self.ui.mdi_area.addSubWindow(
-                    MDIWindow(dialog.data_file, dialog.channel_file))
+                if dialog.multi_layer:
+                    window = self.ui.mdi_area.addSubWindow(
+                        MultiLayerWindow(dialog.data_file, dialog.channel_file))
+                else:
+                    window = self.ui.mdi_area.addSubWindow(
+                        SingleLayerWindow(dialog.data_file, dialog.channel_file))
                 window.show()
             except KeyboardInterrupt:
                 if window is not None:
