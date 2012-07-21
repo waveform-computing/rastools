@@ -20,6 +20,21 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <widget class="QScrollArea" name="scroll_area">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>450</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
       <property name="widgetResizable">
        <bool>true</bool>
       </property>
@@ -1131,13 +1146,6 @@
             </item>
            </layout>
           </item>
-          <item>
-           <widget class="QCheckBox" name="colorbar_check">
-            <property name="text">
-             <string>Color-bar</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
@@ -1199,7 +1207,6 @@
   <tabstop>grid_style_combo</tabstop>
   <tabstop>histogram_check</tabstop>
   <tabstop>histogram_bins_spinbox</tabstop>
-  <tabstop>colorbar_check</tabstop>
  </tabstops>
  <resources/>
  <connections/>

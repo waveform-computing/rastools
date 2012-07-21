@@ -116,6 +116,7 @@ class MultiLayerWindow(QtGui.QWidget):
         self._data_sorted = None
         self._data_cropped = None
         self._data_normalized = None
+        self._data_flat = None
         self._progress = 0
         self._progress_update = None
         self._progress_dialog = None
@@ -159,7 +160,6 @@ class MultiLayerWindow(QtGui.QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.image_axes = self.figure.add_axes((0.1, 0.1, 0.8, 0.8))
         self.histogram_axes = None
-        self.colorbar_axes = None
         self.title_axes = None
         self.ui.splitter.addWidget(self.canvas)
         # Fill out the combos
@@ -209,7 +209,6 @@ class MultiLayerWindow(QtGui.QWidget):
         self.ui.grid_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_check.toggled.connect(self.invalidate_image)
         self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
-        self.ui.colorbar_check.toggled.connect(self.invalidate_image)
         self.ui.title_edit.textChanged.connect(self.invalidate_image)
         self.ui.default_title_button.clicked.connect(self.default_title_clicked)
         self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
@@ -262,22 +261,34 @@ class MultiLayerWindow(QtGui.QWidget):
 
     def canvas_motion(self, event):
         "Handler for mouse movement over graph canvas"
+        labels = (
+            ('Red', self.window().ui.red_label),
+            ('Green', self.window().ui.green_label),
+            ('Blue', self.window().ui.blue_label))
         if (self.image_axes and
                 (event.inaxes == self.image_axes) and
                 (event.xdata is not None)):
             self.window().ui.x_label.setText('X: {0:.2f}'.format(event.xdata))
             self.window().ui.y_label.setText('Y: {0:.2f}'.format(event.ydata))
             try:
-                self.window().ui.value_label.setText(
-                    'Value: {0:.2f}'.format(
-                        float(self.data[event.ydata, event.xdata])))
+                for index, (name, label) in enumerate(labels):
+                    label.setText(
+                        '{name}: {value:.2f} ({norm:.2f})'.format(
+                            name=name,
+                            value=self.data[event.ydata, event.xdata, index],
+                            norm=self.data_normalized[
+                                event.ydata - self.ui.crop_top_spinbox.value(),
+                                event.xdata - self.ui.crop_left_spinbox.value(),
+                                index]))
             except IndexError:
-                self.window().ui.value_label.setText('')
+                for _, label in labels:
+                    label.setText('')
             self.canvas.setCursor(QtCore.Qt.CrossCursor)
         else:
             self.window().ui.x_label.setText('')
             self.window().ui.y_label.setText('')
-            self.window().ui.value_label.setText('')
+            for _, label in labels:
+                label.setText('')
             self.canvas.setCursor(QtCore.Qt.ArrowCursor)
 
     def canvas_press(self, event):
@@ -708,22 +719,17 @@ Value range: {range_from} to {range_to}""")
     @property
     def data(self):
         "Returns the data of the combined channels"
-        if self.ui:
-            if (self._data is None) and (
-                    self.red_channel is not None or
-                    self.green_channel is not None or
-                    self.blue_channel is not None
-                    ):
-                self._data = np.zeros(
-                    (self._file.y_size, self._file.x_size, 3), np.float)
-                for index, channel in enumerate((
-                        self.red_channel,
-                        self.green_channel,
-                        self.blue_channel,
-                        )):
-                    if channel:
-                        self._data[..., index] = channel.data
-            return self._data
+        if self.ui and (self._data is None):
+            self._data = np.zeros(
+                (self._file.y_size, self._file.x_size, 3), np.float)
+            for index, channel in enumerate((
+                    self.red_channel,
+                    self.green_channel,
+                    self.blue_channel,
+                    )):
+                if channel:
+                    self._data[..., index] = channel.data
+        return self._data
 
     @property
     def data_cropped(self):
@@ -788,6 +794,16 @@ Value range: {range_from} to {range_to}""")
         return self._data_normalized
 
     @property
+    def data_flat(self):
+        "Returns the normalized data flattened and sorted"
+        if (self._data_flat is None) and (self.data_normalized is not None):
+            self._data_flat = np.empty(
+                (self.data_normalized.shape[0] * self.data_normalized.shape[1], 3))
+            for index in range(3):
+                self._data_flat[..., index] = self.data_normalized[..., index].flatten()
+        return self._data_flat
+
+    @property
     def x_limits(self):
         "Returns a tuple of the X-axis limits after scaling and offset"
         if self.data_cropped is not None:
@@ -831,6 +847,11 @@ Value range: {range_from} to {range_to}""")
     def invalidate_data_normalized(self):
         "Invalidate our normalized version of the cropped data"
         self._data_normalized = None
+        self.invalidate_data_flat()
+
+    def invalidate_data_flat(self):
+        "Invalidate our flattened normalized data"
+        self._data_flat = None
         self.invalidate_image()
 
     def invalidate_image(self):
@@ -875,7 +896,6 @@ Value range: {range_from} to {range_to}""")
             # stuff...
             margin = (0.0, 0.75)[
                 self.ui.axes_check.isChecked()
-                or self.ui.colorbar_check.isChecked()
                 or self.ui.histogram_check.isChecked()
                 or bool(title)
             ]
@@ -885,22 +905,15 @@ Value range: {range_from} to {range_to}""")
                 self.data_cropped.shape[0] / FIGURE_DPI,
                 self.data_cropped.shape[1] / FIGURE_DPI
             )
-            colorbar_box = BoundingBox(
-                margin,
-                [0.0, margin][self.ui.colorbar_check.isChecked()],
-                image_box.width,
-                [0.0, 0.3][self.ui.colorbar_check.isChecked()]
-            )
             histogram_box = BoundingBox(
                 margin,
-                [0.0, margin + colorbar_box.top][
-                    self.ui.histogram_check.isChecked()],
+                [0.0, margin][self.ui.histogram_check.isChecked()],
                 image_box.width,
                 [0.0, image_box.height * 0.8][
                     self.ui.histogram_check.isChecked()]
             )
             image_box.bottom = (
-                margin + max(histogram_box.top, colorbar_box.top)
+                margin + histogram_box.top
             )
             title_box = BoundingBox(
                 0.0,
@@ -918,7 +931,6 @@ Value range: {range_from} to {range_to}""")
             # from the metrics above
             image = self.draw_image(image_box.relative_to(figure_box))
             self.draw_histogram(histogram_box.relative_to(figure_box))
-            self.draw_colorbar(image, colorbar_box.relative_to(figure_box))
             self.draw_title(title, title_box.relative_to(figure_box))
             self.canvas.draw()
 
@@ -962,33 +974,13 @@ Value range: {range_from} to {range_to}""")
                 self.histogram_axes.clear()
                 self.histogram_axes.set_position(box)
             self.histogram_axes.grid(True)
-            self.histogram_axes.hist(self.data_cropped.flat,
+            self.histogram_axes.hist(self.data_flat,
                 bins=self.ui.histogram_bins_spinbox.value(),
-                range=self.data_range)
+                histtype='barstacked',
+                color=('red', 'green', 'blue'))
         elif self.histogram_axes:
             self.figure.delaxes(self.histogram_axes)
             self.histogram_axes = None
-
-    def draw_colorbar(self, image, box):
-        "Draws a range color-bar within the figure"
-        if self.ui.colorbar_check.isChecked():
-            if self.colorbar_axes is None:
-                self.colorbar_axes = self.figure.add_axes(box)
-            else:
-                self.colorbar_axes.clear()
-                self.colorbar_axes.set_position(box)
-            self.figure.colorbar(
-                image, cax=self.colorbar_axes,
-                orientation='horizontal',
-                extend=
-                'both' if self.data_range.low > self.data_domain.low and
-                          self.data_range.high < self.data_domain.high else
-                'max' if self.data_range.high < self.data_domain.high else
-                'min' if self.data_range.low > self.data_domain.low else
-                'neither')
-        elif self.colorbar_axes:
-            self.figure.delaxes(self.colorbar_axes)
-            self.colorbar_axes = None
 
     def draw_title(self, title, box):
         "Draws a title within the specified figure"

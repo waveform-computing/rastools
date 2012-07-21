@@ -59,7 +59,12 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.y_label = QtGui.QLabel('')
         self.statusBar().addWidget(self.ui.y_label)
         self.ui.value_label = QtGui.QLabel('')
+        self.ui.red_label = self.ui.value_label
         self.statusBar().addWidget(self.ui.value_label)
+        self.ui.green_label = QtGui.QLabel('')
+        self.statusBar().addWidget(self.ui.green_label)
+        self.ui.blue_label = QtGui.QLabel('')
+        self.statusBar().addWidget(self.ui.blue_label)
         # Connect up signals to methods
         self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
         self.ui.quit_action.setIcon(QtGui.QIcon.fromTheme('application-exit'))
