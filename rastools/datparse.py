@@ -52,7 +52,7 @@ class SortedList(list):
 
 DatParseState = namedtuple('DatParseState', ('re', 'next'))
 
-class DatFileReader(object):
+class DatParser(object):
     """Parser for Sam's dat files"""
 
     # We haven't got a formal definition of Sam's dat format, but it's a
@@ -92,7 +92,7 @@ class DatFileReader(object):
     def __init__(
             self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
-        super(DatFileReader, self).__init__()
+        super(DatParser, self).__init__()
         self.progress_start, self.progress_update, self.progress_finish = \
             kwargs.get('progress', (None, None, None))
         if channels_file:

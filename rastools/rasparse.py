@@ -38,7 +38,7 @@ class ChannelFileError(Error):
     """Base class for errors encountered in channel file parsing"""
 
 
-class RasFileReader(object):
+class RasParser(object):
     """Parser for QSCAN RAS files"""
 
     # QSCAN Data File format - April '08
@@ -182,7 +182,7 @@ class RasFileReader(object):
     def __init__(
             self, data_file, channels_file=None, **kwargs):
         """Constructor accepts a filename or file-like object"""
-        super(RasFileReader, self).__init__()
+        super(RasParser, self).__init__()
         (   self.progress_start,
             self.progress_update,
             self.progress_finish,

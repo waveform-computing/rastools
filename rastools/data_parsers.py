@@ -29,21 +29,21 @@ DATA_PARSERS = []
 
 logging.info('Loading RAS parser')
 try:
-    from rastools.rasparse import RasFileReader
+    from rastools.rasparse import RasParser
 except ImportError:
     logging.warning('Failed to load RAS parser')
 else:
     DATA_PARSERS.extend([
-        (RasFileReader, ('.ras', '.RAS'), 'RAS - QSCAN binary raster format'),
+        (RasParser, ('.ras', '.RAS'), 'RAS - QSCAN binary raster format'),
     ])
 
 logging.info('Loading DAT parser')
 try:
-    from rastools.datparse import DatFileReader
+    from rastools.datparse import DatParser
 except ImportError:
     logging.warning('Failed to load DAT parser')
 else:
     DATA_PARSERS.extend([
-        (DatFileReader, ('.dat', '.DAT'), "DAT - Sam's data format"),
+        (DatParser, ('.dat', '.DAT'), "DAT - Sam's data format"),
     ])
 

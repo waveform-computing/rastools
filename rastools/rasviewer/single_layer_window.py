@@ -452,18 +452,18 @@ class SingleLayerWindow(QtGui.QWidget):
         "Handler for crop_*_spinbox change event"
         self.invalidate_data_cropped()
         if self.channel is not None:
-            self.ui.value_from_label.setText(str(self.data_sorted[0]))
-            self.ui.value_to_label.setText(str(self.data_sorted[-1]))
+            self.ui.value_from_label.setText(str(self.data_domain.low))
+            self.ui.value_to_label.setText(str(self.data_domain.high))
             self.ui.value_from_spinbox.setRange(
-                self.data_sorted[0],
-                self.data_sorted[-1])
+                self.data_domain.low,
+                self.data_domain.high)
             self.ui.value_from_spinbox.setValue(
                 self.data_sorted[
                     (len(self.data_sorted) - 1) *
                     self.ui.percentile_from_spinbox.value() / 100.0])
             self.ui.value_to_spinbox.setRange(
-                self.data_sorted[0],
-                self.data_sorted[-1])
+                self.data_domain.low,
+                self.data_domain.high)
             self.ui.value_to_spinbox.setValue(
                 self.data_sorted[
                     (len(self.data_sorted) - 1) *

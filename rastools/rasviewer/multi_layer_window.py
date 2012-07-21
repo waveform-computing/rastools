@@ -42,6 +42,21 @@ DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
 
 
+class ControlSet(object):
+    def __init__(self, **kwargs):
+        self.channel_combo = kwargs['channel_combo']
+        self.value_from_label = kwargs['value_from_label']
+        self.value_to_label = kwargs['value_to_label']
+        self.value_from_spinbox = kwargs['value_from_spinbox']
+        self.value_to_spinbox = kwargs['value_to_spinbox']
+        self.value_from_slider = kwargs['value_from_slider']
+        self.value_to_slider = kwargs['value_to_slider']
+        self.percentile_from_spinbox = kwargs['percentile_from_spinbox']
+        self.percentile_to_spinbox = kwargs['percentile_to_spinbox']
+        self.percentile_from_slider = kwargs['percentile_from_slider']
+        self.percentile_to_slider = kwargs['percentile_to_slider']
+
+
 class MultiLayerWindow(QtGui.QWidget):
     "The rasviewer document window"
 
@@ -54,10 +69,48 @@ class MultiLayerWindow(QtGui.QWidget):
                     os.path.dirname(__file__),
                     'multi_layer_window.ui'
                 )), self)
+        self._control_sets = [
+            ControlSet(
+                channel_combo=self.ui.red_channel_combo,
+                value_from_label=self.ui.red_value_from_label,
+                value_to_label=self.ui.red_value_to_label,
+                value_from_spinbox=self.ui.red_value_from_spinbox,
+                value_to_spinbox=self.ui.red_value_to_spinbox,
+                value_from_slider=self.ui.red_value_from_slider,
+                value_to_slider=self.ui.red_value_to_slider,
+                percentile_from_spinbox=self.ui.red_percentile_from_spinbox,
+                percentile_to_spinbox=self.ui.red_percentile_to_spinbox,
+                percentile_from_slider=self.ui.red_percentile_from_slider,
+                percentile_to_slider=self.ui.red_percentile_to_slider),
+            ControlSet(
+                channel_combo=self.ui.green_channel_combo,
+                value_from_label=self.ui.green_value_from_label,
+                value_to_label=self.ui.green_value_to_label,
+                value_from_spinbox=self.ui.green_value_from_spinbox,
+                value_to_spinbox=self.ui.green_value_to_spinbox,
+                value_from_slider=self.ui.green_value_from_slider,
+                value_to_slider=self.ui.green_value_to_slider,
+                percentile_from_spinbox=self.ui.green_percentile_from_spinbox,
+                percentile_to_spinbox=self.ui.green_percentile_to_spinbox,
+                percentile_from_slider=self.ui.green_percentile_from_slider,
+                percentile_to_slider=self.ui.green_percentile_to_slider),
+            ControlSet(
+                channel_combo=self.ui.blue_channel_combo,
+                value_from_label=self.ui.blue_value_from_label,
+                value_to_label=self.ui.blue_value_to_label,
+                value_from_spinbox=self.ui.blue_value_from_spinbox,
+                value_to_spinbox=self.ui.blue_value_to_spinbox,
+                value_from_slider=self.ui.blue_value_from_slider,
+                value_to_slider=self.ui.blue_value_to_slider,
+                percentile_from_spinbox=self.ui.blue_percentile_from_spinbox,
+                percentile_to_spinbox=self.ui.blue_percentile_to_spinbox,
+                percentile_from_slider=self.ui.blue_percentile_from_slider,
+                percentile_to_slider=self.ui.blue_percentile_to_slider)]
         self._file = None
         self._data = None
         self._data_sorted = None
         self._data_cropped = None
+        self._data_normalized = None
         self._progress = 0
         self._progress_update = None
         self._progress_dialog = None
@@ -105,21 +158,17 @@ class MultiLayerWindow(QtGui.QWidget):
         self.title_axes = None
         self.ui.splitter.addWidget(self.canvas)
         # Fill out the combos
-        for combo in (
-                self.ui.red_channel_combo,
-                self.ui.green_channel_combo,
-                self.ui.blue_channel_combo,
-                ):
-            combo.addItem('None', None)
+        for cset in self._control_sets:
+            cset.channel_combo.addItem('None', None)
             for channel in self._file.channels:
                 if channel.enabled:
                     if channel.name:
-                        combo.addItem(
+                        cset.channel_combo.addItem(
                             'Channel {index} - {name}'.format(
                                 index=channel.index, name=channel.name),
                             channel)
                     else:
-                        combo.addItem(
+                        cset.channel_combo.addItem(
                             'Channel {index}'.format(
                                 index=channel.index),
                             channel)
@@ -138,30 +187,29 @@ class MultiLayerWindow(QtGui.QWidget):
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
         self.redraw_timer.timeout.connect(self.redraw_timeout)
-        self.ui.red_channel_combo.currentIndexChanged.connect(self.channel_changed)
-        self.ui.green_channel_combo.currentIndexChanged.connect(self.channel_changed)
-        self.ui.blue_channel_combo.currentIndexChanged.connect(self.channel_changed)
-        #self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
-        #self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
-        #self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
-        #self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
-        #self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
-        #self.ui.axes_check.toggled.connect(self.invalidate_image)
-        #self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
-        #self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
-        #self.ui.x_scale_spinbox.valueChanged.connect(self.x_scale_changed)
-        #self.ui.y_scale_spinbox.valueChanged.connect(self.y_scale_changed)
-        #self.ui.x_offset_spinbox.valueChanged.connect(self.x_offset_changed)
-        #self.ui.y_offset_spinbox.valueChanged.connect(self.y_offset_changed)
-        #self.ui.grid_check.toggled.connect(self.invalidate_image)
-        #self.ui.histogram_check.toggled.connect(self.invalidate_image)
-        #self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
-        #self.ui.colorbar_check.toggled.connect(self.invalidate_image)
-        #self.ui.title_edit.textChanged.connect(self.invalidate_image)
-        #self.ui.default_title_button.clicked.connect(self.default_title_clicked)
-        #self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
-        #self.ui.title_info_button.clicked.connect(self.title_info_clicked)
-        #QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
+        for cset in self._control_sets:
+            cset.channel_combo.currentIndexChanged.connect(self.channel_changed)
+        self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
+        self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
+        self.ui.axes_check.toggled.connect(self.invalidate_image)
+        self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
+        self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
+        self.ui.x_scale_spinbox.valueChanged.connect(self.x_scale_changed)
+        self.ui.y_scale_spinbox.valueChanged.connect(self.y_scale_changed)
+        self.ui.x_offset_spinbox.valueChanged.connect(self.x_offset_changed)
+        self.ui.y_offset_spinbox.valueChanged.connect(self.y_offset_changed)
+        self.ui.grid_check.toggled.connect(self.invalidate_image)
+        self.ui.histogram_check.toggled.connect(self.invalidate_image)
+        self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
+        self.ui.colorbar_check.toggled.connect(self.invalidate_image)
+        self.ui.title_edit.textChanged.connect(self.invalidate_image)
+        self.ui.default_title_button.clicked.connect(self.default_title_clicked)
+        self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
+        self.ui.title_info_button.clicked.connect(self.title_info_clicked)
+        QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         #self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         #self.canvas.customContextMenuRequested.connect(self.canvas_popup)
         #self.press_id = self.canvas.mpl_connect(
@@ -304,77 +352,78 @@ class MultiLayerWindow(QtGui.QWidget):
         # handlers were connected all the time. Hence, when user focus changes
         # we connect the handlers for the controls the user is focused and and
         # disconnect the others.
-        percentile_controls = (
-            self.ui.percentile_from_slider,
-            self.ui.percentile_from_spinbox,
-            self.ui.percentile_to_slider,
-            self.ui.percentile_to_spinbox,
-        )
-        range_controls = (
-            self.ui.value_from_slider,
-            self.ui.value_from_spinbox,
-            self.ui.value_to_slider,
-            self.ui.value_to_spinbox,
-        )
-        if ((old_widget not in percentile_controls) and
-                (new_widget in percentile_controls)):
-            self.percentile_connect()
-        elif ((old_widget in percentile_controls) and
-                (new_widget not in percentile_controls)):
-            self.percentile_disconnect()
-        if ((old_widget not in range_controls) and
-                (new_widget in range_controls)):
-            self.range_connect()
-        elif ((old_widget in range_controls) and
-                (new_widget not in range_controls)):
-            self.range_disconnect()
+        for cset in self._control_sets:
+            percentile_controls = (
+                cset.percentile_from_slider,
+                cset.percentile_from_spinbox,
+                cset.percentile_to_slider,
+                cset.percentile_to_spinbox,
+            )
+            range_controls = (
+                cset.value_from_slider,
+                cset.value_from_spinbox,
+                cset.value_to_slider,
+                cset.value_to_spinbox,
+            )
+            if ((old_widget not in percentile_controls) and
+                    (new_widget in percentile_controls)):
+                self.percentile_connect(cset)
+            elif ((old_widget in percentile_controls) and
+                    (new_widget not in percentile_controls)):
+                self.percentile_disconnect(cset)
+            if ((old_widget not in range_controls) and
+                    (new_widget in range_controls)):
+                self.range_connect(cset)
+            elif ((old_widget in range_controls) and
+                    (new_widget not in range_controls)):
+                self.range_disconnect(cset)
 
-    def percentile_connect(self):
+    def percentile_connect(self, cset):
         "Connects percentile controls to event handlers"
         # See focus_changed above
-        self.ui.percentile_from_slider.valueChanged.connect(
+        cset.percentile_from_slider.valueChanged.connect(
             self.percentile_from_slider_changed)
-        self.ui.percentile_from_spinbox.valueChanged.connect(
+        cset.percentile_from_spinbox.valueChanged.connect(
             self.percentile_from_spinbox_changed)
-        self.ui.percentile_to_slider.valueChanged.connect(
+        cset.percentile_to_slider.valueChanged.connect(
             self.percentile_to_slider_changed)
-        self.ui.percentile_to_spinbox.valueChanged.connect(
+        cset.percentile_to_spinbox.valueChanged.connect(
             self.percentile_to_spinbox_changed)
 
-    def percentile_disconnect(self):
+    def percentile_disconnect(self, cset):
         "Disconnects percentile controls from event handlers"
         # See focus_changed above
-        self.ui.percentile_from_slider.valueChanged.disconnect(
+        cset.percentile_from_slider.valueChanged.disconnect(
             self.percentile_from_slider_changed)
-        self.ui.percentile_from_spinbox.valueChanged.disconnect(
+        cset.percentile_from_spinbox.valueChanged.disconnect(
             self.percentile_from_spinbox_changed)
-        self.ui.percentile_to_slider.valueChanged.disconnect(
+        cset.percentile_to_slider.valueChanged.disconnect(
             self.percentile_to_slider_changed)
-        self.ui.percentile_to_spinbox.valueChanged.disconnect(
+        cset.percentile_to_spinbox.valueChanged.disconnect(
             self.percentile_to_spinbox_changed)
 
-    def range_connect(self):
+    def range_connect(self, cset):
         "Connects range controls to event handlers"
         # See focus_changed above
-        self.ui.value_from_slider.valueChanged.connect(
+        cset.value_from_slider.valueChanged.connect(
             self.value_from_slider_changed)
-        self.ui.value_from_spinbox.valueChanged.connect(
+        cset.value_from_spinbox.valueChanged.connect(
             self.value_from_spinbox_changed)
-        self.ui.value_to_slider.valueChanged.connect(
+        cset.value_to_slider.valueChanged.connect(
             self.value_to_slider_changed)
-        self.ui.value_to_spinbox.valueChanged.connect(
+        cset.value_to_spinbox.valueChanged.connect(
             self.value_to_spinbox_changed)
 
-    def range_disconnect(self):
+    def range_disconnect(self, cset):
         "Disconnects range controls from event handlers"
         # See focus_changed above
-        self.ui.value_from_slider.valueChanged.disconnect(
+        cset.value_from_slider.valueChanged.disconnect(
             self.value_from_slider_changed)
-        self.ui.value_from_spinbox.valueChanged.disconnect(
+        cset.value_from_spinbox.valueChanged.disconnect(
             self.value_from_spinbox_changed)
-        self.ui.value_to_slider.valueChanged.disconnect(
+        cset.value_to_slider.valueChanged.disconnect(
             self.value_to_slider_changed)
-        self.ui.value_to_spinbox.valueChanged.disconnect(
+        cset.value_to_spinbox.valueChanged.disconnect(
             self.value_to_spinbox_changed)
 
     def percentile_from_slider_changed(self, value):
@@ -452,33 +501,30 @@ class MultiLayerWindow(QtGui.QWidget):
         "Handler for crop_*_spinbox change event"
         self.invalidate_data_cropped()
         if self.data is not None:
-            self.ui.value_from_label.setText(str(self.data_sorted[0]))
-            self.ui.value_to_label.setText(str(self.data_sorted[-1]))
-            self.ui.value_from_spinbox.setRange(
-                self.data_sorted[0],
-                self.data_sorted[-1])
-            self.ui.value_from_spinbox.setValue(
-                self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_from_spinbox.value() / 100.0])
-            self.ui.value_to_spinbox.setRange(
-                self.data_sorted[0],
-                self.data_sorted[-1])
-            self.ui.value_to_spinbox.setValue(
-                self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_to_spinbox.value() / 100.0])
-            self.ui.value_from_slider.setRange(
-                int(self.data_sorted[0] * 100.0),
-                int(self.data_sorted[-1] * 100.0))
-            self.ui.value_from_slider.setValue(
-                int(self.ui.value_from_spinbox.value() * 100.0))
-            self.ui.value_to_slider.setRange(
-                int(self.data_sorted[0] * 100.0),
-                int(self.data_sorted[-1] * 100.0))
-            self.ui.value_to_slider.setValue(
-                int(self.ui.value_to_spinbox.value() * 100.0))
-            y_size, x_size = self.data_cropped.shape
+            for index, cset in enumerate(self._control_sets):
+                cset.value_from_label.setText(str(self.data_domain[index].low))
+                cset.value_to_label.setText(str(self.data_domain[index].high))
+                cset.value_from_spinbox.setRange(
+                    self.data_domain[index].low, self.data_domain[index].high)
+                cset.value_from_spinbox.setValue(self.data_sorted[
+                    (self.data_sorted.shape[0] - 1) *
+                    cset.percentile_from_spinbox.value() / 100.0, index])
+                cset.value_to_spinbox.setRange(
+                    self.data_domain[index].low, self.data_domain[index].high)
+                cset.value_to_spinbox.setValue(self.data_sorted[
+                    (self.data_sorted.shape[0] - 1) *
+                    cset.percentile_to_spinbox.value() / 100.0, index])
+                cset.value_from_slider.setRange(
+                    int(self.data_domain[index].low * 100.0),
+                    int(self.data_domain[index].high * 100.0))
+                cset.value_from_slider.setValue(
+                    int(cset.value_from_spinbox.value() * 100.0))
+                cset.value_to_slider.setRange(
+                    int(self.data_domain[index].low * 100.0),
+                    int(self.data_domain[index].high * 100.0))
+                cset.value_to_slider.setValue(
+                    int(cset.value_to_spinbox.value() * 100.0))
+            y_size, x_size, _ = self.data_cropped.shape
             self.ui.x_size_label.setText(str(x_size))
             self.ui.y_size_label.setText(str(y_size))
 
@@ -637,19 +683,27 @@ Value range: {range_from} to {range_to}""")
 
     @property
     def data(self):
-        "Returns the data of the currently selected channel"
+        "Returns the data of the combined channels"
         if self.ui:
             if (self._data is None) and (
                     self.red_channel is not None or
                     self.green_channel is not None or
                     self.blue_channel is not None
                     ):
-                self._data = self.channel.data.copy()
+                self._data = np.zeros(
+                    (self._file.y_size, self._file.x_size, 3), np.float)
+                for index, channel in enumerate((
+                        self.red_channel,
+                        self.green_channel,
+                        self.blue_channel,
+                        )):
+                    if channel:
+                        self._data[..., index] = channel.data
             return self._data
 
     @property
     def data_cropped(self):
-        "Returns the data of the selected channel after cropping"
+        "Returns the data after cropping"
         if (self._data_cropped is None) and (self.data is not None):
             top = self.ui.crop_top_spinbox.value()
             left = self.ui.crop_left_spinbox.value()
@@ -660,24 +714,54 @@ Value range: {range_from} to {range_to}""")
 
     @property
     def data_sorted(self):
-        "Returns a flat, sorted array of the cropped channel data"
+        "Returns a flat, sorted array of the cropped data"
         if (self._data_sorted is None) and (self.data_cropped is not None):
-            self._data_sorted = np.sort(self.data_cropped, None)
+            self._data_sorted = np.empty(
+                (self.data_cropped.shape[0] * self.data_cropped.shape[1], 3))
+            for index in range(3):
+                self._data_sorted[..., index] = np.sort(
+                    self.data_cropped[..., index], axis=None)
         return self._data_sorted
 
     @property
     def data_domain(self):
-        "Returns a tuple of the value limits for the current channel"
+        "Returns a list of tuples of the value limits"
         if self.data_sorted is not None:
-            return Range(self.data_sorted[0], self.data_sorted[-1])
+            return [
+                Range(
+                    self.data_sorted[..., index][0],
+                    self.data_sorted[..., index][-1])
+                for index in range(3)]
 
     @property
     def data_range(self):
-        "Returns a tuple of the percentile values for the current channel"
+        "Returns a list of tuples of the percentile values"
         if self.data_sorted is not None:
-            return Range(
-                self.ui.value_from_spinbox.value(),
-                self.ui.value_to_spinbox.value())
+            return [
+                Range(
+                    self.ui.red_value_from_spinbox.value(),
+                    self.ui.red_value_to_spinbox.value()),
+                Range(
+                    self.ui.green_value_from_spinbox.value(),
+                    self.ui.green_value_to_spinbox.value()),
+                Range(
+                    self.ui.blue_value_from_spinbox.value(),
+                    self.ui.blue_value_to_spinbox.value())]
+
+    @property
+    def data_normalized(self):
+        "Returns the data normalized to a 0-1 range"
+        if (self._data_normalized is None) and (self.data_cropped is not None):
+            array = self.data_cropped.copy()
+            for index in range(3):
+                low, high = self.data_range[index]
+                array[..., index][array[..., index] < low] = low
+                array[..., index][array[..., index] > high] = high
+                array[..., index] = array[..., index] - low
+                if (high - low):
+                    array[..., index] = array[..., index] / (high - low)
+            self._data_normalized = array
+        return self._data_normalized
 
     @property
     def x_limits(self):
@@ -706,18 +790,23 @@ Value range: {range_from} to {range_to}""")
             )
 
     def invalidate_data(self):
-        "Invalidate our copy of the channel data"
+        "Invalidate our copy of the data"
         self._data = None
         self.invalidate_data_cropped()
 
     def invalidate_data_cropped(self):
-        "Invalidate our copy of the cropped channel data"
+        "Invalidate our copy of the cropped data"
         self._data_cropped = None
         self.invalidate_data_sorted()
 
     def invalidate_data_sorted(self):
-        "Invalidate our flat sorted version of the cropped channel data"
+        "Invalidate our flat sorted version of the cropped data"
         self._data_sorted = None
+        self.invalidate_data_normalized()
+
+    def invalidate_data_normalized(self):
+        "Invalidate our normalized version of the cropped data"
+        self._data_normalized = None
         self.invalidate_image()
 
     def invalidate_image(self):
@@ -835,14 +924,9 @@ Value range: {range_from} to {range_to}""")
         # The imshow() call takes care of clamping values with data_range and
         # color-mapping
         return self.image_axes.imshow(
-            self.data_cropped,
-            vmin=self.data_range.low, vmax=self.data_range.high,
+            self.data_normalized,
             origin='upper',
             extent=self.x_limits + self.y_limits,
-            cmap=matplotlib.cm.get_cmap(
-                unicode(self.ui.colormap_combo.currentText()) +
-                ('_r' if self.ui.reverse_check.isChecked() else '')
-            ),
             interpolation=unicode(self.ui.interpolation_combo.currentText()))
 
     def draw_histogram(self, box):
