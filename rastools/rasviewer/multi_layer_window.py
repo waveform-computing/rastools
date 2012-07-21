@@ -43,7 +43,8 @@ FIGURE_DPI = 72.0
 
 
 class ControlSet(object):
-    def __init__(self, **kwargs):
+    def __init__(self, index, **kwargs):
+        self.index = index
         self.channel_combo = kwargs['channel_combo']
         self.value_from_label = kwargs['value_from_label']
         self.value_to_label = kwargs['value_to_label']
@@ -69,8 +70,10 @@ class MultiLayerWindow(QtGui.QWidget):
                     os.path.dirname(__file__),
                     'multi_layer_window.ui'
                 )), self)
+        self._current_set = None
         self._control_sets = [
             ControlSet(
+                index=0,
                 channel_combo=self.ui.red_channel_combo,
                 value_from_label=self.ui.red_value_from_label,
                 value_to_label=self.ui.red_value_to_label,
@@ -83,6 +86,7 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_from_slider=self.ui.red_percentile_from_slider,
                 percentile_to_slider=self.ui.red_percentile_to_slider),
             ControlSet(
+                index=1,
                 channel_combo=self.ui.green_channel_combo,
                 value_from_label=self.ui.green_value_from_label,
                 value_to_label=self.ui.green_value_to_label,
@@ -95,6 +99,7 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_from_slider=self.ui.green_percentile_from_slider,
                 percentile_to_slider=self.ui.green_percentile_to_slider),
             ControlSet(
+                index=2,
                 channel_combo=self.ui.blue_channel_combo,
                 value_from_label=self.ui.blue_value_from_label,
                 value_to_label=self.ui.blue_value_to_label,
@@ -210,14 +215,14 @@ class MultiLayerWindow(QtGui.QWidget):
         self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
         self.ui.title_info_button.clicked.connect(self.title_info_clicked)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
-        #self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        #self.canvas.customContextMenuRequested.connect(self.canvas_popup)
-        #self.press_id = self.canvas.mpl_connect(
-        #    'button_press_event', self.canvas_press)
-        #self.release_id = self.canvas.mpl_connect(
-        #    'button_release_event', self.canvas_release)
-        #self.motion_id = self.canvas.mpl_connect(
-        #    'motion_notify_event', self.canvas_motion)
+        self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.canvas.customContextMenuRequested.connect(self.canvas_popup)
+        self.press_id = self.canvas.mpl_connect(
+            'button_press_event', self.canvas_press)
+        self.release_id = self.canvas.mpl_connect(
+            'button_release_event', self.canvas_release)
+        self.motion_id = self.canvas.mpl_connect(
+            'motion_notify_event', self.canvas_motion)
         self.setWindowTitle(os.path.basename(data_file))
         self.channel_changed()
 
@@ -352,35 +357,43 @@ class MultiLayerWindow(QtGui.QWidget):
         # handlers were connected all the time. Hence, when user focus changes
         # we connect the handlers for the controls the user is focused and and
         # disconnect the others.
-        for cset in self._control_sets:
-            percentile_controls = (
+        percentile_controls = dict(
+            (control, cset)
+            for cset in self._control_sets
+            for control in (
                 cset.percentile_from_slider,
                 cset.percentile_from_spinbox,
                 cset.percentile_to_slider,
                 cset.percentile_to_spinbox,
             )
-            range_controls = (
+        )
+        range_controls = dict(
+            (control, cset)
+            for cset in self._control_sets
+            for control in (
                 cset.value_from_slider,
                 cset.value_from_spinbox,
                 cset.value_to_slider,
                 cset.value_to_spinbox,
             )
-            if ((old_widget not in percentile_controls) and
-                    (new_widget in percentile_controls)):
-                self.percentile_connect(cset)
-            elif ((old_widget in percentile_controls) and
-                    (new_widget not in percentile_controls)):
-                self.percentile_disconnect(cset)
-            if ((old_widget not in range_controls) and
-                    (new_widget in range_controls)):
-                self.range_connect(cset)
-            elif ((old_widget in range_controls) and
-                    (new_widget not in range_controls)):
-                self.range_disconnect(cset)
+        )
+        if ((old_widget not in percentile_controls) and
+                (new_widget in percentile_controls)):
+            self.percentile_connect(percentile_controls[new_widget])
+        elif ((old_widget in percentile_controls) and
+                (new_widget not in percentile_controls)):
+            self.percentile_disconnect(percentile_controls[old_widget])
+        if ((old_widget not in range_controls) and
+                (new_widget in range_controls)):
+            self.range_connect(range_controls[new_widget])
+        elif ((old_widget in range_controls) and
+                (new_widget not in range_controls)):
+            self.range_disconnect(range_controls[old_widget])
 
     def percentile_connect(self, cset):
         "Connects percentile controls to event handlers"
         # See focus_changed above
+        self._current_set = cset
         cset.percentile_from_slider.valueChanged.connect(
             self.percentile_from_slider_changed)
         cset.percentile_from_spinbox.valueChanged.connect(
@@ -405,6 +418,7 @@ class MultiLayerWindow(QtGui.QWidget):
     def range_connect(self, cset):
         "Connects range controls to event handlers"
         # See focus_changed above
+        self._current_set = cset
         cset.value_from_slider.valueChanged.connect(
             self.value_from_slider_changed)
         cset.value_from_spinbox.valueChanged.connect(
@@ -428,69 +442,75 @@ class MultiLayerWindow(QtGui.QWidget):
 
     def percentile_from_slider_changed(self, value):
         "Handler for percentile_from_slider change event"
-        self.ui.percentile_to_spinbox.setMinimum(value / 100.0)
-        self.ui.percentile_from_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
+        self._current_set.percentile_to_spinbox.setMinimum(value / 100.0)
+        self._current_set.percentile_from_spinbox.setValue(value / 100.0)
+        self.invalidate_data_normalized()
 
     def percentile_to_slider_changed(self, value):
         "Handler for percentile_to_slider change event"
-        self.ui.percentile_from_spinbox.setMaximum(value / 100.0)
-        self.ui.percentile_to_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
+        self._current_set.percentile_from_spinbox.setMaximum(value / 100.0)
+        self._current_set.percentile_to_spinbox.setValue(value / 100.0)
+        self.invalidate_data_normalized()
 
     def percentile_from_spinbox_changed(self, value):
         "Handler for percentile_from_spinbox change event"
-        self.ui.percentile_to_spinbox.setMinimum(value)
-        self.ui.percentile_from_slider.setValue(int(value * 100.0))
-        self.ui.value_from_spinbox.setValue(
-            self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.value_from_slider.setValue(
-            int(self.ui.value_from_spinbox.value() * 100.0))
-        self.invalidate_image()
+        self._current_set.percentile_to_spinbox.setMinimum(value)
+        self._current_set.percentile_from_slider.setValue(int(value * 100.0))
+        self._current_set.value_from_spinbox.setValue(
+            self.data_sorted[
+                (self.data_sorted.shape[0] - 1) * value / 100.0,
+                self._current_set.index])
+        self._current_set.value_from_slider.setValue(
+            int(self._current_set.value_from_spinbox.value() * 100.0))
+        self.invalidate_data_normalized()
 
     def percentile_to_spinbox_changed(self, value):
         "Handler for percentile_to_spinbox change event"
-        self.ui.percentile_from_spinbox.setMaximum(value)
-        self.ui.percentile_to_slider.setValue(int(value * 100.0))
-        self.ui.value_to_spinbox.setValue(
-            self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
-        self.ui.value_to_slider.setValue(
-            int(self.ui.value_to_spinbox.value() * 100.0))
-        self.invalidate_image()
+        self._current_set.percentile_from_spinbox.setMaximum(value)
+        self._current_set.percentile_to_slider.setValue(int(value * 100.0))
+        self._current_set.value_to_spinbox.setValue(
+            self.data_sorted[
+                (self.data_sorted.shape[0] - 1) * value / 100.0,
+                self._current_set.index])
+        self._current_set.value_to_slider.setValue(
+            int(self._current_set.value_to_spinbox.value() * 100.0))
+        self.invalidate_data_normalized()
 
     def value_from_slider_changed(self, value):
         "Handler for range_from_slider change event"
-        self.ui.value_to_spinbox.setMinimum(value / 100.0)
-        self.ui.value_from_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
+        cset = self._current_set
+        cset.value_to_spinbox.setMinimum(value / 100.0)
+        cset.value_from_spinbox.setValue(value / 100.0)
+        self.invalidate_data_normalized()
 
     def value_to_slider_changed(self, value):
         "Handler for range_to_slider change event"
-        self.ui.value_from_spinbox.setMaximum(value / 100.0)
-        self.ui.value_to_spinbox.setValue(value / 100.0)
-        self.invalidate_image()
+        cset = self._current_set
+        cset.value_from_spinbox.setMaximum(value / 100.0)
+        cset.value_to_spinbox.setValue(value / 100.0)
+        self.invalidate_data_normalized()
 
     def value_from_spinbox_changed(self, value):
         "Handler for range_from_spinbox change event"
-        self.ui.value_to_spinbox.setMinimum(value)
-        self.ui.value_from_slider.setValue(int(value * 100.0))
-        self.ui.percentile_from_spinbox.setValue(
-            self.data_sorted.searchsorted(value) * 100.0 /
-            (len(self.data_sorted) - 1))
-        self.ui.percentile_from_slider.setValue(
-            int(self.ui.percentile_from_spinbox.value() * 100.0))
-        self.invalidate_image()
+        cset = self._current_set
+        cset.value_to_spinbox.setMinimum(value)
+        cset.value_from_slider.setValue(int(value * 100.0))
+        cset.percentile_from_spinbox.setValue(
+            self.data_sorted[..., cset.index].searchsorted(value) * 100.0 / (self.data_sorted.shape[0] - 1))
+        cset.percentile_from_slider.setValue(
+            int(cset.percentile_from_spinbox.value() * 100.0))
+        self.invalidate_data_normalized()
 
     def value_to_spinbox_changed(self, value):
         "Handler for range_to_spinbox change event"
-        self.ui.value_from_spinbox.setMaximum(value)
-        self.ui.value_to_slider.setValue(int(value * 100.0))
-        self.ui.percentile_to_spinbox.setValue(
-            self.data_sorted.searchsorted(value) * 100.0 /
-            (len(self.data_sorted) - 1))
-        self.ui.percentile_to_slider.setValue(
-            int(self.ui.percentile_to_spinbox.value() * 100.0))
-        self.invalidate_image()
+        cset = self._current_set
+        cset.value_from_spinbox.setMaximum(value)
+        cset.value_to_slider.setValue(int(value * 100.0))
+        cset.percentile_to_spinbox.setValue(
+            self.data_sorted[..., cset.index].searchsorted(value) * 100.0 / (self.data_sorted.shape[0] - 1))
+        cset.percentile_to_slider.setValue(
+            int(cset.percentile_to_spinbox.value() * 100.0))
+        self.invalidate_data_normalized()
 
     def channel_changed(self):
         "Handler for data channel change event"
@@ -501,27 +521,31 @@ class MultiLayerWindow(QtGui.QWidget):
         "Handler for crop_*_spinbox change event"
         self.invalidate_data_cropped()
         if self.data is not None:
-            for index, cset in enumerate(self._control_sets):
-                cset.value_from_label.setText(str(self.data_domain[index].low))
-                cset.value_to_label.setText(str(self.data_domain[index].high))
+            for cset in self._control_sets:
+                cset.value_from_label.setText(
+                    str(self.data_domain[cset.index].low))
+                cset.value_to_label.setText(
+                    str(self.data_domain[cset.index].high))
                 cset.value_from_spinbox.setRange(
-                    self.data_domain[index].low, self.data_domain[index].high)
+                    self.data_domain[cset.index].low,
+                    self.data_domain[cset.index].high)
                 cset.value_from_spinbox.setValue(self.data_sorted[
                     (self.data_sorted.shape[0] - 1) *
-                    cset.percentile_from_spinbox.value() / 100.0, index])
+                    cset.percentile_from_spinbox.value() / 100.0, cset.index])
                 cset.value_to_spinbox.setRange(
-                    self.data_domain[index].low, self.data_domain[index].high)
+                    self.data_domain[cset.index].low,
+                    self.data_domain[cset.index].high)
                 cset.value_to_spinbox.setValue(self.data_sorted[
                     (self.data_sorted.shape[0] - 1) *
-                    cset.percentile_to_spinbox.value() / 100.0, index])
+                    cset.percentile_to_spinbox.value() / 100.0, cset.index])
                 cset.value_from_slider.setRange(
-                    int(self.data_domain[index].low * 100.0),
-                    int(self.data_domain[index].high * 100.0))
+                    int(self.data_domain[cset.index].low * 100.0),
+                    int(self.data_domain[cset.index].high * 100.0))
                 cset.value_from_slider.setValue(
                     int(cset.value_from_spinbox.value() * 100.0))
                 cset.value_to_slider.setRange(
-                    int(self.data_domain[index].low * 100.0),
-                    int(self.data_domain[index].high * 100.0))
+                    int(self.data_domain[cset.index].low * 100.0),
+                    int(self.data_domain[cset.index].high * 100.0))
                 cset.value_to_slider.setValue(
                     int(cset.value_to_spinbox.value() * 100.0))
             y_size, x_size, _ = self.data_cropped.shape
