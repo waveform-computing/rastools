@@ -105,25 +105,24 @@ class MultiLayerWindow(QtGui.QWidget):
         self.title_axes = None
         self.ui.splitter.addWidget(self.canvas)
         # Fill out the combos
-        for channel in self._file.channels:
-            if channel.enabled:
-                if channel.name:
-                    self.ui.channel_combo.addItem(
-                        unicode(self.tr('Channel {index} - {name}')).format(
-                            index=channel.index, name=channel.name),
-                        channel)
-                else:
-                    self.ui.channel_combo.addItem(
-                        unicode(self.tr('Channel {index}')).format(
-                            index=channel.index),
-                        channel)
-        default = -1
-        for color in sorted(matplotlib.cm.datad):
-            if not color.endswith('_r'):
-                if color == DEFAULT_COLORMAP:
-                    default = self.ui.colormap_combo.count()
-                self.ui.colormap_combo.addItem(color)
-        self.ui.colormap_combo.setCurrentIndex(default)
+        for combo in (
+                self.ui.red_channel_combo,
+                self.ui.green_channel_combo,
+                self.ui.blue_channel_combo,
+                ):
+            combo.addItem('None', None)
+            for channel in self._file.channels:
+                if channel.enabled:
+                    if channel.name:
+                        combo.addItem(
+                            'Channel {index} - {name}'.format(
+                                index=channel.index, name=channel.name),
+                            channel)
+                    else:
+                        combo.addItem(
+                            'Channel {index}'.format(
+                                index=channel.index),
+                            channel)
         default = -1
         for interpolation in sorted(matplotlib.image.AxesImage._interpd):
             if interpolation == DEFAULT_INTERPOLATION:
@@ -139,38 +138,38 @@ class MultiLayerWindow(QtGui.QWidget):
         self.redraw_timer = QtCore.QTimer()
         self.redraw_timer.setInterval(200)
         self.redraw_timer.timeout.connect(self.redraw_timeout)
-        self.ui.channel_combo.currentIndexChanged.connect(self.channel_changed)
-        self.ui.colormap_combo.currentIndexChanged.connect(self.invalidate_image)
-        self.ui.reverse_check.toggled.connect(self.invalidate_image)
-        self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
-        self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
-        self.ui.axes_check.toggled.connect(self.invalidate_image)
-        self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
-        self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
-        self.ui.x_scale_spinbox.valueChanged.connect(self.x_scale_changed)
-        self.ui.y_scale_spinbox.valueChanged.connect(self.y_scale_changed)
-        self.ui.x_offset_spinbox.valueChanged.connect(self.x_offset_changed)
-        self.ui.y_offset_spinbox.valueChanged.connect(self.y_offset_changed)
-        self.ui.grid_check.toggled.connect(self.invalidate_image)
-        self.ui.histogram_check.toggled.connect(self.invalidate_image)
-        self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
-        self.ui.colorbar_check.toggled.connect(self.invalidate_image)
-        self.ui.title_edit.textChanged.connect(self.invalidate_image)
-        self.ui.default_title_button.clicked.connect(self.default_title_clicked)
-        self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
-        self.ui.title_info_button.clicked.connect(self.title_info_clicked)
-        QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
-        self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.canvas.customContextMenuRequested.connect(self.canvas_popup)
-        self.press_id = self.canvas.mpl_connect(
-            'button_press_event', self.canvas_press)
-        self.release_id = self.canvas.mpl_connect(
-            'button_release_event', self.canvas_release)
-        self.motion_id = self.canvas.mpl_connect(
-            'motion_notify_event', self.canvas_motion)
+        self.ui.red_channel_combo.currentIndexChanged.connect(self.channel_changed)
+        self.ui.green_channel_combo.currentIndexChanged.connect(self.channel_changed)
+        self.ui.blue_channel_combo.currentIndexChanged.connect(self.channel_changed)
+        #self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
+        #self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
+        #self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
+        #self.ui.crop_right_spinbox.valueChanged.connect(self.crop_changed)
+        #self.ui.crop_bottom_spinbox.valueChanged.connect(self.crop_changed)
+        #self.ui.axes_check.toggled.connect(self.invalidate_image)
+        #self.ui.x_label_edit.textChanged.connect(self.invalidate_image)
+        #self.ui.y_label_edit.textChanged.connect(self.invalidate_image)
+        #self.ui.x_scale_spinbox.valueChanged.connect(self.x_scale_changed)
+        #self.ui.y_scale_spinbox.valueChanged.connect(self.y_scale_changed)
+        #self.ui.x_offset_spinbox.valueChanged.connect(self.x_offset_changed)
+        #self.ui.y_offset_spinbox.valueChanged.connect(self.y_offset_changed)
+        #self.ui.grid_check.toggled.connect(self.invalidate_image)
+        #self.ui.histogram_check.toggled.connect(self.invalidate_image)
+        #self.ui.histogram_bins_spinbox.valueChanged.connect(self.invalidate_image)
+        #self.ui.colorbar_check.toggled.connect(self.invalidate_image)
+        #self.ui.title_edit.textChanged.connect(self.invalidate_image)
+        #self.ui.default_title_button.clicked.connect(self.default_title_clicked)
+        #self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
+        #self.ui.title_info_button.clicked.connect(self.title_info_clicked)
+        #QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
+        #self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.canvas.customContextMenuRequested.connect(self.canvas_popup)
+        #self.press_id = self.canvas.mpl_connect(
+        #    'button_press_event', self.canvas_press)
+        #self.release_id = self.canvas.mpl_connect(
+        #    'button_release_event', self.canvas_release)
+        #self.motion_id = self.canvas.mpl_connect(
+        #    'motion_notify_event', self.canvas_motion)
         self.setWindowTitle(os.path.basename(data_file))
         self.channel_changed()
 
@@ -452,7 +451,7 @@ class MultiLayerWindow(QtGui.QWidget):
     def crop_changed(self, value=None):
         "Handler for crop_*_spinbox change event"
         self.invalidate_data_cropped()
-        if self.channel is not None:
+        if self.data is not None:
             self.ui.value_from_label.setText(str(self.data_sorted[0]))
             self.ui.value_to_label.setText(str(self.data_sorted[-1]))
             self.ui.value_from_spinbox.setRange(
@@ -610,22 +609,43 @@ Value range: {range_from} to {range_to}""")
         self._info_dialog.show()
 
     @property
-    def channel(self):
-        "Returns the currently selected channel object"
+    def red_channel(self):
+        "Returns the currently selected red channel object"
         # We test self.ui here as during ui loading something
         # (connectSlotsByName) seems to iterate over all the properties
         # querying their value. As self.ui wasn't assigned at this point it led
         # to several annoying exceptions...
-        if self.ui and (self.ui.channel_combo.currentIndex() != -1):
-            return self.ui.channel_combo.itemData(
-                self.ui.channel_combo.currentIndex()).toPyObject()
+        if self.ui and (self.ui.red_channel_combo.currentIndex() != -1):
+            return self.ui.red_channel_combo.itemData(
+                self.ui.red_channel_combo.currentIndex()).toPyObject()
+
+    @property
+    def green_channel(self):
+        "Returns the currently selected green channel object"
+        # See note above about self.ui
+        if self.ui and (self.ui.green_channel_combo.currentIndex() != -1):
+            return self.ui.green_channel_combo.itemData(
+                self.ui.green_channel_combo.currentIndex()).toPyObject()
+
+    @property
+    def blue_channel(self):
+        "Returns the currently selected blue channel object"
+        # See note above about self.ui
+        if self.ui and (self.ui.blue_channel_combo.currentIndex() != -1):
+            return self.ui.blue_channel_combo.itemData(
+                self.ui.blue_channel_combo.currentIndex()).toPyObject()
 
     @property
     def data(self):
         "Returns the data of the currently selected channel"
-        if (self._data is None) and (self.channel is not None):
-            self._data = self.channel.data.copy()
-        return self._data
+        if self.ui:
+            if (self._data is None) and (
+                    self.red_channel is not None or
+                    self.green_channel is not None or
+                    self.blue_channel is not None
+                    ):
+                self._data = self.channel.data.copy()
+            return self._data
 
     @property
     def data_cropped(self):
@@ -719,7 +739,7 @@ Value range: {range_from} to {range_to}""")
         "Called to redraw the channel image"
         # The following tests ensure we don't try and draw anything while we're
         # still loading the file
-        if self._file and self.channel is not None:
+        if self._file and self.data is not None:
             # Generate the title text. This is done up here as we need to know
             # if there's going to be anything to render, and whether or not to
             # reserve space for it

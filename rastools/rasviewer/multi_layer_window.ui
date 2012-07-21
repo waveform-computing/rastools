@@ -28,8 +28,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>610</width>
-         <height>903</height>
+         <width>626</width>
+         <height>871</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_2">
@@ -661,10 +661,7 @@
            </layout>
            <zorder>green_channel_combo</zorder>
            <zorder>green_channel_label</zorder>
-           <zorder>layoutWidget</zorder>
-           <zorder>green_percentile_from_slider</zorder>
            <zorder>green_percentile_label</zorder>
-           <zorder>layoutWidget_4</zorder>
            <zorder>green_range_label</zorder>
           </widget>
           <widget class="QWidget" name="blue_tab">
@@ -1151,8 +1148,8 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>layer_tabs</tabstop>
   <tabstop>scroll_area</tabstop>
+  <tabstop>layer_tabs</tabstop>
   <tabstop>red_channel_combo</tabstop>
   <tabstop>red_percentile_from_slider</tabstop>
   <tabstop>red_percentile_from_spinbox</tabstop>

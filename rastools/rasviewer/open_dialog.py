@@ -152,7 +152,8 @@ class OpenDialog(QtGui.QDialog):
 
     @property
     def multi_layer(self):
-        return self.ui.multi_layer_radio.checked()
+        "Returns True if the multi-layer open-mode is selected"
+        return self.ui.multi_layer_radio.isChecked()
 
     def data_file_changed(self, value=None):
         "Called to update the dialog buttons when the data_file changes"

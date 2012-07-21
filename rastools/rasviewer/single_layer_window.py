@@ -109,13 +109,12 @@ class SingleLayerWindow(QtGui.QWidget):
             if channel.enabled:
                 if channel.name:
                     self.ui.channel_combo.addItem(
-                        unicode(self.tr('Channel {index} - {name}')).format(
+                        'Channel {index} - {name}'.format(
                             index=channel.index, name=channel.name),
                         channel)
                 else:
                     self.ui.channel_combo.addItem(
-                        unicode(self.tr('Channel {index}')).format(
-                            index=channel.index),
+                        'Channel {index}'.format(index=channel.index),
                         channel)
         default = -1
         for color in sorted(matplotlib.cm.datad):

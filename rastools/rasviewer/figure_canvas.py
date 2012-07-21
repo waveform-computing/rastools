@@ -19,7 +19,7 @@
 """Implements a QT-based matplotlib FigureCanvas with better rubber-banding"""
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 
 COMPOSITION_SUPPORTED = True
 
