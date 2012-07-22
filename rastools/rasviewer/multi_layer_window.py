@@ -43,8 +43,9 @@ FIGURE_DPI = 72.0
 
 
 class ControlSet(object):
-    def __init__(self, index, **kwargs):
+    def __init__(self, index, prefix, **kwargs):
         self.index = index
+        self.prefix = prefix
         self.channel_combo = kwargs['channel_combo']
         self.value_from_label = kwargs['value_from_label']
         self.value_to_label = kwargs['value_to_label']
@@ -74,6 +75,7 @@ class MultiLayerWindow(QtGui.QWidget):
         self._control_sets = [
             ControlSet(
                 index=0,
+                prefix='red',
                 channel_combo=self.ui.red_channel_combo,
                 value_from_label=self.ui.red_value_from_label,
                 value_to_label=self.ui.red_value_to_label,
@@ -87,6 +89,7 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_to_slider=self.ui.red_percentile_to_slider),
             ControlSet(
                 index=1,
+                prefix='green',
                 channel_combo=self.ui.green_channel_combo,
                 value_from_label=self.ui.green_value_from_label,
                 value_to_label=self.ui.green_value_to_label,
@@ -100,6 +103,7 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_to_slider=self.ui.green_percentile_to_slider),
             ControlSet(
                 index=2,
+                prefix='blue',
                 channel_combo=self.ui.blue_channel_combo,
                 value_from_label=self.ui.blue_value_from_label,
                 value_to_label=self.ui.blue_value_to_label,
@@ -602,11 +606,11 @@ class MultiLayerWindow(QtGui.QWidget):
 
     def default_title_clicked(self):
         "Handler for default_title_button click event"
-        self.ui.title_edit.setPlainText("""\
-Channel {channel:02d} - {channel_name}
-{start_time:%A, %d %b %Y %H:%M:%S}
-Percentile range: {percentile_from} to {percentile_to}
-Value range: {range_from} to {range_to}""")
+        title = 'Multi-Layered Image'
+        for channel, cset in zip(self.channels, self._control_sets):
+            if channel:
+                title += '\n{prefix}: {{{prefix}_channel:02d}} - {{{prefix}_channel_name}}'.format(prefix=cset.prefix)
+        self.ui.title_edit.setPlainText(title)
 
     def clear_title_clicked(self):
         "Handler for clear_title_button click event"
@@ -618,7 +622,7 @@ Value range: {range_from} to {range_to}""")
         if not self._info_dialog:
             self._info_dialog = TitleInfoDialog(self)
         self._info_dialog.ui.template_list.clear()
-        for key, value in sorted(self.format_dict(self.channel).iteritems()):
+        for key, value in sorted(self.format_dict().iteritems()):
             if isinstance(value, basestring):
                 if '\n' in value:
                     value = value.splitlines()[0].rstrip()
@@ -717,16 +721,17 @@ Value range: {range_from} to {range_to}""")
                 self.ui.blue_channel_combo.currentIndex()).toPyObject()
 
     @property
+    def channels(self):
+        "Returns the selected channels as a three-tuple"
+        return (self.red_channel, self.green_channel, self.blue_channel)
+
+    @property
     def data(self):
         "Returns the data of the combined channels"
         if self.ui and (self._data is None):
             self._data = np.zeros(
                 (self._file.y_size, self._file.x_size, 3), np.float)
-            for index, channel in enumerate((
-                    self.red_channel,
-                    self.green_channel,
-                    self.blue_channel,
-                    )):
+            for index, channel in enumerate(self.channels):
                 if channel:
                     self._data[..., index] = channel.data
         return self._data
@@ -785,8 +790,8 @@ Value range: {range_from} to {range_to}""")
             array = self.data_cropped.copy()
             for index in range(3):
                 low, high = self.data_range[index]
-                array[..., index][array[..., index] < low] = low
-                array[..., index][array[..., index] > high] = high
+                #array[..., index][array[..., index] < low] = low
+                #array[..., index][array[..., index] > high] = high
                 array[..., index] = array[..., index] - low
                 if (high - low):
                     array[..., index] = array[..., index] / (high - low)
@@ -881,7 +886,7 @@ Value range: {range_from} to {range_to}""")
             try:
                 if unicode(self.ui.title_edit.toPlainText()):
                     title = unicode(self.ui.title_edit.toPlainText()).format(
-                        **self.format_dict(self.channel))
+                        **self.format_dict())
             except KeyError as exc:
                 self.ui.title_error_label.setText(
                     'Unknown template "{}"'.format(exc))
@@ -957,10 +962,16 @@ Value range: {range_from} to {range_to}""")
         else:
             self.image_axes.set_xticklabels([])
             self.image_axes.set_yticklabels([])
-        # The imshow() call takes care of clamping values with data_range and
-        # color-mapping
+        # Here we tweak values outside the normalized 0.0 and 1.0 range just
+        # before drawing. This is not done in data_normalized as otherwise
+        # histograms derived from the flattened version of the data wind up
+        # with clumps of data at the extremes of the range when percentiles are
+        # applied
+        data = self.data_normalized.copy()
+        data[data < 0.0] = 0.0
+        data[data > 1.0] = 1.0
         return self.image_axes.imshow(
-            self.data_normalized,
+            data,
             origin='upper',
             extent=self.x_limits + self.y_limits,
             interpolation=unicode(self.ui.interpolation_combo.currentText()))
@@ -977,7 +988,8 @@ Value range: {range_from} to {range_to}""")
             self.histogram_axes.hist(self.data_flat,
                 bins=self.ui.histogram_bins_spinbox.value(),
                 histtype='barstacked',
-                color=('red', 'green', 'blue'))
+                color=('red', 'green', 'blue'),
+                range=(0.0, 1.0))
         elif self.histogram_axes:
             self.figure.delaxes(self.histogram_axes)
             self.histogram_axes = None
@@ -1000,20 +1012,17 @@ Value range: {range_from} to {range_to}""")
             self.figure.delaxes(self.title_axes)
             self.title_axes = None
 
-    def format_dict(self, source, **kwargs):
+    def format_dict(self):
         "Returns UI settings in a dict for use in format substitutions"
-        return source.format_dict(
-            percentile_from=self.ui.percentile_from_spinbox.value(),
-            percentile_to=self.ui.percentile_to_spinbox.value(),
-            range_from=self.ui.value_from_spinbox.value(),
-            range_to=self.ui.value_to_spinbox.value(),
+        result = dict(
             interpolation=self.interpolation_combo.currentText(),
-            colormap=self.ui.colormap_combo.currentText() +
-                ('_r' if self.ui.reverse_check.isChecked() else ''),
             crop_left=self.ui.crop_left_spinbox.value(),
             crop_top=self.ui.crop_top_spinbox.value(),
             crop_right=self.ui.crop_right_spinbox.value(),
-            crop_bottom=self.ui.crop_bottom_spinbox.value(),
-            **kwargs
-        )
+            crop_bottom=self.ui.crop_bottom_spinbox.value())
+        for channel, cset in zip(self.channels, self._control_sets):
+            if channel:
+                for name, value in channel.format_dict().iteritems():
+                    result[cset.prefix + '_' + name] = value
+        return result
 
