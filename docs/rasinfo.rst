@@ -10,15 +10,16 @@ be with rasextract.
 Synopsis
 ========
 
-Usage::
+::
 
   $ rasinfo [options] data-file [channels-file]
 
-Where *data-file* is the file you wish to extract header data from and the
-optional *channel-file* defines the indices and names of the channels. If the
-*channel-file* is omitted channels in .RAS files will be unnamed.
+Description
+===========
 
-The :program:`rasinfo` utility has several options:
+Output information from the header of *data-file*. The optional *channel-file*
+defines the indices and names of the channels. If the *channel-file* is omitted
+channels in .RAS files will be unnamed.
 
 .. program:: rasinfo
 

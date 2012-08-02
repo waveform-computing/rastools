@@ -11,16 +11,17 @@ drawing of axes and titles.
 Synopsis
 ========
 
-Usage::
+::
 
   $ rasextract [options] data-file [channel-file]
 
-Where *data-file* is the file containing the channel data to extract as images
-and the optional *channel-file* defines the indices and names of the channels
-to extract. If the *channel-file* is omitted all channels are extracted and
-channels in .RAS files will be unnamed.
+Description
+===========
 
-The :program:`rasextract` utility has several options:
+Extract channel data from  *data-file* as images. The optional *channel-file*
+defines the indices and names of the channels to extract. If the *channel-file*
+is omitted all channels are extracted and channels in .RAS files will be
+unnamed.
 
 .. program:: rasextract
 

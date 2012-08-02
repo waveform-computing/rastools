@@ -11,7 +11,7 @@ Download
 
 You can find pre-built binary packages for several platforms available from
 the `rastools development site
-<http://www.waveform.org.uk/trac/rastools/wiki/Download>`_. Installations
+<http://www.waveform.org.uk/trac/rastools/wiki/Download>`_. Installation
 instructions for specific platforms are included in the sections below.
 
 If your platform is *not* covered by one of the sections below, rastools is

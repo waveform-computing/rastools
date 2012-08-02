@@ -10,16 +10,16 @@ output including percentile limiting, and output format.
 Synopsis
 ========
 
-Usage::
+::
 
   $ rasdump [options] data-file [channels-file]
 
-Where *data-file* is the file containing the channel data to dump and the
-optional *channel-file* defines the indices and names of the channels to dump.
-If the *channel-file* is omitted all channels are extracted and channels in
-RAS files will be unnamed.
+Description
+===========
 
-The :program:`rasdump` utility has several options:
+Dump channel data from *data-file*. The optional *channel-file* defines the
+indices and names of the channels to dump.  If the *channel-file* is omitted
+all channels are extracted and channels in RAS files will be unnamed.
 
 .. program:: rasdump
 
