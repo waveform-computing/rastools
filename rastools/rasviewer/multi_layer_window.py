@@ -159,7 +159,7 @@ class MultiLayerWindow(QtGui.QWidget):
             self.close()
             return
         # Create a figure in a tab for the file
-        self.figure = Figure(figsize=(5.0, 4.0), dpi=FIGURE_DPI,
+        self.figure = Figure(figsize=(5.0, 5.0), dpi=FIGURE_DPI,
             facecolor='w', edgecolor='w')
         self.canvas = FigureCanvas(self.figure)
         self.image_axes = self.figure.add_axes((0.1, 0.1, 0.8, 0.8))
@@ -217,6 +217,7 @@ class MultiLayerWindow(QtGui.QWidget):
         self.ui.default_title_button.clicked.connect(self.default_title_clicked)
         self.ui.clear_title_button.clicked.connect(self.clear_title_clicked)
         self.ui.title_info_button.clicked.connect(self.title_info_clicked)
+        self.ui.splitter.splitterMoved.connect(self.splitter_moved)
         QtGui.QApplication.instance().focusChanged.connect(self.focus_changed)
         self.canvas.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.canvas.customContextMenuRequested.connect(self.canvas_popup)
@@ -228,6 +229,9 @@ class MultiLayerWindow(QtGui.QWidget):
             'motion_notify_event', self.canvas_motion)
         self.setWindowTitle(os.path.basename(data_file))
         self.channel_changed()
+
+    def splitter_moved(self, pos, index):
+        self.invalidate_image()
 
     def canvas_popup(self, pos):
         "Handler for canvas context menu event"
@@ -272,8 +276,8 @@ class MultiLayerWindow(QtGui.QWidget):
         if (self.image_axes and
                 (event.inaxes == self.image_axes) and
                 (event.xdata is not None)):
-            self.window().ui.x_label.setText('X: {0:.2f}'.format(event.xdata))
-            self.window().ui.y_label.setText('Y: {0:.2f}'.format(event.ydata))
+            self.window().ui.x_label.setText('X: {0:.0f}'.format(event.xdata))
+            self.window().ui.y_label.setText('Y: {0:.0f}'.format(event.ydata))
             try:
                 for index, (name, label) in enumerate(labels):
                     label.setText(
@@ -899,38 +903,50 @@ class MultiLayerWindow(QtGui.QWidget):
             # Calculate the figure dimensions and margins. See RasRenderer.draw
             # in the rastools.rasextract module for more information about this
             # stuff...
-            margin = (0.0, 0.75)[
+            margin_visible = (
                 self.ui.axes_check.isChecked()
                 or self.ui.histogram_check.isChecked()
                 or bool(title)
-            ]
-            image_box = BoundingBox(
-                margin,
-                0.0,
-                self.data_cropped.shape[0] / FIGURE_DPI,
-                self.data_cropped.shape[1] / FIGURE_DPI
             )
-            histogram_box = BoundingBox(
-                margin,
-                [0.0, margin][self.ui.histogram_check.isChecked()],
-                image_box.width,
-                [0.0, image_box.height * 0.8][
-                    self.ui.histogram_check.isChecked()]
-            )
-            image_box.bottom = (
-                margin + histogram_box.top
-            )
-            title_box = BoundingBox(
-                0.0,
-                [0.0, margin + image_box.top][bool(title)],
-                image_box.width + (margin * 2),
-                [0.0, 0.75][bool(title)]
-            )
+            xmargin = 0.5 if margin_visible else 0.0
+            ymargin = 0.5 if margin_visible else 0.0
+            separator = 0.3
             figure_box = BoundingBox(
                 0.0,
                 0.0,
-                image_box.width + (margin * 2),
-                margin + (title_box.top if bool(title) else image_box.top)
+                self.figure.get_figwidth(),
+                self.figure.get_figheight()
+            )
+            title_box = BoundingBox(
+                xmargin,
+                figure_box.height - (ymargin + 1.0 if bool(title) else 0.0),
+                figure_box.width - (xmargin * 2),
+                1.0 if bool(title) else 0.0
+            )
+            histogram_box = BoundingBox(
+                xmargin,
+                ymargin,
+                figure_box.width - (xmargin * 2),
+                (
+                    figure_box.height -
+                    (ymargin * 2) -
+                    title_box.height -
+                    (separator if bool(title) else 0.0)
+                ) / 2.0 if self.histogram_check.isChecked() else 0.0
+            )
+            image_box = BoundingBox(
+                xmargin,
+                histogram_box.top + (
+                    separator if self.ui.histogram_check.isChecked() else 0.0),
+                figure_box.width - (xmargin * 2),
+                (
+                    figure_box.height -
+                    (ymargin * 2) -
+                    title_box.height -
+                    histogram_box.height -
+                    (separator if self.histogram_check.isChecked() else 0.0) -
+                    (separator if bool(title) else 0.0)
+                )
             )
             # Draw the various image elements within bounding boxes calculated
             # from the metrics above
