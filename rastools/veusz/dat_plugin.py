@@ -19,15 +19,24 @@
 """Plugin supporting Sam's DAT file format as a 2D Veusz dataset"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
-from veusz.plugins import ImportPlugin, ImportDataset2D, importpluginregistry
-from rastools.datparse import DatFileReader, Error
+from veusz.plugins import (
+    ImportPlugin,
+    ImportDataset2D,
+    importpluginregistry,
+    )
+
+from rastools.datparse import DatParser, Error
 
 class ImportPluginDat(ImportPlugin):
     """A plugin supporting Sam's dat format"""
 
-    name = 'dat plugin'
+    name = "Sam's DAT import"
     author = 'Dave Hughes <dave@waveform.org.uk>'
     description = 'Reads the 2D channels from a dat file'
     file_extensions = set(['.DAT', '.dat'])
@@ -46,7 +55,7 @@ Comments:
 
 """
         try:
-            reader = DatFileReader(params.filename)
+            reader = DatParser(params.filename)
             return (
                 result.format(
                     count=sum(
@@ -61,11 +70,13 @@ Comments:
                 ),
                 True
             )
+        except IOError as exc:
+            return ('I/O error when opening file: {}'.format(exc), False)
         except Error as exc:
-            return (str(exc), False)
+            return ('File does not appear to be a valid DAT file: {}'.format(exc), False)
 
     def doImport(self, params):
-        reader = DatFileReader(params.filename)
+        reader = DatParser(params.filename)
         return [
             ImportDataset2D(channel.name, channel.data)
             for channel in reader.channels

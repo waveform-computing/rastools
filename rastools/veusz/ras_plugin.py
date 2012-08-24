@@ -19,16 +19,25 @@
 """Plugin supporting the RAS file format as a 2D Veusz dataset"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 from veusz.plugins import (
-    ImportPlugin, ImportDataset2D, FieldFilename, importpluginregistry)
-from rastools.rasparse import RasFileReader, Error
+    ImportPlugin,
+    ImportDataset2D,
+    FieldFilename,
+    importpluginregistry,
+    )
+
+from rastools.rasparse import RasParser, Error
 
 class ImportPluginRas(ImportPlugin):
     """A plugin supporting the QSCAN RAS format"""
 
-    name = 'RAS plugin'
+    name = 'QSCAN RAS import'
     author = 'Dave Hughes <dave@waveform.org.uk>'
     description = 'Reads the 2D channels from a QSCAN RAS file'
     file_extensions = set(['.RAS', '.ras'])
@@ -58,7 +67,7 @@ Comments:
 
 """
         try:
-            reader = RasFileReader(params.filename,
+            reader = RasParser(params.filename,
                 params.field_results.get('channels'))
             return (
                 result.format(
@@ -73,11 +82,13 @@ Comments:
                     comments=reader.comments),
                 True
             )
+        except IOError as exc:
+            return ('I/O error when opening file: {}'.format(exc), False)
         except Error as exc:
-            return (str(exc), False)
+            return ('File does not appear to be a valid RAS file: {}'.format(exc), False)
 
     def doImport(self, params):
-        reader = RasFileReader(params.filename,
+        reader = RasParser(params.filename,
             params.field_results.get('channels'))
         return [
             ImportDataset2D(channel.name, channel.data)
