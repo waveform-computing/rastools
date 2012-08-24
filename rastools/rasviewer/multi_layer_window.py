@@ -286,8 +286,10 @@ class MultiLayerWindow(QtGui.QWidget):
         if (self.image_axes and
                 (event.inaxes == self.image_axes) and
                 (event.xdata is not None)):
-            self.window().ui.x_label.setText('X: {0:.0f}'.format(event.xdata))
-            self.window().ui.y_label.setText('Y: {0:.0f}'.format(event.ydata))
+            self.window().ui.x_label.setText(
+                'X: {0:d}'.format(int(event.xdata)))
+            self.window().ui.y_label.setText(
+                'Y: {0:d}'.format(int(event.ydata)))
             try:
                 for index, (name, label) in enumerate(labels):
                     label.setText(

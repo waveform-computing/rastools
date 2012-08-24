@@ -48,6 +48,9 @@
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
         <item row="0" column="0">
          <widget class="QLabel" name="channel_label">
           <property name="text">
@@ -62,7 +65,11 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QComboBox" name="channel_combo"/>
+         <widget class="QComboBox" name="channel_combo">
+          <property name="toolTip">
+           <string>The channel to display in the right panel</string>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="colormap_label">
@@ -80,7 +87,11 @@
         <item row="1" column="1">
          <layout class="QHBoxLayout" name="colormap_layout">
           <item>
-           <widget class="QComboBox" name="colormap_combo"/>
+           <widget class="QComboBox" name="colormap_combo">
+            <property name="toolTip">
+             <string>The color map used to map counts to colors</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="reverse_check">
@@ -111,7 +122,11 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QComboBox" name="interpolation_combo"/>
+         <widget class="QComboBox" name="interpolation_combo">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The interpolation algorithm to use when resizing the image to fit the display.&lt;/p&gt;&lt;p&gt;Good choices are: Lanczos for more fine detail, Gaussian for more smoothing which may make patterns easier to spot, or Bilinear for speed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
         </item>
         <item row="3" column="0" colspan="2">
          <widget class="Line" name="percentile_line">
@@ -137,6 +152,9 @@
          <layout class="QGridLayout" name="percentile_layout">
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="percentile_from_spinbox">
+            <property name="toolTip">
+             <string>The percentile below which all counts will be mapped to the lowest color in the selected map</string>
+            </property>
             <property name="maximum">
              <double>100.000000000000000</double>
             </property>
@@ -147,6 +165,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="percentile_to_spinbox">
+            <property name="toolTip">
+             <string>The percentile above which all counts will be mapped to the highest color in the selected map</string>
+            </property>
             <property name="maximum">
              <double>100.000000000000000</double>
             </property>
@@ -160,6 +181,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QSlider" name="percentile_to_slider">
+            <property name="toolTip">
+             <string>The percentile above which all counts will be mapped to the highest color in the selected map</string>
+            </property>
             <property name="maximum">
              <number>10000</number>
             </property>
@@ -179,6 +203,9 @@
           </item>
           <item row="0" column="0">
            <widget class="QSlider" name="percentile_from_slider">
+            <property name="toolTip">
+             <string>The percentile below which all counts will be mapped to the lowest color in the selected map</string>
+            </property>
             <property name="maximum">
              <number>10000</number>
             </property>
@@ -211,13 +238,24 @@
         <item row="5" column="1">
          <layout class="QGridLayout" name="value_layout">
           <item row="0" column="3">
-           <widget class="QDoubleSpinBox" name="value_from_spinbox"/>
+           <widget class="QDoubleSpinBox" name="value_from_spinbox">
+            <property name="toolTip">
+             <string>All counts below this value will be mapped to the lowest color in the selected map</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QDoubleSpinBox" name="value_to_spinbox"/>
+           <widget class="QDoubleSpinBox" name="value_to_spinbox">
+            <property name="toolTip">
+             <string>All counts above this value will be mapped to the highest color in the selected map</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="0" colspan="3">
            <widget class="QSlider" name="value_from_slider">
+            <property name="toolTip">
+             <string>All counts below this value will be mapped to the lowest color in the selected map</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -228,6 +266,9 @@
           </item>
           <item row="1" column="0" colspan="3">
            <widget class="QSlider" name="value_to_slider">
+            <property name="toolTip">
+             <string>All counts above this value will be mapped to the highest color in the selected map</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -238,6 +279,9 @@
           </item>
           <item row="2" column="2">
            <widget class="QLabel" name="value_to_label">
+            <property name="toolTip">
+             <string>The highest count in the portion of the image currently displayed (or the entire image if no zoom has been applied)</string>
+            </property>
             <property name="text">
              <string>TextLabel</string>
             </property>
@@ -248,6 +292,9 @@
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="value_from_label">
+            <property name="toolTip">
+             <string>The lowest count in the portion of the image currently displayed (or the entire image if no zoom has been applied)</string>
+            </property>
             <property name="text">
              <string>TextLabel</string>
             </property>
@@ -292,6 +339,9 @@
          <layout class="QGridLayout" name="crop_layout">
           <item row="0" column="1">
            <widget class="QSpinBox" name="crop_top_spinbox">
+            <property name="toolTip">
+             <string>The number of lines to crop from the top of the data</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -299,6 +349,9 @@
           </item>
           <item row="2" column="1">
            <widget class="QSpinBox" name="crop_bottom_spinbox">
+            <property name="toolTip">
+             <string>The number of lines to crop from the bottom of the data</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -306,6 +359,9 @@
           </item>
           <item row="1" column="2">
            <widget class="QSpinBox" name="crop_right_spinbox">
+            <property name="toolTip">
+             <string>The number of columns to crop from the right of the data</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -313,6 +369,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QSpinBox" name="crop_left_spinbox">
+            <property name="toolTip">
+             <string>The number of columns to crop from the left of the data</string>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -344,6 +403,9 @@
          <layout class="QHBoxLayout" name="title_layout_1">
           <item>
            <widget class="QPlainTextEdit" name="title_edit">
+            <property name="toolTip">
+             <string>The title to display above the image. Click the Info button for details of {templates} that can be used within the title definition</string>
+            </property>
             <property name="tabChangesFocus">
              <bool>true</bool>
             </property>
@@ -362,6 +424,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>Click to set the title to the default which includes details of the channel selected and percentiles</string>
+              </property>
               <property name="text">
                <string>Default</string>
               </property>
@@ -375,6 +440,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>Click to clear the title</string>
+              </property>
               <property name="text">
                <string>Clear</string>
               </property>
@@ -387,6 +455,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Click for information on the {templates} that can be inserted into the title text</string>
               </property>
               <property name="text">
                <string>Info...</string>
@@ -423,6 +494,13 @@
           </property>
          </widget>
         </item>
+        <item row="11" column="0" colspan="2">
+         <widget class="Line" name="axes_line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
         <item row="12" column="0">
          <widget class="QLabel" name="axes_label">
           <property name="text">
@@ -438,6 +516,9 @@
         </item>
         <item row="12" column="1">
          <widget class="QCheckBox" name="axes_check">
+          <property name="toolTip">
+           <string>If checked, axes will be visible around the image</string>
+          </property>
           <property name="text">
            <string>Visible</string>
           </property>
@@ -457,7 +538,11 @@
          </widget>
         </item>
         <item row="13" column="1">
-         <widget class="QLineEdit" name="x_label_edit"/>
+         <widget class="QLineEdit" name="x_label_edit">
+          <property name="toolTip">
+           <string>The label to show beside the X-axis</string>
+          </property>
+         </widget>
         </item>
         <item row="14" column="0">
          <widget class="QLabel" name="y_label_label">
@@ -473,7 +558,11 @@
          </widget>
         </item>
         <item row="14" column="1">
-         <widget class="QLineEdit" name="y_label_edit"/>
+         <widget class="QLineEdit" name="y_label_edit">
+          <property name="toolTip">
+           <string>The label to show beside the Y-axis</string>
+          </property>
+         </widget>
         </item>
         <item row="15" column="0">
          <widget class="QLabel" name="size_label">
@@ -571,6 +660,9 @@
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="x_offset_spinbox">
+            <property name="toolTip">
+             <string>The amount added or subtracted to each element of the X-axis prior to scaling</string>
+            </property>
             <property name="decimals">
              <number>3</number>
             </property>
@@ -603,6 +695,9 @@
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="y_offset_spinbox">
+            <property name="toolTip">
+             <string>The amount added or subtracted to each element of the Y-axis prior to scaling</string>
+            </property>
             <property name="decimals">
              <number>3</number>
             </property>
@@ -622,6 +717,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>If checked, the axis offsets will be made equal</string>
+            </property>
             <property name="text">
              <string>Lock</string>
             </property>
@@ -631,19 +729,6 @@
            </widget>
           </item>
          </layout>
-        </item>
-        <item row="17" column="0">
-         <widget class="QLabel" name="scale_label">
-          <property name="text">
-           <string>Scale</string>
-          </property>
-          <property name="textFormat">
-           <enum>Qt::PlainText</enum>
-          </property>
-          <property name="buddy">
-           <cstring>x_scale_spinbox</cstring>
-          </property>
-         </widget>
         </item>
         <item row="17" column="1">
          <layout class="QHBoxLayout" name="scale_layout">
@@ -668,6 +753,9 @@
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="x_scale_spinbox">
+            <property name="toolTip">
+             <string>The multiplier applied to the X-axis after offsetting</string>
+            </property>
             <property name="decimals">
              <number>3</number>
             </property>
@@ -706,6 +794,9 @@
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="y_scale_spinbox">
+            <property name="toolTip">
+             <string>The multiplier applied to the Y-axis after offsetting</string>
+            </property>
             <property name="decimals">
              <number>3</number>
             </property>
@@ -730,6 +821,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>If checked, the axis scales will be made equal</string>
             </property>
             <property name="text">
              <string>Lock</string>
@@ -773,6 +867,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>If checked, a grid will be overlaid over the image</string>
+              </property>
               <property name="text">
                <string>Grid</string>
               </property>
@@ -806,6 +903,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>If checked, a histogram of counts will be displayed below the image</string>
+              </property>
               <property name="text">
                <string>Histogram</string>
               </property>
@@ -813,6 +913,9 @@
             </item>
             <item>
              <widget class="QSpinBox" name="histogram_bins_spinbox">
+              <property name="toolTip">
+               <string>The number of bins to use in the count histogram</string>
+              </property>
               <property name="minimum">
                <number>2</number>
               </property>
@@ -860,6 +963,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="colorbar_check">
+            <property name="toolTip">
+             <string>If checked, a color-bar showing the map of counts to colors will be displayed below the image (and below the histogram, if enabled)</string>
+            </property>
             <property name="text">
              <string>Color-bar</string>
             </property>
@@ -867,10 +973,16 @@
           </item>
          </layout>
         </item>
-        <item row="11" column="0" colspan="2">
-         <widget class="Line" name="axes_line">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+        <item row="17" column="0">
+         <widget class="QLabel" name="scale_label">
+          <property name="text">
+           <string>Scale</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="buddy">
+           <cstring>x_scale_spinbox</cstring>
           </property>
          </widget>
         </item>
@@ -902,6 +1014,7 @@
        <zorder>offset_label</zorder>
        <zorder>display_label</zorder>
        <zorder>axes_line</zorder>
+       <zorder></zorder>
       </widget>
      </widget>
     </widget>

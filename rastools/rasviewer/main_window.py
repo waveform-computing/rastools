@@ -19,7 +19,11 @@
 """Module implementing the rasviewer main window"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import os
 
@@ -78,6 +82,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
         self.ui.export_document_action.triggered.connect(self.export_document)
+        self.ui.print_action.triggered.connect(self.print_file)
         self.ui.zoom_in_action.triggered.connect(self.zoom_in)
         self.ui.zoom_in_action.setIcon(QtGui.QIcon.fromTheme('zoom-in'))
         self.ui.zoom_out_action.triggered.connect(self.zoom_out)
@@ -119,6 +124,16 @@ class MainWindow(QtGui.QMainWindow):
     def close_file(self):
         "Handler for the File/Close action"
         self.ui.mdi_area.currentSubWindow().close()
+
+    def print_file(self):
+        "Handler for the File/Print action"
+        printer = QtGui.QPrinter(QtGui.QPrinter.HighResolution)
+        dialog = QtGui.QPrintDialog(printer, self)
+        dialog.setOptions(
+            QtGui.QAbstractPrintDialog.PrintToFile |
+            QtGui.QAbstractPrintDialog.PrintShowPageSize)
+        if dialog.exec_():
+            pass
 
     def zoom_in(self):
         "Handler for the View/Zoom In action"
@@ -299,6 +314,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def window_changed(self, window):
         "Called when the MDI child window changes"
+        self.ui.print_action.setEnabled(window is not None)
         self.ui.close_action.setEnabled(window is not None)
         self.ui.export_menu.setEnabled(window is not None)
         self.ui.export_image_action.setEnabled(window is not None)

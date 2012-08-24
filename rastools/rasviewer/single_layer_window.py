@@ -216,8 +216,10 @@ class SingleLayerWindow(QtGui.QWidget):
         if (self.image_axes and
                 (event.inaxes == self.image_axes) and
                 (event.xdata is not None)):
-            self.window().ui.x_label.setText('X: {0:.0f}'.format(event.xdata))
-            self.window().ui.y_label.setText('Y: {0:.0f}'.format(event.ydata))
+            self.window().ui.x_label.setText(
+                'X: {0:d}'.format(int(event.xdata)))
+            self.window().ui.y_label.setText(
+                'Y: {0:d}'.format(int(event.ydata)))
             try:
                 self.window().ui.value_label.setText(
                     'Value: {0:.2f}'.format(
@@ -808,9 +810,8 @@ Value range: {range_from} to {range_to}""")
                     colorbar_box.height -
                     title_box.height -
                     histogram_box.height -
-                    (
-                        separator if self.colorbar_check.isChecked()
-                        or self.histogram_check.isChecked() else 0.0) -
+                    (separator if self.colorbar_check.isChecked() else 0.0) -
+                    (separator if self.histogram_check.isChecked() else 0.0) -
                     (separator if bool(title) else 0.0)
                 )
             )
