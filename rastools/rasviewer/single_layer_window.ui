@@ -241,6 +241,9 @@
             <property name="text">
              <string>TextLabel</string>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
            </widget>
           </item>
           <item row="2" column="0">
@@ -778,6 +781,19 @@
             <item>
              <widget class="QComboBox" name="grid_style_combo"/>
             </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
           <item>
@@ -826,6 +842,19 @@
                <cstring>histogram_bins_spinbox</cstring>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>

@@ -433,6 +433,20 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="red_percentile_from_button">
+                <property name="text">
+                 <string>Set</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="red_percentile_to_button">
+                <property name="text">
+                 <string>Set</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item row="2" column="0">
@@ -450,39 +464,6 @@
             </item>
             <item row="2" column="1">
              <layout class="QGridLayout" name="red_value_layout">
-              <item row="0" column="0" colspan="4">
-               <widget class="QSlider" name="red_value_from_slider">
-                <property name="maximum">
-                 <number>0</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="4">
-               <widget class="QDoubleSpinBox" name="red_value_from_spinbox"/>
-              </item>
-              <item row="1" column="4">
-               <widget class="QDoubleSpinBox" name="red_value_to_spinbox"/>
-              </item>
-              <item row="2" column="3">
-               <widget class="QLabel" name="red_value_to_label">
-                <property name="text">
-                 <string>TextLabel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QSlider" name="red_value_to_slider">
-                <property name="maximum">
-                 <number>0</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="0">
                <widget class="QLabel" name="red_value_from_label">
                 <property name="text">
@@ -502,6 +483,42 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item row="0" column="4">
+               <widget class="QDoubleSpinBox" name="red_value_from_spinbox"/>
+              </item>
+              <item row="1" column="4">
+               <widget class="QDoubleSpinBox" name="red_value_to_spinbox"/>
+              </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QSlider" name="red_value_to_slider">
+                <property name="maximum">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QLabel" name="red_value_to_label">
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0" colspan="4">
+               <widget class="QSlider" name="red_value_from_slider">
+                <property name="maximum">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -601,6 +618,20 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="green_percentile_from_button">
+                <property name="text">
+                 <string>Set</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="green_percentile_to_button">
+                <property name="text">
+                 <string>Set</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item row="2" column="0">
@@ -618,38 +649,11 @@
             </item>
             <item row="2" column="1">
              <layout class="QGridLayout" name="green_value_layout">
-              <item row="0" column="0" colspan="4">
-               <widget class="QSlider" name="green_value_from_slider">
-                <property name="maximum">
-                 <number>0</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="4">
                <widget class="QDoubleSpinBox" name="green_value_from_spinbox"/>
               </item>
               <item row="1" column="4">
                <widget class="QDoubleSpinBox" name="green_value_to_spinbox"/>
-              </item>
-              <item row="2" column="3">
-               <widget class="QLabel" name="green_value_to_label">
-                <property name="text">
-                 <string>TextLabel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QSlider" name="green_value_to_slider">
-                <property name="maximum">
-                 <number>0</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
               </item>
               <item row="2" column="0">
                <widget class="QLabel" name="green_value_from_label">
@@ -670,6 +674,36 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item row="0" column="0" colspan="4">
+               <widget class="QSlider" name="green_value_from_slider">
+                <property name="maximum">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QSlider" name="green_value_to_slider">
+                <property name="maximum">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QLabel" name="green_value_to_label">
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -715,6 +749,16 @@
             </item>
             <item row="1" column="1">
              <layout class="QGridLayout" name="blue_percentile_layout">
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="blue_percentile_from_spinbox">
+                <property name="maximum">
+                 <double>100.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
               <item row="1" column="0">
                <widget class="QSlider" name="blue_percentile_to_slider">
                 <property name="maximum">
@@ -747,16 +791,6 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="blue_percentile_from_spinbox">
-                <property name="maximum">
-                 <double>100.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.100000000000000</double>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="0">
                <widget class="QSlider" name="blue_percentile_from_slider">
                 <property name="maximum">
@@ -770,6 +804,20 @@
                 </property>
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="blue_percentile_from_button">
+                <property name="text">
+                 <string>Set</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="blue_percentile_to_button">
+                <property name="text">
+                 <string>Set</string>
                 </property>
                </widget>
               </item>
@@ -811,6 +859,9 @@
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
                </widget>
               </item>
               <item row="1" column="0" colspan="4">
@@ -820,13 +871,6 @@
                 </property>
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="blue_value_from_label">
-                <property name="text">
-                 <string>TextLabel</string>
                 </property>
                </widget>
               </item>
@@ -842,6 +886,13 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="blue_value_from_label">
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -1095,6 +1146,19 @@
             <item>
              <widget class="QComboBox" name="grid_style_combo"/>
             </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
           <item>
@@ -1144,6 +1208,19 @@
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
          </layout>
@@ -1161,8 +1238,10 @@
   <tabstop>red_channel_combo</tabstop>
   <tabstop>red_percentile_from_slider</tabstop>
   <tabstop>red_percentile_from_spinbox</tabstop>
+  <tabstop>red_percentile_from_button</tabstop>
   <tabstop>red_percentile_to_slider</tabstop>
   <tabstop>red_percentile_to_spinbox</tabstop>
+  <tabstop>red_percentile_to_button</tabstop>
   <tabstop>red_value_from_slider</tabstop>
   <tabstop>red_value_from_spinbox</tabstop>
   <tabstop>red_value_to_slider</tabstop>
@@ -1170,8 +1249,10 @@
   <tabstop>green_channel_combo</tabstop>
   <tabstop>green_percentile_from_slider</tabstop>
   <tabstop>green_percentile_from_spinbox</tabstop>
+  <tabstop>green_percentile_from_button</tabstop>
   <tabstop>green_percentile_to_slider</tabstop>
   <tabstop>green_percentile_to_spinbox</tabstop>
+  <tabstop>green_percentile_to_button</tabstop>
   <tabstop>green_value_from_slider</tabstop>
   <tabstop>green_value_from_spinbox</tabstop>
   <tabstop>green_value_to_slider</tabstop>
@@ -1179,8 +1260,10 @@
   <tabstop>blue_channel_combo</tabstop>
   <tabstop>blue_percentile_from_slider</tabstop>
   <tabstop>blue_percentile_from_spinbox</tabstop>
+  <tabstop>blue_percentile_from_button</tabstop>
   <tabstop>blue_percentile_to_slider</tabstop>
   <tabstop>blue_percentile_to_spinbox</tabstop>
+  <tabstop>blue_percentile_to_button</tabstop>
   <tabstop>blue_value_from_slider</tabstop>
   <tabstop>blue_value_from_spinbox</tabstop>
   <tabstop>blue_value_to_slider</tabstop>

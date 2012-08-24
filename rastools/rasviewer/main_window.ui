@@ -64,6 +64,8 @@
     <addaction name="close_action"/>
     <addaction name="export_menu"/>
     <addaction name="separator"/>
+    <addaction name="print_action"/>
+    <addaction name="separator"/>
     <addaction name="quit_action"/>
    </widget>
    <widget class="QMenu" name="help_menu">
@@ -247,6 +249,20 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="print_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Print...</string>
+   </property>
+   <property name="toolTip">
+    <string>Print the current image</string>
+   </property>
+   <property name="statusTip">
+    <string>Print the current image</string>
    </property>
   </action>
  </widget>

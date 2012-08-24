@@ -57,6 +57,8 @@ class ControlSet(object):
         self.percentile_to_spinbox = kwargs['percentile_to_spinbox']
         self.percentile_from_slider = kwargs['percentile_from_slider']
         self.percentile_to_slider = kwargs['percentile_to_slider']
+        self.percentile_from_button = kwargs['percentile_from_button']
+        self.percentile_to_button = kwargs['percentile_to_button']
 
 
 class MultiLayerWindow(QtGui.QWidget):
@@ -86,7 +88,9 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_from_spinbox=self.ui.red_percentile_from_spinbox,
                 percentile_to_spinbox=self.ui.red_percentile_to_spinbox,
                 percentile_from_slider=self.ui.red_percentile_from_slider,
-                percentile_to_slider=self.ui.red_percentile_to_slider),
+                percentile_to_slider=self.ui.red_percentile_to_slider,
+                percentile_from_button=self.ui.red_percentile_from_button,
+                percentile_to_button=self.ui.red_percentile_to_button),
             ControlSet(
                 index=1,
                 prefix='green',
@@ -100,7 +104,9 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_from_spinbox=self.ui.green_percentile_from_spinbox,
                 percentile_to_spinbox=self.ui.green_percentile_to_spinbox,
                 percentile_from_slider=self.ui.green_percentile_from_slider,
-                percentile_to_slider=self.ui.green_percentile_to_slider),
+                percentile_to_slider=self.ui.green_percentile_to_slider,
+                percentile_from_button=self.ui.green_percentile_from_button,
+                percentile_to_button=self.ui.green_percentile_to_button),
             ControlSet(
                 index=2,
                 prefix='blue',
@@ -114,7 +120,9 @@ class MultiLayerWindow(QtGui.QWidget):
                 percentile_from_spinbox=self.ui.blue_percentile_from_spinbox,
                 percentile_to_spinbox=self.ui.blue_percentile_to_spinbox,
                 percentile_from_slider=self.ui.blue_percentile_from_slider,
-                percentile_to_slider=self.ui.blue_percentile_to_slider)]
+                percentile_to_slider=self.ui.blue_percentile_to_slider,
+                percentile_from_button=self.ui.blue_percentile_from_button,
+                percentile_to_button=self.ui.blue_percentile_to_button)]
         self._file = None
         self._data = None
         self._data_sorted = None
@@ -198,6 +206,8 @@ class MultiLayerWindow(QtGui.QWidget):
         self.redraw_timer.timeout.connect(self.redraw_timeout)
         for cset in self._control_sets:
             cset.channel_combo.currentIndexChanged.connect(self.channel_changed)
+            cset.percentile_from_button.clicked.connect(self.percentile_from_clicked)
+            cset.percentile_to_button.clicked.connect(self.percentile_to_clicked)
         self.ui.interpolation_combo.currentIndexChanged.connect(self.invalidate_image)
         self.ui.crop_top_spinbox.valueChanged.connect(self.crop_changed)
         self.ui.crop_left_spinbox.valueChanged.connect(self.crop_changed)
@@ -360,6 +370,18 @@ class MultiLayerWindow(QtGui.QWidget):
                     data_right,
                     data_bottom,
                 ) = self._zoom_coords
+                data_left = (
+                    (data_left / self.ui.x_scale_spinbox.value()) -
+                    self.ui.x_offset_spinbox.value())
+                data_right = (
+                    (data_right / self.ui.x_scale_spinbox.value()) -
+                    self.ui.x_offset_spinbox.value())
+                data_top = (
+                    (data_top / self.ui.y_scale_spinbox.value()) -
+                    self.ui.y_offset_spinbox.value())
+                data_bottom = (
+                    (data_bottom / self.ui.y_scale_spinbox.value()) -
+                    self.ui.y_offset_spinbox.value())
                 self.ui.crop_left_spinbox.setValue(data_left)
                 self.ui.crop_top_spinbox.setValue(data_top)
                 self.ui.crop_right_spinbox.setValue(
@@ -494,6 +516,28 @@ class MultiLayerWindow(QtGui.QWidget):
         self._current_set.value_to_slider.setValue(
             int(self._current_set.value_to_spinbox.value() * 100.0))
         self.invalidate_data_normalized()
+
+    def percentile_from_clicked(self):
+        cset_save = self._current_set
+        try:
+            value = cset_save.percentile_from_spinbox.value()
+            for cset in self._control_sets:
+                self._current_set = cset
+                cset.percentile_from_spinbox.setValue(value)
+                self.percentile_from_spinbox_changed(value)
+        finally:
+            self._current_set = cset_save
+
+    def percentile_to_clicked(self):
+        cset_save = self._current_set
+        try:
+            value = cset_save.percentile_to_spinbox.value()
+            for cset in self._control_sets:
+                self._current_set = cset
+                cset.percentile_to_spinbox.setValue(value)
+                self.percentile_to_spinbox_changed(value)
+        finally:
+            self._current_set = cset_save
 
     def value_from_slider_changed(self, value):
         "Handler for range_from_slider change event"
@@ -908,8 +952,8 @@ class MultiLayerWindow(QtGui.QWidget):
                 or self.ui.histogram_check.isChecked()
                 or bool(title)
             )
-            xmargin = 0.5 if margin_visible else 0.0
-            ymargin = 0.5 if margin_visible else 0.0
+            xmargin = 0.75 if margin_visible else 0.0
+            ymargin = 0.25 if margin_visible else 0.0
             separator = 0.3
             figure_box = BoundingBox(
                 0.0,

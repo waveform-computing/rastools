@@ -292,6 +292,18 @@ class SingleLayerWindow(QtGui.QWidget):
                     data_right,
                     data_bottom,
                 ) = self._zoom_coords
+                data_left = (
+                    (data_left / self.ui.x_scale_spinbox.value()) -
+                    self.ui.x_offset_spinbox.value())
+                data_right = (
+                    (data_right / self.ui.x_scale_spinbox.value()) -
+                    self.ui.x_offset_spinbox.value())
+                data_top = (
+                    (data_top / self.ui.y_scale_spinbox.value()) -
+                    self.ui.y_offset_spinbox.value())
+                data_bottom = (
+                    (data_bottom / self.ui.y_scale_spinbox.value()) -
+                    self.ui.y_offset_spinbox.value())
                 self.ui.crop_left_spinbox.setValue(data_left)
                 self.ui.crop_top_spinbox.setValue(data_top)
                 self.ui.crop_right_spinbox.setValue(
@@ -749,8 +761,8 @@ Value range: {range_from} to {range_to}""")
                 or self.ui.histogram_check.isChecked()
                 or bool(title)
             )
-            xmargin = 0.5 if margin_visible else 0.0
-            ymargin = 0.5 if margin_visible else 0.0
+            xmargin = 0.75 if margin_visible else 0.0
+            ymargin = 0.25 if margin_visible else 0.0
             separator = 0.3
             figure_box = BoundingBox(
                 0.0,
