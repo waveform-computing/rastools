@@ -18,7 +18,11 @@
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
