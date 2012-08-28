@@ -32,6 +32,7 @@ from PyQt4 import QtCore, QtGui, uic
 from rastools.rasviewer.open_dialog import OpenDialog
 from rastools.rasviewer.single_layer_window import SingleLayerWindow
 from rastools.rasviewer.multi_layer_window import MultiLayerWindow
+#from rastools.rasviewer.figure_canvas import FigureCanvas
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -133,7 +134,31 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QAbstractPrintDialog.PrintToFile |
             QtGui.QAbstractPrintDialog.PrintShowPageSize)
         if dialog.exec_():
-            pass
+            QtGui.QApplication.instance().setOverrideCursor(
+                QtCore.Qt.WaitCursor)
+            try:
+                widget = self.ui.mdi_area.currentSubWindow().widget()
+                save_dpi = widget.figure.get_dpi()
+                save_size = widget.canvas.size()
+                painter = QtGui.QPainter()
+                painter.begin(printer)
+                try:
+                    widget.figure.set_dpi(printer.resolution())
+                    widget.canvas.resize(printer.pageRect().size())
+                    widget.redraw_figure()
+                    painter.translate(
+                        printer.paperRect().x() + printer.pageRect().width() / 2,
+                        printer.paperRect().y() + printer.pageRect().height() / 2)
+                    painter.translate(
+                        -widget.canvas.width() / 2, -widget.canvas.height() / 2)
+                    widget.canvas.render(painter)
+                finally:
+                    painter.end()
+                    widget.figure.set_dpi(save_dpi)
+                    widget.canvas.resize(save_size)
+                    widget.redraw_figure()
+            finally:
+                QtGui.QApplication.instance().restoreOverrideCursor()
 
     def zoom_in(self):
         "Handler for the View/Zoom In action"
@@ -319,7 +344,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.export_menu.setEnabled(window is not None)
         self.ui.export_image_action.setEnabled(window is not None)
         self.ui.export_channel_action.setEnabled(window is not None)
-        self.ui.export_document_action.setEnabled(window is not None)
+        #self.ui.export_document_action.setEnabled(window is not None)
         self.ui.reset_zoom_action.setEnabled(window is not None)
         self.ui.reset_origin_action.setEnabled(window is not None)
 
