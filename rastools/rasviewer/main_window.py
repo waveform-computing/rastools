@@ -339,12 +339,16 @@ class MainWindow(QtGui.QMainWindow):
 
     def window_changed(self, window):
         "Called when the MDI child window changes"
+        if window:
+            window = window.widget()
         self.ui.print_action.setEnabled(window is not None)
         self.ui.close_action.setEnabled(window is not None)
         self.ui.export_menu.setEnabled(window is not None)
         self.ui.export_image_action.setEnabled(window is not None)
         self.ui.export_channel_action.setEnabled(window is not None)
         #self.ui.export_document_action.setEnabled(window is not None)
-        self.ui.reset_zoom_action.setEnabled(window is not None)
+        self.ui.zoom_in_action.setEnabled(window is not None and window.can_zoom_in)
+        self.ui.zoom_out_action.setEnabled(window is not None and window.can_zoom_out)
+        self.ui.reset_zoom_action.setEnabled(window is not None and window.can_zoom_out)
         self.ui.reset_origin_action.setEnabled(window is not None)
 
