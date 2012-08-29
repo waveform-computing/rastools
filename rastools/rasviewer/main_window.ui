@@ -84,6 +84,9 @@
     <addaction name="reset_zoom_action"/>
     <addaction name="reset_origin_action"/>
     <addaction name="separator"/>
+    <addaction name="zoom_mode_action"/>
+    <addaction name="pan_mode_action"/>
+    <addaction name="separator"/>
     <addaction name="status_bar_action"/>
    </widget>
    <addaction name="file_menu"/>
@@ -102,11 +105,13 @@
     <bool>false</bool>
    </attribute>
    <addaction name="open_action"/>
+   <addaction name="print_action"/>
    <addaction name="separator"/>
    <addaction name="zoom_in_action"/>
    <addaction name="zoom_out_action"/>
    <addaction name="reset_zoom_action"/>
    <addaction name="reset_origin_action"/>
+   <addaction name="separator"/>
   </widget>
   <action name="open_action">
    <property name="text">
@@ -163,6 +168,12 @@
    <property name="text">
     <string>&amp;About rasViewer</string>
    </property>
+   <property name="toolTip">
+    <string>Display information about the application</string>
+   </property>
+   <property name="statusTip">
+    <string>Display information about the application</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::AboutRole</enum>
    </property>
@@ -170,6 +181,12 @@
   <action name="about_qt_action">
    <property name="text">
     <string>About QT</string>
+   </property>
+   <property name="toolTip">
+    <string>Display information about the QT framework</string>
+   </property>
+   <property name="statusTip">
+    <string>Display information about the QT framework</string>
    </property>
    <property name="menuRole">
     <enum>QAction::AboutQtRole</enum>
@@ -204,7 +221,13 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Reset &amp;Zoom</string>
+    <string>Reset Zoom</string>
+   </property>
+   <property name="toolTip">
+    <string>Show the entire dataset (reset all crop parameters to zero)</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the entire dataset (reset all crop parameters to zero)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+1</string>
@@ -215,7 +238,13 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>&amp;Reset Origin</string>
+    <string>Reset Origin</string>
+   </property>
+   <property name="toolTip">
+    <string>Change the axis offset and scale so that the origin is at the lower left of the currently shown portion of the dataset</string>
+   </property>
+   <property name="statusTip">
+    <string>Change the axis offset and scale so that the origin is at the lower left of the currently shown portion of the dataset</string>
    </property>
   </action>
   <action name="status_bar_action">
@@ -236,6 +265,12 @@
    <property name="text">
     <string>Zoom &amp;In</string>
    </property>
+   <property name="toolTip">
+    <string>Increase the zoom by 20%</string>
+   </property>
+   <property name="statusTip">
+    <string>Increase the zoom by 20%</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl++</string>
    </property>
@@ -246,6 +281,12 @@
    </property>
    <property name="text">
     <string>Zoom &amp;Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Decrease the zoom by 20%</string>
+   </property>
+   <property name="statusTip">
+    <string>Decrease the zoom by 20%</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+-</string>
@@ -263,6 +304,46 @@
    </property>
    <property name="statusTip">
     <string>Print the current image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="zoom_mode_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Zoom Mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Click and drag on the image to select a zoom area</string>
+   </property>
+   <property name="statusTip">
+    <string>Click and drag on the image to select a zoom area</string>
+   </property>
+  </action>
+  <action name="pan_mode_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Pan Mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Click and drag the image to move the zoomed area shown</string>
+   </property>
+   <property name="statusTip">
+    <string>Click and drag the image to move the zoomed area shown</string>
    </property>
   </action>
  </widget>

@@ -83,6 +83,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
         self.ui.export_document_action.triggered.connect(self.export_document)
+        self.ui.print_action.setIcon(QtGui.QIcon.fromTheme('document-print'))
         self.ui.print_action.triggered.connect(self.print_file)
         self.ui.zoom_in_action.triggered.connect(self.zoom_in)
         self.ui.zoom_in_action.setIcon(QtGui.QIcon.fromTheme('zoom-in'))
