@@ -314,14 +314,59 @@ class SubWindow(QtGui.QWidget):
         raise NotImplementedError
 
     @property
+    def zoom_factor(self):
+        "Returns the percentage by which zoom in/out will operate"
+        factor = 0.1
+        return (
+            self._file.x_size * factor,
+            self._file.y_size * factor)
+
+    @property
     def can_zoom_in(self):
         "Returns True if the image can be zoomed"
-        return False
+        width = (
+            self._file.x_size -
+            self.ui.crop_left_spinbox.value() -
+            self.ui.crop_right_spinbox.value())
+        height = (
+            self._file.y_size -
+            self.ui.crop_top_spinbox.value() -
+            self.ui.crop_bottom_spinbox.value())
+        x_factor, y_factor = self.zoom_factor
+        return (width > (x_factor * 2) and height > (y_factor * 2))
 
     @property
     def can_zoom_out(self):
         "Returns True if the image is zoomed"
-        return False
+        return (
+            self.ui.crop_left_spinbox.value() > 0
+            or self.ui.crop_right_spinbox.value() > 0
+            or self.ui.crop_top_spinbox.value() > 0
+            or self.ui.crop_bottom_spinbox.value())
+
+    def zoom_in(self):
+        "Zooms the image in by a fixed amount"
+        x_factor, y_factor = self.zoom_factor
+        self.ui.crop_left_spinbox.setValue(
+            self.ui.crop_left_spinbox.value() + x_factor)
+        self.ui.crop_right_spinbox.setValue(
+            self.ui.crop_right_spinbox.value() + x_factor)
+        self.ui.crop_top_spinbox.setValue(
+            self.ui.crop_top_spinbox.value() + y_factor)
+        self.ui.crop_bottom_spinbox.setValue(
+            self.ui.crop_bottom_spinbox.value() + y_factor)
+
+    def zoom_out(self):
+        "Zooms the image out by a fixed amount"
+        x_factor, y_factor = self.zoom_factor
+        self.ui.crop_left_spinbox.setValue(
+            max(0.0, self.ui.crop_left_spinbox.value() - x_factor))
+        self.ui.crop_right_spinbox.setValue(
+            max(0.0, self.ui.crop_right_spinbox.value() + x_factor))
+        self.ui.crop_top_spinbox.setValue(
+            max(0.0, self.ui.crop_top_spinbox.value() + y_factor))
+        self.ui.crop_bottom_spinbox.setValue(
+            max(0.0, self.ui.crop_bottom_spinbox.value() + y_factor))
 
     def reset_zoom(self):
         "Handler for reset_zoom_action triggered event"
