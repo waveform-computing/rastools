@@ -95,6 +95,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.status_bar_action.triggered.connect(self.toggle_status)
         self.ui.view_menu.aboutToShow.connect(self.update_status)
 
+    @property
+    def sub_widget(self):
+        "Returns the widget shown in the current sub-window"
+        if self.ui.mdi_area.currentSubWindow():
+            return self.ui.mdi_area.currentSubWindow().widget()
+        else:
+            return None
+
     def close(self):
         "Called when the window is closed"
         super(MainWindow, self).close()
@@ -118,6 +126,7 @@ class MainWindow(QtGui.QMainWindow):
                     window = self.ui.mdi_area.addSubWindow(
                         SingleLayerWindow(dialog.data_file, dialog.channel_file))
                 window.show()
+                window.widget().cropChanged.connect(self.crop_changed)
             except KeyboardInterrupt:
                 if window is not None:
                     window.close()
@@ -137,45 +146,44 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
-                widget = self.ui.mdi_area.currentSubWindow().widget()
-                save_dpi = widget.figure.get_dpi()
-                save_size = widget.canvas.size()
+                save_dpi = self.sub_widget.figure.get_dpi()
+                save_size = self.sub_widget.canvas.size()
                 painter = QtGui.QPainter()
                 painter.begin(printer)
                 try:
-                    widget.figure.set_dpi(printer.resolution())
-                    widget.canvas.resize(printer.pageRect().size())
-                    widget.redraw_figure()
+                    self.sub_widget.figure.set_dpi(printer.resolution())
+                    self.sub_widget.canvas.resize(printer.pageRect().size())
+                    self.sub_widget.redraw_figure()
                     painter.translate(
                         printer.paperRect().x() + printer.pageRect().width() / 2,
                         printer.paperRect().y() + printer.pageRect().height() / 2)
                     painter.translate(
-                        -widget.canvas.width() / 2, -widget.canvas.height() / 2)
-                    widget.canvas.render(painter)
+                        -self.sub_widget.canvas.width() / 2,
+                        -self.sub_widget.canvas.height() / 2)
+                    self.sub_widget.canvas.render(painter)
                 finally:
                     painter.end()
-                    widget.figure.set_dpi(save_dpi)
-                    widget.canvas.resize(save_size)
-                    widget.redraw_figure()
+                    self.sub_widget.figure.set_dpi(save_dpi)
+                    self.sub_widget.canvas.resize(save_size)
+                    self.sub_widget.redraw_figure()
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
 
     def zoom_in(self):
         "Handler for the View/Zoom In action"
-        pass
+        self.sub_widget.zoom_in()
 
     def zoom_out(self):
         "Handler for the View/Zoom Out action"
-        pass
+        self.sub_widget.zoom_out()
 
     def reset_zoom(self):
         "Handler for the View/Reset Zoom action"
-        self.ui.mdi_area.currentSubWindow().widget().reset_zoom()
+        self.sub_widget.reset_zoom()
 
     def reset_origin(self):
         "Handler for the View/Reset Origin action"
-        self.ui.mdi_area.currentSubWindow().widget().reset_origin()
-        pass
+        self.sub_widget.reset_origin()
 
     def update_status(self):
         "Called to update the status_bar_action check state"
@@ -264,7 +272,7 @@ class MainWindow(QtGui.QMainWindow):
                 # extension which we append to the filename
                 (method, ext) = filter_map[filter_]
                 filename = filename + ext
-            fig = self.ui.mdi_area.currentSubWindow().widget().figure
+            fig = self.sub_widget.figure
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
@@ -320,15 +328,14 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 (cls, ext) = filter_map[filter_]
                 filename = filename + ext
-            mdi_window = self.ui.mdi_area.currentSubWindow().widget()
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
-                data = mdi_window.data_cropped
-                start, finish = mdi_window.data_range
+                data = self.sub_widget.data_cropped
+                start, finish = self.sub_widget.data_range
                 data[data < start] = start
                 data[data > finish] = finish
-                cls(filename, mdi_window.channel).write(data)
+                cls(filename, self.sub_widget.channel).write(data)
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
 
@@ -337,18 +344,24 @@ class MainWindow(QtGui.QMainWindow):
         # XXX Placeholder
         pass
 
+    def crop_changed(self):
+        "Called when the crop in a sub-window changes"
+        self.update_actions()
+
     def window_changed(self, window):
         "Called when the MDI child window changes"
-        if window:
-            window = window.widget()
-        self.ui.print_action.setEnabled(window is not None)
-        self.ui.close_action.setEnabled(window is not None)
-        self.ui.export_menu.setEnabled(window is not None)
-        self.ui.export_image_action.setEnabled(window is not None)
-        self.ui.export_channel_action.setEnabled(window is not None)
-        #self.ui.export_document_action.setEnabled(window is not None)
-        self.ui.zoom_in_action.setEnabled(window is not None and window.can_zoom_in)
-        self.ui.zoom_out_action.setEnabled(window is not None and window.can_zoom_out)
-        self.ui.reset_zoom_action.setEnabled(window is not None and window.can_zoom_out)
-        self.ui.reset_origin_action.setEnabled(window is not None)
+        self.update_actions()
+
+    def update_actions(self):
+        "Called to update the main window actions"
+        self.ui.print_action.setEnabled(self.sub_widget is not None)
+        self.ui.close_action.setEnabled(self.sub_widget is not None)
+        self.ui.export_menu.setEnabled(self.sub_widget is not None)
+        self.ui.export_image_action.setEnabled(self.sub_widget is not None)
+        self.ui.export_channel_action.setEnabled(self.sub_widget is not None)
+        #self.ui.export_document_action.setEnabled(self.sub_widget is not None)
+        self.ui.zoom_in_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_in)
+        self.ui.zoom_out_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
+        self.ui.reset_zoom_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
+        self.ui.reset_origin_action.setEnabled(self.sub_widget is not None)
 

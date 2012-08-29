@@ -42,11 +42,6 @@ from rastools.rasviewer.figure_canvas import FigureCanvas
 from rastools.rasviewer.sub_window import SubWindow
 
 
-DEFAULT_COLORMAP = 'gray'
-DEFAULT_INTERPOLATION = 'nearest'
-FIGURE_DPI = 72.0
-
-
 class SingleLayerWindow(SubWindow):
     "Document window for the single-layer view"
 
@@ -248,8 +243,9 @@ class SingleLayerWindow(SubWindow):
 
     def crop_changed(self, value=None):
         "Handler for crop_*_spinbox change event"
+        super(SingleLayerWindow, self).crop_changed(value)
         self.invalidate_data_cropped()
-        if self.channel is not None:
+        if self.data is not None:
             self.ui.value_from_label.setText(str(self.data_domain.low))
             self.ui.value_to_label.setText(str(self.data_domain.high))
             self.ui.value_from_spinbox.setRange(

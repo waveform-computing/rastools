@@ -44,10 +44,13 @@ from rastools.rasviewer.figure_canvas import FigureCanvas
 DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
+ZOOM_THRESHOLD = 49
 
 
 class SubWindow(QtGui.QWidget):
     "Base class for rasviewer document windows"
+
+    cropChanged = QtCore.pyqtSignal()
 
     def __init__(self, ui_file, data_file, channel_file=None):
         super(SubWindow, self).__init__(None)
@@ -257,8 +260,7 @@ class SubWindow(QtGui.QWidget):
             (band_right, band_bottom))
         # Ignore the drag operation until the total number of data-points in
         # the selection exceeds the threshold
-        threshold = 49
-        if (abs(data_right - data_left) * abs(data_bottom - data_top)) > threshold:
+        if (abs(data_right - data_left) * abs(data_bottom - data_top)) > ZOOM_THRESHOLD:
             self._zoom_coords = (data_left, data_top, data_right, data_bottom)
             self.window().statusBar().showMessage(
                 unicode(self.tr(
@@ -311,29 +313,21 @@ class SubWindow(QtGui.QWidget):
 
     def crop_changed(self, value=None):
         "Handler for crop_*_spinbox change event"
-        raise NotImplementedError
+        self.cropChanged.emit()
 
     @property
     def zoom_factor(self):
         "Returns the percentage by which zoom in/out will operate"
-        factor = 0.1
-        return (
-            self._file.x_size * factor,
-            self._file.y_size * factor)
+        factor = 0.2
+        height, width = self.data_cropped.shape[:2]
+        return (max(1.0, width * factor), max(1.0, height * factor))
 
     @property
     def can_zoom_in(self):
         "Returns True if the image can be zoomed"
-        width = (
-            self._file.x_size -
-            self.ui.crop_left_spinbox.value() -
-            self.ui.crop_right_spinbox.value())
-        height = (
-            self._file.y_size -
-            self.ui.crop_top_spinbox.value() -
-            self.ui.crop_bottom_spinbox.value())
+        height, width = self.data_cropped.shape[:2]
         x_factor, y_factor = self.zoom_factor
-        return (width > (x_factor * 2) and height > (y_factor * 2))
+        return (width - x_factor * 2) * (height - y_factor * 2) > ZOOM_THRESHOLD
 
     @property
     def can_zoom_out(self):
@@ -362,11 +356,11 @@ class SubWindow(QtGui.QWidget):
         self.ui.crop_left_spinbox.setValue(
             max(0.0, self.ui.crop_left_spinbox.value() - x_factor))
         self.ui.crop_right_spinbox.setValue(
-            max(0.0, self.ui.crop_right_spinbox.value() + x_factor))
+            max(0.0, self.ui.crop_right_spinbox.value() - x_factor))
         self.ui.crop_top_spinbox.setValue(
-            max(0.0, self.ui.crop_top_spinbox.value() + y_factor))
+            max(0.0, self.ui.crop_top_spinbox.value() - y_factor))
         self.ui.crop_bottom_spinbox.setValue(
-            max(0.0, self.ui.crop_bottom_spinbox.value() + y_factor))
+            max(0.0, self.ui.crop_bottom_spinbox.value() - y_factor))
 
     def reset_zoom(self):
         "Handler for reset_zoom_action triggered event"
@@ -492,6 +486,16 @@ class SubWindow(QtGui.QWidget):
                             '{0}'.format(value)
                         ])))
         self._info_dialog.show()
+
+    @property
+    def data(self):
+        "Returns the original data array"
+        raise NotImplementedError
+
+    @property
+    def data_cropped(self):
+        "Returns the data after cropping"
+        raise NotImplementedError
 
     @property
     def x_limits(self):

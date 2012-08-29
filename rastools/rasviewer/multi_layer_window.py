@@ -42,11 +42,6 @@ from rastools.rasviewer.figure_canvas import FigureCanvas
 from rastools.rasviewer.sub_window import SubWindow
 
 
-DEFAULT_COLORMAP = 'gray'
-DEFAULT_INTERPOLATION = 'nearest'
-FIGURE_DPI = 72.0
-
-
 class ControlSet(object):
     def __init__(self, index, prefix, **kwargs):
         self.index = index
@@ -377,6 +372,7 @@ class MultiLayerWindow(SubWindow):
 
     def crop_changed(self, value=None):
         "Handler for crop_*_spinbox change event"
+        super(MultiLayerWindow, self).crop_changed(value)
         self.invalidate_data_cropped()
         if self.data is not None:
             for cset in self._control_sets:
