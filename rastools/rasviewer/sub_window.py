@@ -45,6 +45,8 @@ DEFAULT_COLORMAP = 'gray'
 DEFAULT_INTERPOLATION = 'nearest'
 FIGURE_DPI = 72.0
 ZOOM_THRESHOLD = 49
+REDRAW_TIMEOUT_DEFAULT = 200
+REDRAW_TIMEOUT_PAN = 100
 
 
 class SubWindow(QtGui.QWidget):
@@ -109,9 +111,11 @@ class SubWindow(QtGui.QWidget):
     def _config_interface(self):
         "Called by __init__ to configure the interface elements"
         self._info_dialog = None
+        self._drag_start = None
+        self._pan_id = None
+        self._pan_crop = None
         self._zoom_id = None
-        self._zoom_start = None
-        self._zoom_coords = None
+        self._zoom_rect = None
         # Create a figure in a tab for the file
         self.figure = Figure(figsize=(5.0, 5.0), dpi=FIGURE_DPI,
             facecolor='w', edgecolor='w')
@@ -123,7 +127,7 @@ class SubWindow(QtGui.QWidget):
         self.ui.splitter.addWidget(self.canvas)
         # Set up the redraw timer
         self.redraw_timer = QtCore.QTimer()
-        self.redraw_timer.setInterval(200)
+        self.redraw_timer.setInterval(REDRAW_TIMEOUT_DEFAULT)
         self.redraw_timer.timeout.connect(self.redraw_timeout)
         # Set up the limits of the crop spinners
         self.ui.crop_left_spinbox.setRange(0, self._file.x_size - 1)
@@ -232,19 +236,41 @@ class SubWindow(QtGui.QWidget):
             return
         if event.inaxes != self.image_axes:
             return
-        self._zoom_start = Coord(event.x, event.y)
-        self._zoom_id = self.canvas.mpl_connect(
-            'motion_notify_event', self.canvas_zoom_motion)
+        self._drag_start = Coord(event.x, event.y)
+        if self.window().ui.zoom_mode_action.isChecked():
+            self._zoom_id = self.canvas.mpl_connect(
+                'motion_notify_event', self.canvas_zoom_motion)
+        elif self.window().ui.pan_mode_action.isChecked():
+            self._pan_id = self.canvas.mpl_connect(
+                'motion_notify_event', self.canvas_pan_motion)
+            self._pan_rect = (
+                self.ui.crop_left_spinbox.value(),
+                self.ui.crop_top_spinbox.value(),
+                self.ui.crop_right_spinbox.value(),
+                self.ui.crop_bottom_spinbox.value())
+            self.redraw_timer.setInterval(REDRAW_TIMEOUT_PAN)
+
+    def canvas_pan_motion(self, event):
+        "Handler for mouse movement in pan mode"
+        inverse = self.image_axes.transData.inverted()
+        start_x, start_y = inverse.transform_point(self._drag_start)
+        end_x, end_y = inverse.transform_point((event.x, event.y))
+        delta = Coord(int(start_x - end_x), int(start_y - end_y))
+        self.window().statusBar().showMessage('Move by ({}, {})'.format(delta.x, delta.y))
+        self.ui.crop_left_spinbox.setValue(self._pan_rect[0] + delta.x)
+        self.ui.crop_right_spinbox.setValue(self._pan_rect[2] - delta.x)
+        self.ui.crop_top_spinbox.setValue(self._pan_rect[1] + delta.y)
+        self.ui.crop_bottom_spinbox.setValue(self._pan_rect[3] - delta.y)
 
     def canvas_zoom_motion(self, event):
-        "Handler for mouse movement over graph canvas (after press)"
+        "Handler for mouse movement in zoom mode"
         # Calculate the display coordinates of the selection
         box_left, box_top, box_right, box_bottom = self.image_axes.bbox.extents
         height = self.figure.bbox.height
-        band_left   = max(min(self._zoom_start.x, event.x), box_left)
-        band_right  = min(max(self._zoom_start.x, event.x), box_right)
-        band_top    = max(min(self._zoom_start.y, event.y), box_top)
-        band_bottom = min(max(self._zoom_start.y, event.y), box_bottom)
+        band_left   = max(min(self._drag_start.x, event.x), box_left)
+        band_right  = min(max(self._drag_start.x, event.x), box_right)
+        band_top    = max(min(self._drag_start.y, event.y), box_top)
+        band_bottom = min(max(self._drag_start.y, event.y), box_bottom)
         rectangle = (
             band_left,
             height - band_top,
@@ -261,7 +287,7 @@ class SubWindow(QtGui.QWidget):
         # Ignore the drag operation until the total number of data-points in
         # the selection exceeds the threshold
         if (abs(data_right - data_left) * abs(data_bottom - data_top)) > ZOOM_THRESHOLD:
-            self._zoom_coords = (data_left, data_top, data_right, data_bottom)
+            self._zoom_rect = (data_left, data_top, data_right, data_bottom)
             self.window().statusBar().showMessage(
                 unicode(self.tr(
                     'Crop from ({left:.0f}, {top:.0f}) to '
@@ -270,22 +296,27 @@ class SubWindow(QtGui.QWidget):
                         right=data_right, bottom=data_bottom))
             self.canvas.drawRectangle(rectangle)
         else:
-            self._zoom_coords = None
+            self._zoom_rect = None
             self.window().statusBar().clearMessage()
             self.canvas.draw()
 
     def canvas_release(self, event):
         "Handler for mouse release on graph canvas"
+        if self._pan_id:
+            self.window().statusBar().clearMessage()
+            self.canvas.mpl_disconnect(self._pan_id)
+            self._pan_id = None
+            self.redraw_timer.setInterval(REDRAW_TIMEOUT_DEFAULT)
         if self._zoom_id:
             self.window().statusBar().clearMessage()
             self.canvas.mpl_disconnect(self._zoom_id)
             self._zoom_id = None
-            if self._zoom_coords:
+            if self._zoom_rect:
                 (   data_left,
                     data_top,
                     data_right,
                     data_bottom,
-                ) = self._zoom_coords
+                ) = self._zoom_rect
                 data_left = (
                     (data_left / self.ui.x_scale_spinbox.value()) -
                     self.ui.x_offset_spinbox.value())

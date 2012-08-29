@@ -93,6 +93,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.reset_zoom_action.setIcon(QtGui.QIcon.fromTheme('zoom-original'))
         self.ui.reset_origin_action.triggered.connect(self.reset_origin)
         self.ui.reset_origin_action.setIcon(QtGui.QIcon.fromTheme('go-home'))
+        self.ui.zoom_mode_action.triggered.connect(self.zoom_mode)
+        self.ui.pan_mode_action.triggered.connect(self.pan_mode)
         self.ui.status_bar_action.triggered.connect(self.toggle_status)
         self.ui.view_menu.aboutToShow.connect(self.update_status)
 
@@ -138,6 +140,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def print_file(self):
         "Handler for the File/Print action"
+        # Construct a printer and a dialog to configure it
         printer = QtGui.QPrinter(QtGui.QPrinter.HighResolution)
         dialog = QtGui.QPrintDialog(printer, self)
         dialog.setOptions(
@@ -147,14 +150,19 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
+                # Save the existing image size and DPI and construct a painter
+                # to draw onto the printer
                 save_dpi = self.sub_widget.figure.get_dpi()
                 save_size = self.sub_widget.canvas.size()
                 painter = QtGui.QPainter()
                 painter.begin(printer)
                 try:
+                    # Set the image size and DPI to the printer and call the
+                    # redraw_figure() method to refresh the bounding boxes
                     self.sub_widget.figure.set_dpi(printer.resolution())
                     self.sub_widget.canvas.resize(printer.pageRect().size())
                     self.sub_widget.redraw_figure()
+                    # Center the image on the page and render it
                     painter.translate(
                         printer.paperRect().x() + printer.pageRect().width() / 2,
                         printer.paperRect().y() + printer.pageRect().height() / 2)
@@ -164,6 +172,7 @@ class MainWindow(QtGui.QMainWindow):
                     self.sub_widget.canvas.render(painter)
                 finally:
                     painter.end()
+                    # Restore everything we tweaked for printing
                     self.sub_widget.figure.set_dpi(save_dpi)
                     self.sub_widget.canvas.resize(save_size)
                     self.sub_widget.redraw_figure()
@@ -185,6 +194,16 @@ class MainWindow(QtGui.QMainWindow):
     def reset_origin(self):
         "Handler for the View/Reset Origin action"
         self.sub_widget.reset_origin()
+
+    def zoom_mode(self):
+        "Handler for the View/Zoom Mode action"
+        self.ui.zoom_mode_action.setChecked(True)
+        self.ui.pan_mode_action.setChecked(False)
+
+    def pan_mode(self):
+        "Handler for the View/Pan Mode action"
+        self.ui.zoom_mode_action.setChecked(False)
+        self.ui.pan_mode_action.setChecked(True)
 
     def update_status(self):
         "Called to update the status_bar_action check state"
@@ -365,4 +384,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.zoom_out_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
         self.ui.reset_zoom_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
         self.ui.reset_origin_action.setEnabled(self.sub_widget is not None)
+        self.ui.zoom_mode_action.setEnabled(self.sub_widget is not None)
+        self.ui.pan_mode_action.setEnabled(self.sub_widget is not None)
 
