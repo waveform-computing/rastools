@@ -35,17 +35,22 @@ from rastools.rasviewer.multi_layer_window import MultiLayerWindow
 #from rastools.rasviewer.figure_canvas import FigureCanvas
 
 
+MODULE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+
+def get_icon(icon_id):
+    "Returns an icon from the system theme or our fallback theme if required"
+    return QtGui.QIcon.fromTheme(icon_id,
+        QtGui.QIcon(os.path.join(
+            MODULE_DIR, 'fallback-theme', icon_id + '.png')))
+
+
 class MainWindow(QtGui.QMainWindow):
     "The rasviewer main window"
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.ui = uic.loadUi(
-            os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    'main_window.ui'
-                )), self)
+        self.ui = uic.loadUi(os.path.join(MODULE_DIR, 'main_window.ui'), self)
         # Read configuration
         self.settings = QtCore.QSettings()
         self.settings.beginGroup('main_window')
@@ -72,28 +77,32 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().addWidget(self.ui.blue_label)
         # Connect up signals to methods
         self.ui.mdi_area.subWindowActivated.connect(self.window_changed)
-        self.ui.quit_action.setIcon(QtGui.QIcon.fromTheme('application-exit'))
+        self.ui.quit_action.setIcon(get_icon('application-exit'))
         self.ui.about_action.triggered.connect(self.about)
-        self.ui.about_action.setIcon(QtGui.QIcon.fromTheme('help-about'))
+        self.ui.about_action.setIcon(get_icon('help-about'))
         self.ui.about_qt_action.triggered.connect(self.about_qt)
-        self.ui.about_qt_action.setIcon(QtGui.QIcon.fromTheme('help-about'))
-        self.ui.open_action.setIcon(QtGui.QIcon.fromTheme('document-open'))
+        self.ui.about_qt_action.setIcon(get_icon('help-about'))
+        self.ui.open_action.setIcon(get_icon('document-open'))
         self.ui.open_action.triggered.connect(self.open_file)
         self.ui.close_action.triggered.connect(self.close_file)
         self.ui.export_image_action.triggered.connect(self.export_image)
         self.ui.export_channel_action.triggered.connect(self.export_channel)
         self.ui.export_document_action.triggered.connect(self.export_document)
-        self.ui.print_action.setIcon(QtGui.QIcon.fromTheme('document-print'))
+        self.ui.print_action.setIcon(get_icon('document-print'))
         self.ui.print_action.triggered.connect(self.print_file)
+        self.ui.zoom_in_action.setIcon(get_icon('zoom-in'))
         self.ui.zoom_in_action.triggered.connect(self.zoom_in)
-        self.ui.zoom_in_action.setIcon(QtGui.QIcon.fromTheme('zoom-in'))
+        self.ui.zoom_out_action.setIcon(get_icon('zoom-out'))
         self.ui.zoom_out_action.triggered.connect(self.zoom_out)
-        self.ui.zoom_out_action.setIcon(QtGui.QIcon.fromTheme('zoom-out'))
+        self.ui.reset_zoom_action.setIcon(get_icon('zoom-original'))
         self.ui.reset_zoom_action.triggered.connect(self.reset_zoom)
-        self.ui.reset_zoom_action.setIcon(QtGui.QIcon.fromTheme('zoom-original'))
-        self.ui.reset_origin_action.triggered.connect(self.reset_origin)
-        self.ui.reset_origin_action.setIcon(QtGui.QIcon.fromTheme('go-home'))
+        self.ui.reset_axes_action.setIcon(get_icon('reset-axes'))
+        self.ui.reset_axes_action.triggered.connect(self.reset_axes)
+        self.ui.home_axes_action.setIcon(get_icon('home-axes'))
+        self.ui.home_axes_action.triggered.connect(self.home_axes)
+        self.ui.zoom_mode_action.setIcon(get_icon('zoom-mode'))
         self.ui.zoom_mode_action.triggered.connect(self.zoom_mode)
+        self.ui.pan_mode_action.setIcon(get_icon('pan-mode'))
         self.ui.pan_mode_action.triggered.connect(self.pan_mode)
         self.ui.status_bar_action.triggered.connect(self.toggle_status)
         self.ui.view_menu.aboutToShow.connect(self.update_status)
@@ -191,9 +200,13 @@ class MainWindow(QtGui.QMainWindow):
         "Handler for the View/Reset Zoom action"
         self.sub_widget.reset_zoom()
 
-    def reset_origin(self):
-        "Handler for the View/Reset Origin action"
-        self.sub_widget.reset_origin()
+    def reset_axes(self):
+        "Handler for the View/Reset Axes action"
+        self.sub_widget.reset_axes()
+
+    def home_axes(self):
+        "Handler for the View/Home Axes action"
+        self.sub_widget.home_axes()
 
     def zoom_mode(self):
         "Handler for the View/Zoom Mode action"
@@ -383,7 +396,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.zoom_in_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_in)
         self.ui.zoom_out_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
         self.ui.reset_zoom_action.setEnabled(self.sub_widget is not None and self.sub_widget.can_zoom_out)
-        self.ui.reset_origin_action.setEnabled(self.sub_widget is not None)
+        self.ui.reset_axes_action.setEnabled(self.sub_widget is not None)
+        self.ui.home_axes_action.setEnabled(self.sub_widget is not None)
         self.ui.zoom_mode_action.setEnabled(self.sub_widget is not None)
         self.ui.pan_mode_action.setEnabled(self.sub_widget is not None)
 

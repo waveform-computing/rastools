@@ -36,7 +36,7 @@ import matplotlib.cm
 import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.collections import Coord, Range, BoundingBox
+from rastools.collections import Crop, Coord, Range, BoundingBox
 from rastools.rasviewer.progress_dialog import ProgressDialog
 from rastools.rasviewer.figure_canvas import FigureCanvas
 
@@ -220,10 +220,15 @@ class SubWindow(QtGui.QWidget):
     def canvas_popup(self, pos):
         "Handler for canvas context menu event"
         menu = QtGui.QMenu(self)
+        menu.addAction(self.window().ui.zoom_mode_action)
+        menu.addAction(self.window().ui.pan_mode_action)
+        menu.addSeparator()
         menu.addAction(self.window().ui.zoom_in_action)
         menu.addAction(self.window().ui.zoom_out_action)
         menu.addAction(self.window().ui.reset_zoom_action)
-        menu.addAction(self.window().ui.reset_origin_action)
+        menu.addSeparator()
+        menu.addAction(self.window().ui.home_axes_action)
+        menu.addAction(self.window().ui.reset_axes_action)
         menu.popup(self.canvas.mapToGlobal(pos))
 
     def canvas_motion(self, event):
@@ -243,11 +248,11 @@ class SubWindow(QtGui.QWidget):
         elif self.window().ui.pan_mode_action.isChecked():
             self._pan_id = self.canvas.mpl_connect(
                 'motion_notify_event', self.canvas_pan_motion)
-            self._pan_rect = (
-                self.ui.crop_left_spinbox.value(),
-                self.ui.crop_top_spinbox.value(),
-                self.ui.crop_right_spinbox.value(),
-                self.ui.crop_bottom_spinbox.value())
+            self._pan_crop = Crop(
+                top=self.ui.crop_top_spinbox.value(),
+                left=self.ui.crop_left_spinbox.value(),
+                bottom=self.ui.crop_bottom_spinbox.value(),
+                right=self.ui.crop_right_spinbox.value())
             self.redraw_timer.setInterval(REDRAW_TIMEOUT_PAN)
 
     def canvas_pan_motion(self, event):
@@ -256,11 +261,12 @@ class SubWindow(QtGui.QWidget):
         start_x, start_y = inverse.transform_point(self._drag_start)
         end_x, end_y = inverse.transform_point((event.x, event.y))
         delta = Coord(int(start_x - end_x), int(start_y - end_y))
-        self.window().statusBar().showMessage('Move by ({}, {})'.format(delta.x, delta.y))
-        self.ui.crop_left_spinbox.setValue(self._pan_rect[0] + delta.x)
-        self.ui.crop_right_spinbox.setValue(self._pan_rect[2] - delta.x)
-        self.ui.crop_top_spinbox.setValue(self._pan_rect[1] + delta.y)
-        self.ui.crop_bottom_spinbox.setValue(self._pan_rect[3] - delta.y)
+        if (self._pan_crop.left + delta.x >= 0) and (self._pan_crop.right - delta.x >= 0):
+            self.ui.crop_left_spinbox.setValue(self._pan_crop.left + delta.x)
+            self.ui.crop_right_spinbox.setValue(self._pan_crop.right - delta.x)
+        if (self._pan_crop.top + delta.y >= 0) and (self._pan_crop.bottom - delta.y >= 0):
+            self.ui.crop_top_spinbox.setValue(self._pan_crop.top + delta.y)
+            self.ui.crop_bottom_spinbox.setValue(self._pan_crop.bottom - delta.y)
 
     def canvas_zoom_motion(self, event):
         "Handler for mouse movement in zoom mode"
@@ -400,8 +406,17 @@ class SubWindow(QtGui.QWidget):
         self.ui.crop_top_spinbox.setValue(0)
         self.ui.crop_bottom_spinbox.setValue(0)
 
-    def reset_origin(self):
-        "Handler for reset_origin_action triggered event"
+    def reset_axes(self):
+        "Handler for the reset_axes_action triggered event"
+        self.ui.scale_locked_check.setChecked(True)
+        self.ui.x_scale_spinbox.setValue(1.0)
+        self.ui.y_scale_spinbox.setValue(1.0)
+        self.ui.offset_locked_check.setChecked(True)
+        self.ui.x_offset_spinbox.setValue(0.0)
+        self.ui.y_offset_spinbox.setValue(0.0)
+
+    def home_axes(self):
+        "Handler for home_axes_action triggered event"
         self.ui.scale_locked_check.setChecked(True)
         self.ui.x_scale_spinbox.setValue(1.0)
         self.ui.y_scale_spinbox.setValue(1.0)

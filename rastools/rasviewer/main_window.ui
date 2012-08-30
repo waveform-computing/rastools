@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
+    <width>741</width>
     <height>480</height>
    </rect>
   </property>
@@ -41,7 +41,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>640</width>
+     <width>741</width>
      <height>25</height>
     </rect>
    </property>
@@ -79,13 +79,15 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="zoom_mode_action"/>
+    <addaction name="pan_mode_action"/>
+    <addaction name="separator"/>
     <addaction name="zoom_in_action"/>
     <addaction name="zoom_out_action"/>
     <addaction name="reset_zoom_action"/>
-    <addaction name="reset_origin_action"/>
     <addaction name="separator"/>
-    <addaction name="zoom_mode_action"/>
-    <addaction name="pan_mode_action"/>
+    <addaction name="home_axes_action"/>
+    <addaction name="reset_axes_action"/>
     <addaction name="separator"/>
     <addaction name="status_bar_action"/>
    </widget>
@@ -107,11 +109,15 @@
    <addaction name="open_action"/>
    <addaction name="print_action"/>
    <addaction name="separator"/>
+   <addaction name="zoom_mode_action"/>
+   <addaction name="pan_mode_action"/>
+   <addaction name="separator"/>
    <addaction name="zoom_in_action"/>
    <addaction name="zoom_out_action"/>
    <addaction name="reset_zoom_action"/>
-   <addaction name="reset_origin_action"/>
    <addaction name="separator"/>
+   <addaction name="home_axes_action"/>
+   <addaction name="reset_axes_action"/>
   </widget>
   <action name="open_action">
    <property name="text">
@@ -233,18 +239,18 @@
     <string>Ctrl+1</string>
    </property>
   </action>
-  <action name="reset_origin_action">
+  <action name="reset_axes_action">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Reset Origin</string>
+    <string>Reset Axes</string>
    </property>
    <property name="toolTip">
-    <string>Change the axis offset and scale so that the origin is at the lower left of the currently shown portion of the dataset</string>
+    <string>Reset the axes scale and offset to their defaults</string>
    </property>
    <property name="statusTip">
-    <string>Change the axis offset and scale so that the origin is at the lower left of the currently shown portion of the dataset</string>
+    <string>Reset the axes scale and offset to their defaults</string>
    </property>
   </action>
   <action name="status_bar_action">
@@ -328,6 +334,9 @@
    <property name="statusTip">
     <string>Click and drag on the image to select a zoom area</string>
    </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
   </action>
   <action name="pan_mode_action">
    <property name="checkable">
@@ -344,6 +353,23 @@
    </property>
    <property name="statusTip">
     <string>Click and drag the image to move the zoomed area shown</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+  </action>
+  <action name="home_axes_action">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Home Axes</string>
+   </property>
+   <property name="toolTip">
+    <string>Change the axis offset and scale so that the origin is at the upper left of the currently shown portion of the dataset</string>
+   </property>
+   <property name="statusTip">
+    <string>Change the axis offset and scale so that the origin is at the upper left of the currently shown portion of the dataset</string>
    </property>
   </action>
  </widget>
