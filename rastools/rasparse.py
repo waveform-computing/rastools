@@ -152,6 +152,7 @@ class RasParser(object):
     #   dump_file_test(argv[1]);
     # }
     datetime_format = '%a %b %d %H:%M:%S %Y'
+    char_encoding = 'ascii'
     header_version = 1
     header_string = 'Raster Scan V.0.1'
     header_struct = struct.Struct(str(
@@ -249,7 +250,7 @@ class RasParser(object):
         # software does so I'm loathe to do different despite it being an
         # obvious bug. Anyway, one should avoid using the first channel of data
         # in a RAS file as its first value will definitely be incorrect
-        if not self.header['version_string'].startswith('Raster Scan'):
+        if not self.header['version_string'].startswith(b'Raster Scan'):
             raise RasFileError('This does not appear to be a QSCAN RAS file')
         if self.version != self.header_version:
             raise RasFileError(
@@ -258,24 +259,28 @@ class RasParser(object):
         # Right strip the various string fields
         strip_chars = '\t\r\n \0'
         self.filename = self._file.name
-        self.filename_root = self.filename_root.rstrip(strip_chars)
+        self.filename_root = self.filename_root.decode(
+                self.char_encoding).rstrip(strip_chars)
         for field in (
                 'version_string',
                 'x_motor',
                 'y_motor',
                 'region_filename',
                 'filename_original'):
-            self.header[field] = self.header[field].rstrip(strip_chars)
+            self.header[field] = self.header[field].decode(
+                    self.char_encoding).rstrip(strip_chars)
         # Convert comments to a simple string
         self.comments = '\n'.join(
-            line.rstrip(strip_chars)
+            line.decode(self.char_encoding).rstrip(strip_chars)
             for line in self.comments
         )
         # Convert timestamps to a sensible format
         self.start_time = dt.datetime.strptime(
-            self.start_time.rstrip(strip_chars), self.datetime_format)
+            self.start_time.decode(
+                self.char_encoding).rstrip(strip_chars), self.datetime_format)
         self.stop_time = dt.datetime.strptime(
-            self.stop_time.rstrip(strip_chars), self.datetime_format)
+            self.stop_time.decode(
+                self.char_encoding).rstrip(strip_chars), self.datetime_format)
         self.channels = RasChannels(self, channels_file)
         if not kwargs.get('delay_load', True):
             self.channels._read_data()
@@ -331,7 +336,7 @@ class RasChannels(object):
                 self._file = channels_file
             logging.debug('Parsing channels file')
             for line_num, line in enumerate(self._file):
-                line = line.strip()
+                line = line.decode('utf-8').strip()
                 # Ignore empty lines and #-prefixed comment lines
                 if line and not line.startswith('#'):
                     try:

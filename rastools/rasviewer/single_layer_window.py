@@ -293,7 +293,7 @@ Value range: {range_from} to {range_to}""")
         # to several annoying exceptions...
         if self.ui and (self.ui.channel_combo.currentIndex() != -1):
             return self.ui.channel_combo.itemData(
-                self.ui.channel_combo.currentIndex()).toPyObject()
+                self.ui.channel_combo.currentIndex())
 
     @property
     def data(self):
