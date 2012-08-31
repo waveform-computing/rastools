@@ -24,8 +24,11 @@ from __future__ import (
     division,
     )
 
+import os
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
+
+MODULE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # Workaround <http://bugs.python.org/issue10945>
 import codecs
@@ -69,20 +72,29 @@ entry_points = {
 def main():
     setup(
         name                 = 'rastools',
-        version              = get_version('rastools/__init__.py'),
+        version              = get_version(os.path.join(MODULE_DIR, 'rastools/__init__.py')),
         description          = 'Tools for converting SSRL scans into images',
-        long_description     = description('README.txt'),
+        long_description     = description(os.path.join(MODULE_DIR, 'README.txt')),
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
         url                  = 'http://www.waveform.org.uk/trac/rastools/',
         packages             = find_packages(exclude=['distribute_setup', 'utils']),
-        install_requires     = ['matplotlib', 'optcomplete'],
-        extras_require       = {'XLS': ['xlwt']},
+        install_requires = [
+            # For some bizarre reason, matplotlib doesn't "require" numpy in
+            # its setup.py. The ordering below is also necessary to ensure
+            # numpy gets picked up first ... yes, it's backwards ...
+            'matplotlib',
+            'numpy'],
+        extras_require = {
+            'XLS': ['xlwt'],
+            'completion': ['optcomplete'],
+            'GUI': ['pyqt']},
         include_package_data = True,
         platforms            = 'ALL',
         zip_safe             = False,
         entry_points         = entry_points,
-        classifiers          = classifiers
+        classifiers          = classifiers,
+        use_2to3             = True,
     )
 
 if __name__ == '__main__':

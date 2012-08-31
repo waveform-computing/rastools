@@ -94,7 +94,7 @@ def expand_args(args):
                             result.append(resp_arg)
                         else:
                             result.extend(glob_arg(resp_arg))
-            except IOError, exc:
+            except IOError as exc:
                 raise optparse.OptionValueError(str(exc))
         else:
             result.append(arg)
