@@ -11,10 +11,17 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from __future__ import (
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
+
 import sys, os
 
 YEAR = 2012
-AUTHORS = [u'Dave Hughes']
+AUTHORS = ['Dave Hughes']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -43,8 +50,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'rastools'
-copyright = u'%d, %s' % (YEAR, ', '.join(AUTHORS))
+project = 'rastools'
+copyright = '%d, %s' % (YEAR, ', '.join(AUTHORS))
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -186,7 +193,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'rastools.tex', u'rastools Documentation', AUTHORS[0], 'manual', False),
+  ('index', 'rastools.tex', 'rastools Documentation', AUTHORS[0], 'manual', False),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -215,9 +222,9 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('rasinfo',    'rasinfo',    u'rasinfo utility',        AUTHORS, 1),
-    ('rasdump',    'rasdump',    u'rasdump utility',        AUTHORS, 1),
-    ('rasextract', 'rasextract', u'rasextract utility',     AUTHORS, 1),
+    ('rasinfo',    'rasinfo',    'rasinfo utility',        AUTHORS, 1),
+    ('rasdump',    'rasdump',    'rasdump utility',        AUTHORS, 1),
+    ('rasextract', 'rasextract', 'rasextract utility',     AUTHORS, 1),
 ]
 
 # If true, show URL addresses after external links.
@@ -230,7 +237,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'rastools', u'rastools Documentation', AUTHORS[0], 'rastools', 'One line description of project.', 'Miscellaneous'),
+  ('index', 'rastools', 'rastools Documentation', AUTHORS[0], 'rastools', 'One line description of project.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
