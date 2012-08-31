@@ -423,7 +423,7 @@ class MultiLayerWindow(SubWindow):
         # to several annoying exceptions...
         if self.ui and (self.ui.red_channel_combo.currentIndex() != -1):
             return self.ui.red_channel_combo.itemData(
-                self.ui.red_channel_combo.currentIndex()).toPyObject()
+                self.ui.red_channel_combo.currentIndex())
 
     @property
     def green_channel(self):
@@ -431,7 +431,7 @@ class MultiLayerWindow(SubWindow):
         # See note above about self.ui
         if self.ui and (self.ui.green_channel_combo.currentIndex() != -1):
             return self.ui.green_channel_combo.itemData(
-                self.ui.green_channel_combo.currentIndex()).toPyObject()
+                self.ui.green_channel_combo.currentIndex())
 
     @property
     def blue_channel(self):
@@ -439,7 +439,7 @@ class MultiLayerWindow(SubWindow):
         # See note above about self.ui
         if self.ui and (self.ui.blue_channel_combo.currentIndex() != -1):
             return self.ui.blue_channel_combo.itemData(
-                self.ui.blue_channel_combo.currentIndex()).toPyObject()
+                self.ui.blue_channel_combo.currentIndex())
 
     @property
     def channels(self):
