@@ -136,7 +136,7 @@ class RasDumpUtility(RasUtility):
     def list_formats(self):
         "Prints the list of supported data formats to stdout"
         sys.stdout.write('The following file formats are available:\n\n')
-        for ext in sorted(self.data_writers.iterkeys()):
+        for ext in sorted(self.data_writers.keys()):
             sys.stdout.write('%-8s - %s\n' % (ext, self.data_writers[ext][-1]))
         sys.stdout.write('\n')
 
@@ -149,7 +149,7 @@ class RasDumpUtility(RasUtility):
             self.parser.error('unknown output format "%s"' % ext)
         if options.multi and not multi_class:
             multi_ext = [
-                ext for (ext, (_, multi, _)) in self.data_writers.iteritems()
+                ext for (ext, (_, multi, _)) in self.data_writers.items()
                 if multi
             ]
             if multi_ext:

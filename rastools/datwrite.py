@@ -53,9 +53,9 @@ class DatWriter(object):
     "Single channel writer for Sam's dat format"
 
     def __init__(self, filename_or_obj, channel):
-        if isinstance(filename_or_obj, basestring):
+        try:
             self._file = open(filename_or_obj, 'w')
-        else:
+        except TypeError:
             self._file = filename_or_obj
         self._data_file = channel.parent
         self._channel = channel
@@ -65,8 +65,8 @@ class DatWriter(object):
         data_file = self._data_file
         # XXX Is there any way of getting the real coords in the case of a
         # cropped .dat file? If so, define it here...
-        x_coords = range(len(data[0]))
-        y_coords = range(len(data))
+        x_coords = list(range(len(data[0])))
+        y_coords = list(range(len(data)))
         self._file.write(DAT_HEADER.format(
             x_size=len(data[0]),
             y_size=len(data),
@@ -88,9 +88,9 @@ class DatMultiWriter(object):
     "Multi channel writer for Sam's dat format"
 
     def __init__(self, filename_or_obj, data_file):
-        if isinstance(filename_or_obj, basestring):
+        try:
             self._file = open(filename_or_obj, 'w')
-        else:
+        except TypeError:
             self._file = filename_or_obj
         self._data_file = data_file
         self._data = None
@@ -109,8 +109,8 @@ class DatMultiWriter(object):
         data_file = self._data_file
         # XXX Is there any way of getting the real coords in the case of a
         # cropped .dat file? If so, define it here...
-        x_coords = range(len(self._data[..., 0][0]))
-        y_coords = range(len(self._data[..., 0]))
+        x_coords = list(range(len(self._data[..., 0][0])))
+        y_coords = list(range(len(self._data[..., 0])))
         self._file.write(DAT_HEADER.format(
             x_size=len(self._data[..., 0][0]),
             y_size=len(self._data[..., 0]),

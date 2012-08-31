@@ -42,7 +42,7 @@ class ProgressDialog(QtGui.QDialog):
 
     def _get_task(self):
         "Getter for task property"
-        return unicode(self.ui.windowTitle())
+        return self.ui.windowTitle()
     def _set_task(self, value):
         "Setter for task property"
         self.ui.setWindowTitle(value)

@@ -69,9 +69,9 @@ class RasAsciiWriter(object):
     "Single channel writer for the ASCII variant of the QSCAN RAS format"
 
     def __init__(self, filename_or_obj, channel):
-        if isinstance(filename_or_obj, basestring):
+        try:
             self._file = open(filename_or_obj, 'w')
-        else:
+        except TypeError:
             self._file = filename_or_obj
         self._data_file = channel.parent
         self._channel = channel
@@ -103,9 +103,9 @@ class RasWriter(object):
     "Single channel writer for the default binary QSCAN RAS format"
 
     def __init__(self, filename_or_obj, channel):
-        if isinstance(filename_or_obj, basestring):
+        try:
             self._file = open(filename_or_obj, 'wb')
-        else:
+        except TypeError:
             self._file = filename_or_obj
         self._data_file = channel.parent
         self._channel = channel
@@ -163,7 +163,7 @@ class RasAsciiMultiWriter(object):
     "Multi channel writer for the ASCII variant of the QSCAN RAS format"
 
     def __init__(self, filename_or_obj, data_file):
-        if isinstance(filename_or_obj, basestring):
+        if isinstance(filename_or_obj, str):
             self._file = open(filename_or_obj, 'w')
         else:
             self._file = filename_or_obj
@@ -198,7 +198,7 @@ class RasAsciiMultiWriter(object):
                 'sweep_count', DEFAULT_SWEEP_COUNT),
             count_time=data_file.header.get('count_time', DEFAULT_COUNT_TIME),
         ))
-        for raster in xrange(len(self._data[..., 0])):
+        for raster in range(len(self._data[..., 0])):
             self._file.write(
                 ''.join(
                     ''.join(
@@ -214,9 +214,9 @@ class RasMultiWriter(object):
     "Multi channel writer for the default binary QSCAN RAS format"
     
     def __init__(self, filename_or_obj, data_file):
-        if isinstance(filename_or_obj, basestring):
+        try:
             self._file = open(filename_or_obj, 'wb')
-        else:
+        except TypeError:
             self._file = filename_or_obj
         self._data_file = data_file
         self._data = None
@@ -274,7 +274,7 @@ class RasMultiWriter(object):
         ))
         output_struct = struct.Struct(
             'I' * len(self._data[..., 0][0]) * len(self._data[0, 0]))
-        for raster in xrange(len(self._data[..., 0])):
+        for raster in range(len(self._data[..., 0])):
             self._file.write(
                 output_struct.pack(*(i for i in self._data[raster].flat)))
         # XXX See the note in rasparse.py about the off-by-one error in the

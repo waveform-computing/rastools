@@ -567,10 +567,10 @@ class MultiLayerWindow(SubWindow):
         else:
             self.image_axes.grid(False)
         if self.axes_visible:
-            if unicode(self.ui.x_label_edit.text()):
-                self.image_axes.set_xlabel(unicode(self.ui.x_label_edit.text()))
-            if unicode(self.ui.y_label_edit.text()):
-                self.image_axes.set_ylabel(unicode(self.ui.y_label_edit.text()))
+            if self.ui.x_label_edit.text():
+                self.image_axes.set_xlabel(self.ui.x_label_edit.text())
+            if self.ui.y_label_edit.text():
+                self.image_axes.set_ylabel(self.ui.y_label_edit.text())
         else:
             self.image_axes.set_xticklabels([])
             self.image_axes.set_yticklabels([])
@@ -586,7 +586,7 @@ class MultiLayerWindow(SubWindow):
             data,
             origin='upper',
             extent=self.x_limits + self.y_limits,
-            interpolation=unicode(self.ui.interpolation_combo.currentText()))
+            interpolation=self.ui.interpolation_combo.currentText())
 
     def draw_histogram(self):
         "Draws the data's historgram within the figure"
@@ -620,7 +620,7 @@ class MultiLayerWindow(SubWindow):
             crop_bottom=self.ui.crop_bottom_spinbox.value())
         for channel, cset in zip(self.channels, self._control_sets):
             if channel:
-                for name, value in channel.format_dict().iteritems():
+                for name, value in channel.format_dict().items():
                     result[cset.prefix + '_' + name] = value
         return result
 

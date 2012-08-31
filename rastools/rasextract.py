@@ -276,7 +276,12 @@ class RasExtractUtility(RasUtility):
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
-                        canvas = canvas_method.im_class(figure)
+                        try:
+                            # Py2 only
+                            canvas = canvas_method.im_class(figure)
+                        except AttributeError:
+                            # Py3 only
+                            canvas = canvas_method.__self__.__class__(figure)
                         if options.multi:
                             output.savefig(
                                 figure, title=channel.format(
@@ -301,7 +306,7 @@ class RasExtractUtility(RasUtility):
         "List the supported data formats"
         return (
             (ext, self.data_parsers[ext][-1])
-            for ext in sorted(self.data_parsers.iterkeys(),
+            for ext in sorted(self.data_parsers.keys(),
                 key=methodcaller('lower'))
         )
 
@@ -309,7 +314,7 @@ class RasExtractUtility(RasUtility):
         "List the supported image formats"
         return (
             (ext, self.image_writers[ext][-1])
-            for ext in sorted(self.image_writers.iterkeys(),
+            for ext in sorted(self.image_writers.keys(),
                 key=methodcaller('lower'))
         )
 
@@ -390,7 +395,7 @@ class RasExtractUtility(RasUtility):
         if options.multi and not multi_class:
             multi_ext = [
                 ext
-                for (ext, (_, _, multi, _)) in self.image_writers.iteritems()
+                for (ext, (_, _, multi, _)) in self.image_writers.items()
                 if multi
             ]
             if multi_ext:

@@ -295,9 +295,9 @@ class SubWindow(QtGui.QWidget):
         if (abs(data_right - data_left) * abs(data_bottom - data_top)) > ZOOM_THRESHOLD:
             self._zoom_rect = (data_left, data_top, data_right, data_bottom)
             self.window().statusBar().showMessage(
-                unicode(self.tr(
+                self.tr(
                     'Crop from ({left:.0f}, {top:.0f}) to '
-                    '({right:.0f}, {bottom:.0f})')).format(
+                    '({right:.0f}, {bottom:.0f})').format(
                         left=data_left, top=data_top,
                         right=data_right, bottom=data_bottom))
             self.canvas.drawRectangle(rectangle)
@@ -462,8 +462,8 @@ class SubWindow(QtGui.QWidget):
         if not self._info_dialog:
             self._info_dialog = TitleInfoDialog(self)
         self._info_dialog.ui.template_list.clear()
-        for key, value in sorted(self.format_dict().iteritems()):
-            if isinstance(value, basestring):
+        for key, value in sorted(self.format_dict().items()):
+            if isinstance(value, type('')):
                 if '\n' in value:
                     value = value.splitlines()[0].rstrip()
                 self._info_dialog.ui.template_list.addTopLevelItem(
@@ -472,7 +472,7 @@ class SubWindow(QtGui.QWidget):
                             '{{{0}}}'.format(key),
                             value
                         ])))
-            elif isinstance(value, (int, long)):
+            elif isinstance(value, int):
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
                         QtCore.QStringList([
@@ -613,15 +613,15 @@ class SubWindow(QtGui.QWidget):
         "Returns the text of the image title after substitution"
         result = ''
         try:
-            if unicode(self.ui.title_edit.toPlainText()):
-                result = unicode(self.ui.title_edit.toPlainText()).format(
+            if self.ui.title_edit.toPlainText():
+                result = str(self.ui.title_edit.toPlainText()).format(
                     **self.format_dict())
         except KeyError as exc:
             self.ui.title_error_label.setText(
                 'Unknown template "{}"'.format(exc))
             self.ui.title_error_label.show()
         except ValueError as exc:
-            self.ui.title_error_label.setText(unicode(exc))
+            self.ui.title_error_label.setText(str(exc))
             self.ui.title_error_label.show()
         else:
             self.ui.title_error_label.hide()

@@ -191,11 +191,9 @@ class RasParser(object):
             self.progress_update,
             self.progress_finish,
         ) = kwargs.get('progress', (None, None, None))
-        if isinstance(data_file, basestring):
-            logging.debug('Opening QSCAN RAS file %s', data_file)
+        try:
             self._file = open(data_file, 'rb')
-        else:
-            logging.debug('Opening QSCAN RAS file %s', data_file.name)
+        except TypeError:
             self._file = data_file
         # Parse the header
         logging.debug('Reading QSCAN RAS header')
@@ -319,7 +317,7 @@ class RasChannels(object):
         # All channels are initially created unnamed and enabled
         self._items = [
             RasChannel(self, index, '')
-            for index in xrange(self.parent.channel_count)
+            for index in range(self.parent.channel_count)
         ]
         if channels_file:
             # If a channels file is provided, disable all the channels and
@@ -327,11 +325,9 @@ class RasChannels(object):
             for channel in self:
                 channel.enabled = False
             # Parse the channels file
-            if isinstance(channels_file, basestring):
-                logging.debug('Opening channels file %s', channels_file)
+            try:
                 self._file = open(channels_file, 'rb')
-            else:
-                logging.debug('Opening channels file %s', channels_file.name)
+            except TypeError:
                 self._file = channels_file
             logging.debug('Parsing channels file')
             for line_num, line in enumerate(self._file):

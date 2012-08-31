@@ -57,10 +57,10 @@ class MainWindow(QtGui.QMainWindow):
         try:
             self.resize(
                 self.settings.value(
-                    'size', QtCore.QSize(640, 480)).toSize())
+                    'size', QtCore.QSize(640, 480)))
             self.move(
                 self.settings.value(
-                    'position', QtCore.QPoint(100, 100)).toPoint())
+                    'position', QtCore.QPoint(100, 100)))
         finally:
             self.settings.endGroup()
         # Configure status bar elements
@@ -277,7 +277,7 @@ class MainWindow(QtGui.QMainWindow):
                         '*' + ext
                         for (_, exts, _, _, _) in IMAGE_WRITERS
                         for ext in exts))
-            ] + sorted(filter_map.iterkeys())
+            ] + sorted(filter_map.keys())
         )
         # Use the new getSaveFileNameAndFilter method to retrieve both the
         # filename and the filter the user selected
@@ -313,7 +313,12 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
-                canvas = method.im_class(fig)
+                try:
+                    # Py2 only
+                    canvas = method.im_class(fig)
+                except AttributeError:
+                    # Py3 only
+                    canvas = method.__self__.__class__(fig)
                 method(canvas, filename, dpi=fig.dpi)
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()
@@ -340,7 +345,7 @@ class MainWindow(QtGui.QMainWindow):
                         '*' + ext
                         for (_, exts, _, _) in DATA_WRITERS
                         for ext in exts))
-            ] + sorted(filter_map.iterkeys())
+            ] + sorted(filter_map.keys())
         )
         (filename, filter_) = QtGui.QFileDialog.getSaveFileNameAndFilter(
             self, self.tr('Export channel'), os.getcwd(), filters)

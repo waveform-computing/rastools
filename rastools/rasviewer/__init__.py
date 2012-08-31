@@ -28,6 +28,9 @@ from __future__ import (
 
 import sys
 
+import sip
+for api in ('QDate', 'QDateTime', 'QTime', 'QString', 'QTextStream', 'QUrl', 'QVariant'):
+    sip.setapi(api, 2)
 from PyQt4 import QtCore, QtGui
 
 from rastools import __version__

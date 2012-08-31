@@ -372,10 +372,10 @@ Value range: {range_from} to {range_to}""")
         else:
             self.image_axes.grid(False)
         if self.axes_visible:
-            if unicode(self.ui.x_label_edit.text()):
-                self.image_axes.set_xlabel(unicode(self.ui.x_label_edit.text()))
-            if unicode(self.ui.y_label_edit.text()):
-                self.image_axes.set_ylabel(unicode(self.ui.y_label_edit.text()))
+            if self.ui.x_label_edit.text():
+                self.image_axes.set_xlabel(self.ui.x_label_edit.text())
+            if self.ui.y_label_edit.text():
+                self.image_axes.set_ylabel(self.ui.y_label_edit.text())
         else:
             self.image_axes.set_xticklabels([])
             self.image_axes.set_yticklabels([])
@@ -387,10 +387,10 @@ Value range: {range_from} to {range_to}""")
             origin='upper',
             extent=self.x_limits + self.y_limits,
             cmap=matplotlib.cm.get_cmap(
-                unicode(self.ui.colormap_combo.currentText()) +
+                self.ui.colormap_combo.currentText() +
                 ('_r' if self.ui.reverse_check.isChecked() else '')
             ),
-            interpolation=unicode(self.ui.interpolation_combo.currentText()))
+            interpolation=self.ui.interpolation_combo.currentText())
 
     def draw_histogram(self):
         "Draws the data's historgram within the figure"

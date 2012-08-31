@@ -46,21 +46,21 @@ class OpenDialog(QtGui.QDialog):
                 for i in range(count):
                     self.settings.setArrayIndex(i)
                     self.ui.data_file_combo.addItem(
-                        self.settings.value('path').toString())
+                        self.settings.value('path'))
             finally:
                 self.settings.endArray()
             self.ui.data_file_combo.setEditText(
-                self.settings.value('data_file', '').toString())
+                self.settings.value('data_file', ''))
             count = self.settings.beginReadArray('channel_files')
             try:
                 for i in range(count):
                     self.settings.setArrayIndex(i)
                     self.ui.channel_file_combo.addItem(
-                        self.settings.value('path').toString())
+                        self.settings.value('path'))
             finally:
                 self.settings.endArray()
             self.ui.channel_file_combo.setEditText(
-                self.settings.value('channel_file', '').toString())
+                self.settings.value('channel_file', ''))
         finally:
             self.settings.endGroup()
         # Connect up signals
@@ -183,7 +183,7 @@ class OpenDialog(QtGui.QDialog):
                     for (_, exts, _) in DATA_PARSERS
                     for ext in exts
                 )
-            ] + sorted(filter_map.iterkeys())
+            ] + sorted(filter_map.keys())
         )
         filename = QtGui.QFileDialog.getOpenFileName(
             self, self.tr('Select data file'), os.getcwd(), filters)

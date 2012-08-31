@@ -138,7 +138,7 @@ class FigureCanvasXcf(FigureCanvasAgg):
         "Writes the figure to a GIMP XCF image file"
         # If filename_or_obj is a file-like object we need a temporary file for
         # GIMP's output too...
-        if isinstance(filename_or_obj, basestring):
+        if isinstance(filename_or_obj, type('')):
             out_temp_handle, out_temp_name = None, filename_or_obj
         else:
             out_temp_handle, out_temp_name = tempfile.mkstemp(suffix='.xcf')

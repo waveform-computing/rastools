@@ -19,7 +19,11 @@
 """CSV/TSV writer module for rasdump and rasviewer"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import csv
 
@@ -27,9 +31,9 @@ class CsvWriter(object):
     "CSV writer class for rasdump"
 
     def __init__(self, filename_or_obj, channel):
-        if isinstance(filename_or_obj, basestring):
-            self._file = open(filename_or_obj, 'w')
-        else:
+        try:
+            self._file = open(filename_or_obj, 'wb')
+        except TypeError:
             self._file = filename_or_obj
         self._writer = csv.writer(self._file, dialect='excel')
 

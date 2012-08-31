@@ -101,11 +101,9 @@ class DatParser(object):
             kwargs.get('progress', (None, None, None))
         if channels_file:
             logging.warning('Channels files are currently ignored')
-        if isinstance(data_file, basestring):
-            logging.debug('Opening dat file %s', data_file)
+        try:
             self._file = open(data_file, 'rU')
-        else:
-            logging.debug('Opening dat file %s', data_file.name)
+        except TypeError:
             self._file = data_file
         self.header = {}
         self.version = self.header_version
