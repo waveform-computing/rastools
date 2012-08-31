@@ -19,7 +19,11 @@
 """Implementation of the rastools package."""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 __version__ = '0.4'
 

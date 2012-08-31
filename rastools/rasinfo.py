@@ -20,7 +20,11 @@
 """Main module for the rasinfo utility."""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import sys
 

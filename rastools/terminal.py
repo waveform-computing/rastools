@@ -24,7 +24,11 @@ file handling, and common logging configuration and options.
 """
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import sys
 import os

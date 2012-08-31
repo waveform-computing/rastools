@@ -19,7 +19,11 @@
 """Module providing a common base for ras command line utilities"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import os
 import sys
