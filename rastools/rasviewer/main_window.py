@@ -265,8 +265,8 @@ class MainWindow(QtGui.QMainWindow):
             ('{name} ({exts})'.format(
                 name=self.tr(label),
                 exts=' '.join('*' + ext for ext in exts)),
-                (method, exts[0]))
-            for (method, exts, label, _, _) in IMAGE_WRITERS
+                (cls, method, exts[0]))
+            for (cls, method, exts, label, _, _) in IMAGE_WRITERS
         )
         # Construct the filter list by prefixing the list with an "All images"
         # entry which includes all possible extensions
@@ -275,7 +275,7 @@ class MainWindow(QtGui.QMainWindow):
                 str(self.tr('All images ({0})')).format(
                     ' '.join(
                         '*' + ext
-                        for (_, exts, _, _, _) in IMAGE_WRITERS
+                        for (_, _, exts, _, _, _) in IMAGE_WRITERS
                         for ext in exts))
             ] + sorted(filter_map.keys())
         )
@@ -292,12 +292,12 @@ class MainWindow(QtGui.QMainWindow):
                 # If the user has explicitly specified an extension then lookup
                 # the method associated with the extension (if any)
                 writers = dict(
-                    (ext, method)
-                    for (method, exts, _, _, _) in IMAGE_WRITERS
+                    (ext, (cls, method))
+                    for (cls, method, exts, _, _, _) in IMAGE_WRITERS
                     for ext in exts
                 )
                 try:
-                    method = writers[ext]
+                    cls, method = writers[ext]
                 except KeyError:
                     QtGui.QMessageBox.warning(
                         self, self.tr('Warning'),
@@ -307,18 +307,13 @@ class MainWindow(QtGui.QMainWindow):
                 # Otherwise, use the filter label map we built earlier to
                 # lookup the selected filter string and retrieve the default
                 # extension which we append to the filename
-                (method, ext) = filter_map[filter_]
+                (cls, method, ext) = filter_map[filter_]
                 filename = filename + ext
             fig = self.sub_widget.figure
             QtGui.QApplication.instance().setOverrideCursor(
                 QtCore.Qt.WaitCursor)
             try:
-                try:
-                    # Py2 only
-                    canvas = method.im_class(fig)
-                except AttributeError:
-                    # Py3 only
-                    canvas = method.__self__.__class__(fig)
+                canvas = cls(fig)
                 method(canvas, filename, dpi=fig.dpi)
             finally:
                 QtGui.QApplication.instance().restoreOverrideCursor()

@@ -179,8 +179,8 @@ class RasExtractUtility(RasUtility):
         if self._image_writers is None:
             from rastools.image_writers import IMAGE_WRITERS
             self._image_writers = dict(
-                (ext, (method, interp, multi_class, desc))
-                for (method, exts, desc, interp, multi_class) in IMAGE_WRITERS
+                (ext, (cls, method, interp, multi_class, desc))
+                for (cls, method, exts, desc, interp, multi_class) in IMAGE_WRITERS
                 for ext in exts
             )
         return self._image_writers
@@ -238,7 +238,8 @@ class RasExtractUtility(RasUtility):
         renderer.axes_titles = Coord(options.title_x, options.title_y)
         renderer.grid = options.show_grid
         renderer.empty = options.empty
-        (   canvas_method,
+        (   canvas_class,
+            canvas_method,
             multi_class,
             default_interpolation
         ) = self.parse_output_options(options)
@@ -276,12 +277,7 @@ class RasExtractUtility(RasUtility):
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
-                        try:
-                            # Py2 only
-                            canvas = canvas_method.im_class(figure)
-                        except AttributeError:
-                            # Py3 only
-                            canvas = canvas_method.__self__.__class__(figure)
+                        canvas = canvas_class(figure)
                         if options.multi:
                             output.savefig(
                                 figure, title=channel.format(
@@ -385,7 +381,8 @@ class RasExtractUtility(RasUtility):
         "Checks the validity of the --output and --multi options"
         ext = os.path.splitext(options.output)[1]
         try:
-            (   canvas_method,
+            (   canvas_class,
+                canvas_method,
                 default_interpolation,
                 multi_class,
                 _
@@ -395,7 +392,7 @@ class RasExtractUtility(RasUtility):
         if options.multi and not multi_class:
             multi_ext = [
                 ext
-                for (ext, (_, _, multi, _)) in self.image_writers.items()
+                for (ext, (_, _, _, multi, _)) in self.image_writers.items()
                 if multi
             ]
             if multi_ext:
@@ -406,7 +403,7 @@ class RasExtractUtility(RasUtility):
                 self.parser.error(
                     '--multi is not supported by any registered '
                     'output formats')
-        return canvas_method, multi_class, default_interpolation
+        return canvas_class, canvas_method, multi_class, default_interpolation
 
     def parse_interpolation_option(self, options, default_interpolation):
         "Checks the validity of the --interpolation option"

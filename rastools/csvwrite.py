@@ -25,6 +25,7 @@ from __future__ import (
     division,
     )
 
+import sys
 import csv
 
 class CsvWriter(object):
@@ -32,7 +33,12 @@ class CsvWriter(object):
 
     def __init__(self, filename_or_obj, channel):
         try:
-            self._file = open(filename_or_obj, 'wb')
+            if sys.hexversion >= 0x03000000:
+                # XXX Py3 only
+                self._file = open(filename_or_obj, mode='w', newline='')
+            else:
+                # XXX Py2 only
+                self._file = open(filename_or_obj, mode='wb')
         except TypeError:
             self._file = filename_or_obj
         self._writer = csv.writer(self._file, dialect='excel')

@@ -30,13 +30,13 @@ from __future__ import (
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 try:
-    # Py2 only
+    # XXX Py2 only
     from cStringIO import StringIO
 except ImportError:
-    # Py2 only
+    # XXX Py2 only
     from StringIO import StringIO
 except ImportError:
-    # Py3 only
+    # XXX Py3 only
     from io import StringIO
 
 # If PIL's available, define a sub-class of Agg which can handle conversion

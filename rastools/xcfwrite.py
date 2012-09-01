@@ -30,6 +30,7 @@ import tempfile
 import subprocess
 import logging
 
+# XXX Find a python 3 compatible imaging library?
 from PIL import Image
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
