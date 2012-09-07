@@ -167,7 +167,7 @@ class RasConverter(RasChannelProcessor):
     def convert(self, channel):
         "Convert the specified channel, returning the resulting numpy array"
         try:
-            data, data_domain, data_range = self.process(channel)
+            data, data_domain, data_range = self.process_single(channel)
         except RasChannelEmptyError:
             return None
         # Apply the percentiles

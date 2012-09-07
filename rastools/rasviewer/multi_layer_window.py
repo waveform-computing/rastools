@@ -598,7 +598,8 @@ class MultiLayerWindow(SubWindow):
                 self.histogram_axes.clear()
                 self.histogram_axes.set_position(box)
             self.histogram_axes.grid(True)
-            self.histogram_axes.hist(self.data_flat,
+            self.histogram_axes.hist(
+                self.data_flat,
                 bins=self.ui.histogram_bins_spinbox.value(),
                 histtype='barstacked',
                 color=('red', 'green', 'blue'),

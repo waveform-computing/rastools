@@ -83,6 +83,7 @@ class RasExtractUtility(RasUtility):
             title_x='',
             title_y='',
             interpolation=None,
+            layers=None,
             multi=False,
         )
         self.parser.add_option(
@@ -167,6 +168,11 @@ class RasExtractUtility(RasUtility):
             help='if specified, produce a single output file with multiple '
             'layers or pages, one per channel (only available with certain '
             'formats)')
+        self.parser.add_option(
+            '-L', '--layers', dest='layers', action='store',
+            help='store the specified channels as Red, Green, and Blue in '
+            'the resulting image. Channels are comma separated and specified '
+            'as 0-based numbers. Channels may be left empty')
         if optcomplete:
             self.arg_completer = optcomplete.RegexCompleter(
                 re.compile('.*' + ext.replace('.', '\.'))
@@ -223,7 +229,11 @@ class RasExtractUtility(RasUtility):
             return 0
         # Configure the renderer from the command line options
         data_file = self.parse_files(options, args)
-        renderer = RasRenderer()
+        options.layers = self.parse_layers(options, data_file)
+        if options.layers:
+            renderer = LayeredRenderer((data_file.x_size, data_file.y_size))
+        else:
+            renderer = ChannelRenderer((data_file.x_size, data_file.y_size))
         renderer.colormap = self.parse_colormap_option(options)
         renderer.crop = self.parse_crop_option(options)
         renderer.clip = self.parse_range_options(options)
@@ -255,38 +265,46 @@ class RasExtractUtility(RasUtility):
                 if channel.enabled
             )
         )
-        if options.multi:
+        if options.layers:
+            filename = options.output.format(
+                **renderer.format_dict(data_file))
+            logging.warning('Writing all layers to %s', filename)
+            figure = renderer.draw_multiple(*options.layers)
+            canvas = canvas_class(figure)
+            canvas_method(canvas, filename, dpi=DPI)
+        elif options.multi:
             filename = options.output.format(
                 **renderer.format_dict(data_file))
             logging.warning('Writing all channels to %s',  filename)
             output = multi_class(filename)
-        try:
-            for channel in data_file.channels:
-                if channel.enabled:
-                    if options.multi:
+            try:
+                for channel in data_file.channels:
+                    if channel.enabled:
                         logging.warning(
                             'Writing channel %d (%s) to new page/layer',
                             channel.index, channel.name)
-                    else:
-                        filename = options.output.format(
-                            **renderer.format_dict(channel))
-                        logging.warning(
-                            'Writing channel %d (%s) to %s',
-                            channel.index, channel.name, filename)
-                    figure = renderer.draw(channel)
+                        figure = renderer.draw(channel)
+                        if figure is not None:
+                            canvas = canvas_class(figure)
+                            output.savefig(
+                                figure, title=channel.format(
+                                    '{channel} - {channel_name}'))
+            finally:
+                output.close()
+        else:
+            for channel in data_file.channels:
+                if channel.enabled:
+                    filename = options.output.format(
+                        **renderer.format_dict(channel))
+                    logging.warning(
+                        'Writing channel %d (%s) to %s',
+                        channel.index, channel.name, filename)
+                    figure = renderer.draw_single(channel)
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
                         canvas = canvas_class(figure)
-                        if options.multi:
-                            output.savefig(
-                                figure, title=channel.format(
-                                    '{channel} - {channel_name}'))
-                        else:
-                            canvas_method(canvas, filename, dpi=DPI)
-        finally:
-            if options.multi:
-                output.close()
+                        canvas_method(canvas, filename, dpi=DPI)
 
     def list_colormaps(self):
         "List the available colormaps"
@@ -313,6 +331,16 @@ class RasExtractUtility(RasUtility):
             for ext in sorted(self.image_writers.keys(),
                 key=methodcaller('lower'))
         )
+
+    def parse_layers(self, options, data_file):
+        if options.layers is not None:
+            try:
+                red, green, blue = options.layers.split(',')
+            except ValueError:
+                self.parser.error(
+                    '--layers must be specified with three comma-separated channels')
+            # XXX Parse the layers
+            pass
 
     def parse_colormap_option(self, options):
         "Checks the validity of the --colormap option"
@@ -416,13 +444,14 @@ class RasExtractUtility(RasUtility):
         return options.interpolation
 
 
-class RasRenderer(RasChannelProcessor):
-    "Renderer class for data files"
+class BaseRenderer(RasChannelProcessor):
+    "Abstract renderer class for data files"
 
-    def __init__(self):
+    def __init__(self, data_size):
         super(RasRenderer, self).__init__()
-        self.colormap = 'gray'
+        self._data_size = Coord(*data_size)
         self.colorbar = False
+        self.colormap = 'gray'
         self.histogram = False
         self.histogram_bins = 32
         self.interpolation = 'nearest'
@@ -434,127 +463,142 @@ class RasRenderer(RasChannelProcessor):
         self.axes_scales = Coord(1.0, 1.0)
         self.resize = 1.0
 
-    def draw(self, channel):
-        "Draw the specified channel, returning the matplotlib figure"
-        try:
-            data, data_domain, data_range = self.process(channel)
-        except RasChannelEmptyError:
-            return None
-        # Copy the data into a floating-point array (matplotlib's image module
-        # won't play with uint32 data - only uint8 or float32) and crop it as
-        # necessary
-        data = np.array(data, np.float)
-        # Calculate the figure dimensions and margins. The layout of objects in
-        # the final image is roughly as illustrated below. Objects which are
-        # not selected to appear take up no space. Only the IMAGE element is
-        # mandatory:
-        #
-        #   +-----------------+
-        #   |     margin      |
-        #   |                 |
-        #   | m    TITLE    m |
-        #   | a             a |
-        #   | r    IMAGE    r |
-        #   | g             g |
-        #   | i  HISTOGRAM  i |
-        #   | n             n |
-        #   |    COLORBAR     |
-        #   |                 |
-        #   |     margin      |
-        #   +-----------------+
-        #
-        # Several dimensions depend on the IMAGE dimensions, therefore these
-        # are calculated first. However, the IMAGE position in turn depends on
-        # the dimensions of the other figure elements, thus the IMAGE position
-        # is adjusted after calculating all other dimensions
-        margin = (0.0, 0.75)[
-            self.axes or
-            self.colorbar or
-            self.histogram or
-            bool(self.title)
-        ]
-        if isinstance(self.resize, Coord):
-            image_box = BoundingBox(
-                margin,
-                0.0,
-                self.resize.x / DPI,
-                self.resize.y / DPI
-            )
-        else:
-            image_box = BoundingBox(
-                margin,
-                0.0,
-                self.resize / DPI * (
-                    channel.parent.x_size - self.crop.left - self.crop.right),
-                self.resize / DPI * (
-                    channel.parent.y_size - self.crop.top - self.crop.bottom)
-            )
-        colorbar_box = BoundingBox(
-            margin,
-            [0.0, margin][self.colorbar],
-            image_box.width,
-            [0.0, 0.3][self.colorbar]
-        )
-        histogram_box = BoundingBox(
-            margin,
-            [0.0, margin + colorbar_box.top][self.histogram],
-            image_box.width,
-            [0.0, image_box.height * 0.8][self.histogram]
-        )
-        image_box.bottom = (
-            margin + max(histogram_box.top, colorbar_box.top)
-        )
-        title_box = BoundingBox(
-            0.0,
-            [0.0, margin + image_box.top][bool(self.title)],
-            image_box.width + (margin * 2),
-            [0.0, 0.75][bool(self.title)]
-        )
-        figure_box = BoundingBox(
-            0.0,
-            0.0,
-            image_box.width + (margin * 2),
-            margin + (title_box.top if bool(self.title) else image_box.top)
-        )
-        figure = matplotlib.figure.Figure(
-            figsize=(figure_box.width, figure_box.height), dpi=DPI,
-            facecolor='w', edgecolor='w')
-        # Figure out the axis extents
-        extent = Coord(
+    @property
+    def axes_extents(self):
+        "Returns the extents of the axes for the image, after offsets and scaling"
+        return (
             Range(
                 self.axes_scales.x * (
                     self.axes_offsets.x + self.crop.left),
                 self.axes_scales.x * (
-                    self.axes_offsets.x + channel.parent.x_size - self.crop.right)
-            ),
+                    self.axes_offsets.x + self._data_size.x - self.crop.right)
+            ) +
             Range(
                 self.axes_scales.y * (
-                    self.axes_offsets.y + channel.parent.y_size - self.crop.bottom),
+                    self.axes_offsets.y + self._data_size.y - self.crop.bottom),
                 self.axes_scales.y * (
                     self.axes_offsets.y + self.crop.top)
             )
         )
-        # Draw the various image elements within bounding boxes calculated from
-        # the metrics above
-        image = self.draw_image(
-            data, data_range, extent, figure,
-            image_box.relative_to(figure_box))
-        if self.histogram:
-            self.draw_histogram(
-                data, data_range, figure,
-                histogram_box.relative_to(figure_box))
-        if self.colorbar:
-            self.draw_colorbar(
-                image, data_domain, data_range, figure,
-                colorbar_box.relative_to(figure_box))
-        if bool(self.title):
-            self.draw_title(
-                channel, figure, title_box.relative_to(figure_box))
-        return figure
 
-    def draw_image(self, data, data_range, extent, figure, box):
-        "Draws the image of the data within the specified figure"
-        axes = figure.add_axes(box, frame_on=self.axes or self.grid)
+    @property
+    def margins_visible(self):
+        "Returns True if the image margins should be shown"
+        return (
+            self.axes
+            or self.histogram
+            or self.colorbar
+            or bool(self.title))
+
+    @property
+    def margin(self):
+        "Returns the size of the margins when drawing"
+        return Coord(0.75, 0.25) if self.margins_visible else Coord(0.0, 0.0)
+
+    @property
+    def sep_margin(self):
+        "Returns the size of the separator between image elements"
+        return 0.3
+
+    # The following properties calculate the figure dimensions and margins. The
+    # layout of objects in the final image is roughly as illustrated below.
+    # Objects which are not selected to appear take up no space. Only the IMAGE
+    # element is mandatory:
+    #
+    #   +-----------------+
+    #   |     margin.x    |
+    #   |                 |
+    #   | m    TITLE    m |
+    #   | a             a |
+    #   | r    IMAGE    r |
+    #   | g             g |
+    #   | i  HISTOGRAM  i |
+    #   | n             n |
+    #   | .  COLORBAR   . |
+    #   | y             y |
+    #   |     margin.x    |
+    #   +-----------------+
+    #
+    # Positions are calculated from the bottom up, but several dimensions
+    # depend on the image size. Hence, this is calculated first, then each
+    # bounding box from the bottom up is calculated followed by the overall
+    # figure box.
+
+    @property
+    def image_size(self):
+        "Returns the size of the image in pixels after cropping and resizing"
+        if isinstance(self.resize, Coord):
+            return self.resize
+        else:
+            return Coord(
+                self.resize * (self._data_size.x - self.crop.left - self.crop.right),
+                self.resize * (self._data_size.y - self.crop.top - self.crop.bottom),
+            )
+
+    @property
+    def colorbar_box(self):
+        "Returns the colorbar bounding box"
+        return BoundingBox(
+            self.margin.x,
+            self.margin.y,
+            self.image_size.x / DPI,
+            0.5 if self.colorbar else 0.0,
+        )
+
+    @property
+    def histogram_box(self):
+        "Returns the histogram bounding box"
+        return BoundingBox(
+            self.margin.x,
+            self.colorbar_box.top + (
+                self.sep_margin if self.colorbar else 0.0),
+            self.image_size.x / DPI,
+            self.image_size.y / DPI * 0.8 if self.histogram else 0.0,
+        )
+
+    @property
+    def image_box(self):
+        "Returns the image bounding box"
+        return BoundingBox(
+            self.margin.x,
+            self.histogram_box.top + (
+                self.sep_margin if self.colorbar or self.histogram else 0.0),
+            self.image_size.x / DPI,
+            self.image_size.y / DPI,
+        )
+
+    @property
+    def title_box(self):
+        "Returns the title bounding box"
+        return BoundingBox(
+            self.margin.x,
+            self.image_box.top,
+            self.image_box.width,
+            1.0 if bool(self.title) else 0.0,
+        )
+
+    @property
+    def figure_box(self):
+        "Returns the overall bounding box"
+        figure_box = BoundingBox(
+            0.0,
+            0.0,
+            self.image_box.width + (self.margin.x * 2),
+            self.title_box.top + self.margin.y,
+        )
+
+    def title_axes(self, figure):
+        "Construct and configure a set of axes for the title"
+        box = self.title_box.relative_to(self.figure_box)
+        axes = figure.add_axes(box)
+        axes.set_axis_off()
+        return axes
+
+    def image_axes(self, figure):
+        "Construct and configure a set of axes for an image"
+        axes = figure.add_axes(
+            self.image_box.relative_to(self.figure_box),
+            frame_on=self.axes or self.grid)
         # Configure the x and y axes appearance
         if self.grid:
             axes.grid(color='k', linestyle='-')
@@ -568,22 +612,139 @@ class RasRenderer(RasChannelProcessor):
         else:
             axes.set_xticklabels([])
             axes.set_yticklabels([])
+        return axes
+
+    def histogram_axes(self, figure):
+        "Construct and configure a set of axes for a histogram"
+        return figure.add_axes(self.histogram_box.relative_to(self.figure_box))
+
+    def colorbar_axes(self, figure):
+        "Construct and configure a set of axes for the colorbar"
+        return figure.add_axes(self.colorbar_box.relative_to(self.figure_box))
+
+
+class LayeredRenderer(BaseRenderer):
+    "Renderer implementation for multi-layered images"
+
+    def draw(self, red_channel, green_channel, blue_channel):
+        "Draw the specified channels as a single image, returning the matplotlib figure"
+        assert not self.colorbar
+        data, data_domain, data_range = self.process_multiple(
+            red_channel, green_channel, blue_channel)
+        # Copy the data into a floating-point array (matplotlib's image module
+        # won't play with uint32 data - only uint8 or float32) and normalize it
+        # to values between 0.0 and 1.0
+        data = np.array(data, np.float)
+        for index in range(3):
+            low, high = data_range[index]
+            data[..., index] = data[..., index] - low
+            if (high - low):
+                data[..., index] = data[..., index] / (high - low)
+        figure = matplotlib.figure.Figure(
+            figsize=(self.figure_box.width, self.figure_box.height), dpi=DPI,
+            facecolor='w', edgecolor='w')
+        # Draw the various image elements within bounding boxes calculated from
+        # the metrics above
+        image = self.draw_image(data, data_range, figure)
+        if self.histogram:
+            self.draw_histogram(data, data_range, figure)
+        if bool(self.title):
+            self.draw_title(channel, figure)
+        return figure
+
+    def draw_image(self, data, data_range, figure):
+        "Draws the image of the data within the specified figure"
+        axes = self.image_axes(figure)
+        # Clamp all data to values between 0.0 and 1.0 (operate on a copy to
+        # ensure we don't mess with the original array which is needed for a
+        # histogram)
+        data = data.copy()
+        data[data < 0.0] = 0.0
+        data[data > 1.0] = 1.0
+        # The imshow() call takes care of clamping values with data_range and
+        # color-mapping
+        return axes.imshow(
+            data,
+            origin='upper',
+            extent=self.axes_extents,
+            interpolation=self.interpolation)
+
+    def draw_histogram(self, data, data_range, figure):
+        "Draws the data's historgram within the specified figure"
+        axes = self.histogram_axes(figure)
+        data_flat = np.empty((data.shape[0] * data.shape[1], 3))
+        for index in range(3):
+            data_flat[..., index] = data[..., index].flatten()
+        axes.hist(
+            data_flat,
+            bins=self.histogram_bins,
+            histtype='barstacked',
+            color=('red', 'green', 'blue'),
+            range=(0.0, 1.0))
+
+    def draw_title(self, channels, figure):
+        "Draws a title within the specified figure"
+        axes = self.title_axes(figure)
+        # The string_escape codec is used to permit new-line escapes, and
+        # various options are passed-thru to the channel formatter so things
+        # like percentile can be included in the title
+        title = self.title.decode('string_escape').format(
+            **self.format_dict(channels))
+        axes.text(
+            0.5, 0, title,
+            horizontalalignment='center', verticalalignment='baseline',
+            multialignment='center', size='medium', family='sans-serif',
+            transform=axes.transAxes)
+
+    def format_dict(self, channels):
+        pass
+
+
+class ChannelRenderer(BaseRenderer):
+    "Renderer implementation for single-channel images"
+
+    def draw(self, channel):
+        "Draw the specified channel, returning the matplotlib figure"
+        try:
+            data, data_domain, data_range = self.process_single(channel)
+        except RasChannelEmptyError:
+            return None
+        # Copy the data into a floating-point array (matplotlib's image module
+        # won't play with uint32 data - only uint8 or float32)
+        data = np.array(data, np.float)
+        figure = matplotlib.figure.Figure(
+            figsize=(self.figure_box.width, self.figure_box.height), dpi=DPI,
+            facecolor='w', edgecolor='w')
+        # Draw the various image elements within bounding boxes calculated from
+        # the metrics above
+        image = self.draw_image(data, data_range, figure)
+        if self.histogram:
+            self.draw_histogram(data, data_range, figure)
+        if self.colorbar:
+            self.draw_colorbar(image, data_domain, data_range, figure)
+        if bool(self.title):
+            self.draw_title(channel, figure)
+        return figure
+
+    def draw_image(self, data, data_range, figure):
+        "Draws the image of the data within the specified figure"
+        axes = self.image_axes(figure)
         # The imshow() call takes care of clamping values with data_range and
         # color-mapping
         return axes.imshow(
             data, cmap=matplotlib.cm.get_cmap(self.colormap),
-            origin='upper', extent=extent.x + extent.y,
+            origin='upper', extent=self.axes_extents,
             vmin=data_range.low, vmax=data_range.high,
             interpolation=self.interpolation)
 
-    def draw_histogram(self, data, data_range, figure, box):
+    def draw_histogram(self, data, data_range, figure):
         "Draws the data's historgram within the specified figure"
-        axes = figure.add_axes(box)
+        axes = self.histogram_axes(figure)
         axes.hist(data.flat, bins=self.histogram_bins, range=data_range)
 
-    def draw_colorbar(self, image, data_domain, data_range, figure, box):
+    def draw_colorbar(self, image, data_domain, data_range, figure):
         "Draws a range color-bar within the specified figure"
-        axes = figure.add_axes(box)
+        axes = self.colorbar_axes(figure)
         figure.colorbar(
             image, cax=axes, orientation='horizontal',
             extend=
@@ -593,10 +754,9 @@ class RasRenderer(RasChannelProcessor):
                 'min' if data_range.low > data_domain.low else
                 'neither')
 
-    def draw_title(self, channel, figure, box):
+    def draw_title(self, channel, figure):
         "Draws a title within the specified figure"
-        axes = figure.add_axes(box)
-        axes.set_axis_off()
+        axes = self.title_axes(figure)
         # The string_escape codec is used to permit new-line escapes, and
         # various options are passed-thru to the channel formatter so things
         # like percentile can be included in the title
@@ -608,14 +768,12 @@ class RasRenderer(RasChannelProcessor):
             multialignment='center', size='medium', family='sans-serif',
             transform=axes.transAxes)
 
-    def format_dict(self, source, **kwargs):
+    def format_dict(self, channel):
         "Converts the configuration for use in format substitutions"
         return super(RasRenderer, self).format_dict(
-            source,
+            channel,
             interpolation=self.interpolation,
-            colormap=self.colormap,
-            **kwargs
-        )
+            colormap=self.colormap)
 
 
 main = RasExtractUtility()

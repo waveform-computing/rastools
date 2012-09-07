@@ -237,15 +237,67 @@ class RasChannelProcessor(object):
         self.clip = None
         self.empty = False
 
-    def process(self, channel):
+    def process_multiple(self, red_channel, green_channel, blue_channel):
+        "Combine, crop, and limit the specified channels returning the data"
+        channels = (red_channel, green_channel, blue_channel)
+        for channel in channels:
+            if channel:
+                y_size, x_size = channel.shape[:2]
+                break
+        data = np.zeros((y_size, x_size, 3), np.float)
+        for index, channel in enumerate(channels):
+            if channel:
+                data[..., index] = channel.data
+        data = data [
+            self.crop.top:data.shape[0] - self.crop.bottom,
+            self.crop.left:data.shape[1] - self.crop.right]
+        vsorted = np.empty((data.shape[0] * data.shape[1], 3))
+        for index in range(3):
+            vsorted[..., index] = np.sort(data[..., index], axis=None)
+        data_domain = [
+            Range(vsorted[..., index][0], vsorted[..., index][-1])
+            for index in range(3)]
+        if isinstance(self.clip, Percentile):
+            data_range = [
+                Range(
+                    vsorted[(vsorted.shape[0] - 1) * self.clip.low / 100.0, index],
+                    vosrted[(vsorted.shape[0] - 1) * self.clip.high / 100.0, index])
+                for index in range(3)]
+        elif isinstance(self.clip, Range):
+            data_range = [self.clip] * 3
+        else:
+            data_range = data_domain
+        for (channel_color, channel, channel_domain, channel_range) in zip(
+                ('Red', 'Green', 'Blue'), channels, data_domain, data_range):
+            if channel_range != channel_domain:
+                logging.info(
+                    '%s channel (%d - %s) has new range %d-%d',
+                    channel_color, channel.index, channel.name,
+                    channel_range.low, channel_range.high)
+            if channel_range.low < channel_domain.low:
+                logging.warning(
+                    '%s channel (%d - %s) has no values below %d',
+                    channel_color, channel.index, channel.name,
+                    channel_range.low)
+            if channel_range.high > channel_domain.high:
+                logging.warning(
+                    '%s channel (%d - %s) has no values above %d',
+                    channel_color, channel.index, channel.name,
+                    channel_range.high)
+            if channel_range.low == channel_range.high:
+                logging.warning(
+                    '%s channel (%d - %s) is empty',
+                    channel_color, channel.index, channel.name)
+        return data, data_domain, data_range
+
+    def process_single(self, channel):
         "Crop and limit the specified channel returning the domain and range"
         # Perform any cropping requested. This must be done before calculation
         # of the data's range and percentile limiting is performed
         data = channel.data
         data = data[
             self.crop.top:data.shape[0] - self.crop.bottom,
-            self.crop.left:data.shape[1] - self.crop.right
-        ]
+            self.crop.left:data.shape[1] - self.crop.right]
         # Find the minimum and maximum values in the channel and clip
         # them to a percentile/range if requested
         vsorted = np.sort(data, None)
@@ -256,8 +308,7 @@ class RasChannelProcessor(object):
         if isinstance(self.clip, Percentile):
             data_range = Range(
                 vsorted[(len(vsorted) - 1) * self.clip.low / 100.0],
-                vsorted[(len(vsorted) - 1) * self.clip.high / 100.0]
-            )
+                vsorted[(len(vsorted) - 1) * self.clip.high / 100.0])
             logging.info(
                 '%gth percentile is %d',
                 self.clip.low, data_range.low)
