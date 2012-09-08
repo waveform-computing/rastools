@@ -468,69 +468,42 @@ class SubWindow(QtGui.QWidget):
                     value = value.splitlines()[0].rstrip()
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}}}'.format(key),
-                            value
-                        ])))
+                        ['{{{0}}}'.format(key), value]))
             elif isinstance(value, int):
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}}}'.format(key),
-                            '{0}'.format(value)
-                        ])))
+                        ['{{{0}}}'.format(key), '{0}'.format(value)]))
                 if 0 < value < 10:
                     self._info_dialog.ui.template_list.addTopLevelItem(
                         QtGui.QTreeWidgetItem(
-                            QtCore.QStringList([
-                                '{{{0}:02d}}'.format(key),
-                                '{0:02d}'.format(value)
-                            ])))
+                            ['{{{0}:02d}}'.format(key), '{0:02d}'.format(value)]))
             elif isinstance(value, float):
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}}}'.format(key),
-                            '{0}'.format(value)
-                        ])))
+                        ['{{{0}}}'.format(key), '{0}'.format(value)]))
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}:.2f}}'.format(key),
-                            '{0:.2f}'.format(value)
-                        ])))
+                        ['{{{0}:.2f}}'.format(key), '{0:.2f}'.format(value)]))
             elif isinstance(value, dt.datetime):
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}}}'.format(key),
-                            '{0}'.format(value)
-                        ])))
+                        ['{{{0}}}'.format(key), '{0}'.format(value)]))
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}:%Y-%m-%d}}'.format(key),
-                            '{0:%Y-%m-%d}'.format(value)
-                        ])))
+                        ['{{{0}:%Y-%m-%d}}'.format(key),
+                            '{0:%Y-%m-%d}'.format(value)]))
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}:%H:%M:%S}}'.format(key),
-                            '{0:%H:%M:%S}'.format(value)
-                        ])))
+                        ['{{{0}:%H:%M:%S}}'.format(key),
+                            '{0:%H:%M:%S}'.format(value)]))
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}:%A, %d %b %Y, %H:%M:%S}}'.format(key),
-                            '{0:%A, %d %b %Y, %H:%M:%S}'.format(value)
-                        ])))
+                        ['{{{0}:%A, %d %b %Y, %H:%M:%S}}'.format(key),
+                            '{0:%A, %d %b %Y, %H:%M:%S}'.format(value)]))
             else:
                 self._info_dialog.ui.template_list.addTopLevelItem(
                     QtGui.QTreeWidgetItem(
-                        QtCore.QStringList([
-                            '{{{0}}}'.format(key),
-                            '{0}'.format(value)
-                        ])))
+                        ['{{{0}}}'.format(key), '{0}'.format(value)]))
         self._info_dialog.show()
 
     @property
