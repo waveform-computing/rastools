@@ -38,7 +38,7 @@ except ImportError:
     optcomplete = None
 
 from rastools.terminal import TerminalApplication
-from rastools.collections import Percentile, Range, Crop
+from rastools.collections import Percentile, Range, Crop, Coord
 
 class RasUtility(TerminalApplication):
     """Base class for ras terminal utilities.
@@ -232,7 +232,8 @@ class RasChannelProcessor(object):
             EmptyError exception being raised during a call to process()
     """
 
-    def __init__(self):
+    def __init__(self, data_size):
+        self.data_size = Coord(*data_size)
         self.crop = Crop(0, 0, 0, 0)
         self.clip = None
         self.empty = False
@@ -240,11 +241,7 @@ class RasChannelProcessor(object):
     def process_multiple(self, red_channel, green_channel, blue_channel):
         "Combine, crop, and limit the specified channels returning the data"
         channels = (red_channel, green_channel, blue_channel)
-        for channel in channels:
-            if channel:
-                y_size, x_size = channel.shape[:2]
-                break
-        data = np.zeros((y_size, x_size, 3), np.float)
+        data = np.zeros((self.data_size.y, self.data_size.x, 3), np.float)
         for index, channel in enumerate(channels):
             if channel:
                 data[..., index] = channel.data
@@ -261,7 +258,7 @@ class RasChannelProcessor(object):
             data_range = [
                 Range(
                     vsorted[(vsorted.shape[0] - 1) * self.clip.low / 100.0, index],
-                    vosrted[(vsorted.shape[0] - 1) * self.clip.high / 100.0, index])
+                    vsorted[(vsorted.shape[0] - 1) * self.clip.high / 100.0, index])
                 for index in range(3)]
         elif isinstance(self.clip, Range):
             data_range = [self.clip] * 3
@@ -269,25 +266,26 @@ class RasChannelProcessor(object):
             data_range = data_domain
         for (channel_color, channel, channel_domain, channel_range) in zip(
                 ('Red', 'Green', 'Blue'), channels, data_domain, data_range):
-            if channel_range != channel_domain:
-                logging.info(
-                    '%s channel (%d - %s) has new range %d-%d',
-                    channel_color, channel.index, channel.name,
-                    channel_range.low, channel_range.high)
-            if channel_range.low < channel_domain.low:
-                logging.warning(
-                    '%s channel (%d - %s) has no values below %d',
-                    channel_color, channel.index, channel.name,
-                    channel_range.low)
-            if channel_range.high > channel_domain.high:
-                logging.warning(
-                    '%s channel (%d - %s) has no values above %d',
-                    channel_color, channel.index, channel.name,
-                    channel_range.high)
-            if channel_range.low == channel_range.high:
-                logging.warning(
-                    '%s channel (%d - %s) is empty',
-                    channel_color, channel.index, channel.name)
+            if channel:
+                if channel_range != channel_domain:
+                    logging.info(
+                        '%s channel (%d - %s) has new range %d-%d',
+                        channel_color, channel.index, channel.name,
+                        channel_range.low, channel_range.high)
+                if channel_range.low < channel_domain.low:
+                    logging.warning(
+                        '%s channel (%d - %s) has no values below %d',
+                        channel_color, channel.index, channel.name,
+                        channel_range.low)
+                if channel_range.high > channel_domain.high:
+                    logging.warning(
+                        '%s channel (%d - %s) has no values above %d',
+                        channel_color, channel.index, channel.name,
+                        channel_range.high)
+                if channel_range.low == channel_range.high:
+                    logging.warning(
+                        '%s channel (%d - %s) is empty',
+                        channel_color, channel.index, channel.name)
         return data, data_domain, data_range
 
     def process_single(self, channel):
@@ -344,9 +342,9 @@ class RasChannelProcessor(object):
                     'Channel %d is empty' % channel.index)
         return data, data_domain, data_range
 
-    def format_dict(self, source, **kwargs):
+    def format_dict(self, **kwargs):
         "Converts the configuration for use in format substitutions"
-        return source.format_dict(
+        return dict(
             percentile_from=
                 self.clip.low if isinstance(self.clip, Percentile) else None,
             percentile_to=
@@ -359,6 +357,5 @@ class RasChannelProcessor(object):
             crop_top=self.crop.top,
             crop_right=self.crop.right,
             crop_bottom=self.crop.bottom,
-            **kwargs
-        )
+            **kwargs)
 

@@ -49,7 +49,6 @@ class RasDumpUtility(RasUtility):
     def __init__(self):
         super(RasDumpUtility, self).__init__()
         self._data_writers = None
-        self.converter = RasConverter()
         self.parser.set_defaults(
             list_formats=False,
             output='{filename_root}_{channel:02d}_{channel_name}.csv',
@@ -90,6 +89,7 @@ class RasDumpUtility(RasUtility):
             return 0
         # Verify the various command line options
         data_file = self.parse_files(options, args)
+        self.converter = RasConverter((data_file.x_size, data_file.y_size))
         self.converter.clip = self.parse_range_options(options)
         self.converter.empty = options.empty
         writer_class, multi_class = self.parse_output_options(options)
@@ -105,7 +105,8 @@ class RasDumpUtility(RasUtility):
         )
         if options.multi:
             filename = options.output.format(
-                **self.converter.format_dict(data_file))
+                **data_file.format_dict(
+                    **self.converter.format_dict()))
             logging.warning('Writing all channels to %s', filename)
             output = multi_class(filename, data_file)
         try:
@@ -117,7 +118,8 @@ class RasDumpUtility(RasUtility):
                             channel.index, channel.name)
                     else:
                         filename = options.output.format(
-                            **self.converter.format_dict(channel))
+                            **channel.format_dict(
+                                **self.converter.format_dict()))
                         logging.warning(
                             'Writing channel %d (%s) to %s',
                             channel.index, channel.name, filename)

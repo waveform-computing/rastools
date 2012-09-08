@@ -231,6 +231,8 @@ class RasExtractUtility(RasUtility):
         data_file = self.parse_files(options, args)
         options.layers = self.parse_layers(options, data_file)
         if options.layers:
+            if options.show_colorbar:
+                self.parser.error('you may not use --color-bar with --layers')
             renderer = LayeredRenderer((data_file.x_size, data_file.y_size))
         else:
             renderer = ChannelRenderer((data_file.x_size, data_file.y_size))
@@ -267,14 +269,16 @@ class RasExtractUtility(RasUtility):
         )
         if options.layers:
             filename = options.output.format(
-                **renderer.format_dict(data_file))
+                **data_file.format_dict(
+                    **renderer.format_dict()))
             logging.warning('Writing all layers to %s', filename)
-            figure = renderer.draw_multiple(*options.layers)
+            figure = renderer.draw(*options.layers)
             canvas = canvas_class(figure)
             canvas_method(canvas, filename, dpi=DPI)
         elif options.multi:
             filename = options.output.format(
-                **renderer.format_dict(data_file))
+                **data_file.format_dict(
+                    **renderer.format_dict()))
             logging.warning('Writing all channels to %s',  filename)
             output = multi_class(filename)
             try:
@@ -295,11 +299,12 @@ class RasExtractUtility(RasUtility):
             for channel in data_file.channels:
                 if channel.enabled:
                     filename = options.output.format(
-                        **renderer.format_dict(channel))
+                        **channel.format_dict(
+                            **renderer.format_dict()))
                     logging.warning(
                         'Writing channel %d (%s) to %s',
                         channel.index, channel.name, filename)
-                    figure = renderer.draw_single(channel)
+                    figure = renderer.draw(channel)
                     if figure is not None:
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
@@ -338,9 +343,29 @@ class RasExtractUtility(RasUtility):
                 red, green, blue = options.layers.split(',')
             except ValueError:
                 self.parser.error(
-                    '--layers must be specified with three comma-separated channels')
-            # XXX Parse the layers
-            pass
+                    '--layers must be specified with three '
+                    'comma-separated channels')
+            result = [red, green, blue]
+            for index, channel in enumerate(result):
+                if channel:
+                    try:
+                        channel = int(channel)
+                    except ValueError:
+                        self.parser.error(
+                            '--layers must be specified as integer '
+                            'numbers (found %s)' % channel)
+                    try:
+                        channel = [
+                            c for c in data_file.channels
+                            if c.index == channel][0]
+                    except IndexError:
+                        self.parser.error(
+                            '--layers refers to channel %d which does '
+                            'not exist in the source file' % channel)
+                else:
+                    channel = None
+                result[index] = channel
+            return result
 
     def parse_colormap_option(self, options):
         "Checks the validity of the --colormap option"
@@ -448,8 +473,7 @@ class BaseRenderer(RasChannelProcessor):
     "Abstract renderer class for data files"
 
     def __init__(self, data_size):
-        super(RasRenderer, self).__init__()
-        self._data_size = Coord(*data_size)
+        super(BaseRenderer, self).__init__(data_size)
         self.colorbar = False
         self.colormap = 'gray'
         self.histogram = False
@@ -471,11 +495,11 @@ class BaseRenderer(RasChannelProcessor):
                 self.axes_scales.x * (
                     self.axes_offsets.x + self.crop.left),
                 self.axes_scales.x * (
-                    self.axes_offsets.x + self._data_size.x - self.crop.right)
+                    self.axes_offsets.x + self.data_size.x - self.crop.right)
             ) +
             Range(
                 self.axes_scales.y * (
-                    self.axes_offsets.y + self._data_size.y - self.crop.bottom),
+                    self.axes_offsets.y + self.data_size.y - self.crop.bottom),
                 self.axes_scales.y * (
                     self.axes_offsets.y + self.crop.top)
             )
@@ -531,8 +555,8 @@ class BaseRenderer(RasChannelProcessor):
             return self.resize
         else:
             return Coord(
-                self.resize * (self._data_size.x - self.crop.left - self.crop.right),
-                self.resize * (self._data_size.y - self.crop.top - self.crop.bottom),
+                self.resize * (self.data_size.x - self.crop.left - self.crop.right),
+                self.resize * (self.data_size.y - self.crop.top - self.crop.bottom),
             )
 
     @property
@@ -580,7 +604,7 @@ class BaseRenderer(RasChannelProcessor):
     @property
     def figure_box(self):
         "Returns the overall bounding box"
-        figure_box = BoundingBox(
+        return BoundingBox(
             0.0,
             0.0,
             self.image_box.width + (self.margin.x * 2),
@@ -621,6 +645,14 @@ class BaseRenderer(RasChannelProcessor):
     def colorbar_axes(self, figure):
         "Construct and configure a set of axes for the colorbar"
         return figure.add_axes(self.colorbar_box.relative_to(self.figure_box))
+
+    def format_dict(self, **kwargs):
+        "Converts the configuration for use in format substitutions"
+        result = super(BaseRenderer, self).format_dict()
+        result.update(
+            interpolation=self.interpolation,
+            colormap=self.colormap)
+        return result
 
 
 class LayeredRenderer(BaseRenderer):
@@ -688,16 +720,17 @@ class LayeredRenderer(BaseRenderer):
         # The string_escape codec is used to permit new-line escapes, and
         # various options are passed-thru to the channel formatter so things
         # like percentile can be included in the title
-        title = self.title.decode('string_escape').format(
-            **self.format_dict(channels))
+        title_dict = self.format_dict()
+        for prefix, channel in zip(('red', 'green', 'blue'), channels):
+            if channel:
+                for name, value in channel.format_dict():
+                    title_dict[prefix + '_' + name] = value
+        title = self.title.decode('string_escape').format(**title_dict)
         axes.text(
             0.5, 0, title,
             horizontalalignment='center', verticalalignment='baseline',
             multialignment='center', size='medium', family='sans-serif',
             transform=axes.transAxes)
-
-    def format_dict(self, channels):
-        pass
 
 
 class ChannelRenderer(BaseRenderer):
@@ -761,19 +794,12 @@ class ChannelRenderer(BaseRenderer):
         # various options are passed-thru to the channel formatter so things
         # like percentile can be included in the title
         title = self.title.decode('string_escape').format(
-            **self.format_dict(channel))
+            **channel.format_dict(**self.format_dict()))
         axes.text(
             0.5, 0, title,
             horizontalalignment='center', verticalalignment='baseline',
             multialignment='center', size='medium', family='sans-serif',
             transform=axes.transAxes)
-
-    def format_dict(self, channel):
-        "Converts the configuration for use in format substitutions"
-        return super(RasRenderer, self).format_dict(
-            channel,
-            interpolation=self.interpolation,
-            colormap=self.colormap)
 
 
 main = RasExtractUtility()
