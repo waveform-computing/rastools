@@ -270,10 +270,10 @@ class RasParser(object):
             self.header[field] = self.header[field].decode(
                     self.char_encoding).rstrip(strip_chars)
         # Convert comments to a simple string
-        self.comments = '\n'.join(
+        self.comments = [
             line.decode(self.char_encoding).rstrip(strip_chars)
-            for line in self.comments
-        )
+            for line in self.comments]
+        self.comments = '\n'.join(line for line in self.comments if line)
         # Convert timestamps to a sensible format
         self.start_time = dt.datetime.strptime(
             self.start_time.decode(

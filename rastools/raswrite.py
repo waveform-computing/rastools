@@ -29,7 +29,7 @@ import struct
 
 import numpy as np
 
-from rastools.rasparse import RasFileReader
+from rastools.rasparse import RasParser
 
 
 DEFAULT_X_MOTOR          = 'HORZ'
@@ -80,7 +80,7 @@ class RasAsciiWriter(object):
         "Write the specified data to the output file"
         data_file = self._data_file
         self._file.write(RAS_ASCII_HEADER.format(
-            version_string=RasFileReader.header_string,
+            version_string=RasParser.header_string,
             x_size=len(data[0]),
             y_size=len(data),
             channel_count=1,
@@ -97,6 +97,7 @@ class RasAsciiWriter(object):
         ))
         for row in data:
             self._file.write(''.join(' %d\n' % value for value in row))
+        self._file.close()
 
 
 class RasWriter(object):
@@ -114,9 +115,9 @@ class RasWriter(object):
         "Write the specified data to the output file"
         data_file = self._data_file
         comments = data_file.header['comments'].split('\n') + [''] * 6
-        self._file.write(RasFileReader.header_struct.pack(
-            RasFileReader.header_string,
-            RasFileReader.header_version,
+        self._file.write(RasParser.header_struct.pack(
+            RasParser.header_string,
+            RasParser.header_version,
             data_file.header.get('pid', 0),
             comments[0],
             comments[1],
@@ -129,8 +130,8 @@ class RasWriter(object):
             data_file.header.get('region_filename', DEFAULT_REGION_FILENAME),
             data_file.filename_root,
             data_file.header.get('filename_original', data_file.filename),
-            data_file.start_time.strftime(RasFileReader.datetime_format),
-            data_file.stop_time.strftime(RasFileReader.datetime_format),
+            data_file.start_time.strftime(RasParser.datetime_format),
+            data_file.stop_time.strftime(RasParser.datetime_format),
             1,            # num_chans
             0,            # unknown header field
             data_file.header.get('count_time', DEFAULT_COUNT_TIME),
@@ -157,6 +158,7 @@ class RasWriter(object):
         output_struct = struct.Struct('I' * len(data[0]))
         for row in data:
             self._file.write(output_struct.pack(*row))
+        self._file.close()
 
 
 class RasAsciiMultiWriter(object):
@@ -169,6 +171,12 @@ class RasAsciiMultiWriter(object):
             self._file = filename_or_obj
         self._data_file = data_file
         self._data = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, v, tb):
+        self.close()
 
     def write_page(self, data, channel):
         "Write the channel to the output file"
@@ -183,7 +191,7 @@ class RasAsciiMultiWriter(object):
         # written
         data_file = self._data_file
         self._file.write(RAS_ASCII_HEADER.format(
-            version_string=RasFileReader.header_string,
+            version_string=RasParser.header_string,
             x_size=len(self._data[..., 0][0]),
             y_size=len(self._data[..., 0]),
             channel_count=len(self._data[0, 0]),
@@ -208,6 +216,7 @@ class RasAsciiMultiWriter(object):
                     for row in self._data[raster]
                 )
             )
+        self._file.close()
 
 
 class RasMultiWriter(object):
@@ -221,6 +230,12 @@ class RasMultiWriter(object):
         self._data_file = data_file
         self._data = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, v, tb):
+        self.close()
+
     def write_page(self, data, channel):
         "Write the channel to the output file"
         if self._data is None:
@@ -232,23 +247,23 @@ class RasMultiWriter(object):
         "Finalize and close the output file"
         data_file = self._data_file
         comments = data_file.comments.split('\n') + [''] * 6
-        self._file.write(RasFileReader.header_struct.pack(
-            RasFileReader.header_string,
-            RasFileReader.header_version,
+        self._file.write(RasParser.header_struct.pack(
+            str(RasParser.header_string),
+            RasParser.header_version,
             data_file.header.get('pid', 0),
-            comments[0],
-            comments[1],
-            comments[2],
-            comments[3],
-            comments[4],
-            comments[5],
-            data_file.header.get('x_motor', 'HORZ'),
-            data_file.header.get('y_motor', 'VERT'),
-            data_file.header.get('region_filename', ''),
-            data_file.filename_root,
-            data_file.header.get('filename_original', data_file.filename),
-            data_file.start_time.strftime(RasFileReader.datetime_format),
-            data_file.stop_time.strftime(RasFileReader.datetime_format),
+            str(comments[0]),
+            str(comments[1]),
+            str(comments[2]),
+            str(comments[3]),
+            str(comments[4]),
+            str(comments[5]),
+            str(data_file.header.get('x_motor', 'HORZ')),
+            str(data_file.header.get('y_motor', 'VERT')),
+            str(data_file.header.get('region_filename', '')),
+            str(data_file.filename_root),
+            str(data_file.header.get('filename_original', data_file.filename)),
+            data_file.start_time.strftime(RasParser.datetime_format),
+            data_file.stop_time.strftime(RasParser.datetime_format),
             len(self._data[0, 0]),      # num_chans
             0,            # unknown header field
             data_file.header.get('count_time', 0.0),
@@ -273,7 +288,7 @@ class RasMultiWriter(object):
             data_file.header.get('run_number', 1),
         ))
         output_struct = struct.Struct(
-            'I' * len(self._data[..., 0][0]) * len(self._data[0, 0]))
+            str('I' * len(self._data[..., 0][0]) * len(self._data[0, 0])))
         for raster in range(len(self._data[..., 0])):
             self._file.write(
                 output_struct.pack(*(i for i in self._data[raster].flat)))
@@ -281,3 +296,4 @@ class RasMultiWriter(object):
         # header. This extraneous uint32 ensures that our output matches the
         # length of the original, bugs'n'all
         self._file.write(struct.pack('I', 0))
+        self._file.close()

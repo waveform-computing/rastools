@@ -19,7 +19,11 @@
 """Writer for Sam's dat files"""
 
 from __future__ import (
-    unicode_literals, print_function, absolute_import, division)
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
 
 import numpy as np
 
@@ -83,6 +87,7 @@ class DatWriter(object):
             for x, value in enumerate(row):
                 self._file.write(
                     '%.4f\t%.4f\t%.1f\n' % (y_coords[y], x_coords[x], value))
+        self._file.close()
 
 class DatMultiWriter(object):
     "Multi channel writer for Sam's dat format"
@@ -95,6 +100,12 @@ class DatMultiWriter(object):
         self._data_file = data_file
         self._data = None
         self._names = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, v, tb):
+        self.close()
 
     def write_page(self, data, channel):
         "Write the channel to the output file"
@@ -132,3 +143,4 @@ class DatMultiWriter(object):
                         ''.join('%.1f\t' % value for value in values)
                     )
                 )
+        self._file.close()
