@@ -634,8 +634,8 @@ class BaseRenderer(RasChannelProcessor):
             if self.axes_titles.y:
                 axes.set_ylabel(self.axes_titles.y.decode('string_escape'))
         else:
-            axes.set_xticklabels([])
-            axes.set_yticklabels([])
+            axes.set_xticks([], False)
+            axes.set_yticks([], False)
         return axes
 
     def histogram_axes(self, figure):
