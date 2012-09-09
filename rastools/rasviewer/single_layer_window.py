@@ -377,8 +377,8 @@ Value range: {range_from} to {range_to}""")
             if self.ui.y_label_edit.text():
                 self.image_axes.set_ylabel(self.ui.y_label_edit.text())
         else:
-            self.image_axes.set_xticklabels([])
-            self.image_axes.set_yticklabels([])
+            self.image_axes.set_xticks([], False)
+            self.image_axes.set_yticks([], False)
         # The imshow() call takes care of clamping values with data_range and
         # color-mapping
         return self.image_axes.imshow(

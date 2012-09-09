@@ -572,8 +572,8 @@ class MultiLayerWindow(SubWindow):
             if self.ui.y_label_edit.text():
                 self.image_axes.set_ylabel(self.ui.y_label_edit.text())
         else:
-            self.image_axes.set_xticklabels([])
-            self.image_axes.set_yticklabels([])
+            self.image_axes.set_xticks([], False)
+            self.image_axes.set_yticks([], False)
         # Here we tweak values outside the normalized 0.0 and 1.0 range just
         # before drawing. This is not done in data_normalized as otherwise
         # histograms derived from the flattened version of the data wind up
