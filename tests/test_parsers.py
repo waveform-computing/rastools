@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for datparse"""
+"""Unit tests for parsers and writers"""
 
 from __future__ import (
     unicode_literals,
@@ -32,51 +32,32 @@ from nose import with_setup
 from rastools.datparse import DatParser
 from rastools.datwrite import DatMultiWriter
 from rastools.rasparse import RasParser
-from rastools.raswrite import RasMultiWriter, RasAsciiMultiWriter
+from rastools.raswrite import RasMultiWriter
+
 
 THIS_PATH = os.path.abspath(os.path.dirname(__file__))
 TEST_DAT = os.path.join(THIS_PATH, 'test.dat')
 TEST2_DAT = os.path.join(THIS_PATH, 'test2.dat')
 TEST_RAS = os.path.join(THIS_PATH, 'test.ras')
+TEST2_RAS = os.path.join(THIS_PATH, 'test2.ras')
 TEST_CHANNELS = os.path.join(THIS_PATH, 'channels.txt')
+
 
 def read_dat_file(filename):
     return DatParser(filename)
+
+def read_ras_file(filename, channels):
+    return RasParser(filename, channels)
 
 def write_dat_file(filename, data_file):
     with DatMultiWriter(filename, data_file) as f:
         for channel in data_file.channels:
             f.write_page(channel.data, channel)
 
-def read_ras_file(filename, channels):
-    return RasParser(filename, channels)
-
 def write_ras_file(filename, data_file):
     with RasMultiWriter(filename, data_file) as f:
         for channel in data_file.channels:
             f.write_page(channel.data, channel)
-
-def setup_pass():
-    pass
-
-def setup_ras_file():
-    write_ras_file(TEST_RAS, read_dat_file(TEST_DAT))
-    with open(TEST_CHANNELS, 'w') as f:
-        f.write('0 Zeros\n')
-        f.write('1 Sequence\n')
-
-def teardown_ras_file():
-    if os.path.exists(TEST_RAS):
-        os.unlink(TEST_RAS)
-    if os.path.exists(TEST_CHANNELS):
-        os.unlink(TEST_CHANNELS)
-
-def setup_dat_file():
-    write_dat_file(TEST2_DAT, read_dat_file(TEST_DAT))
-
-def teardown_dat_file():
-    if os.path.exists(TEST2_DAT):
-        os.unlink(TEST2_DAT)
 
 def check_contents(data_file):
     assert data_file.version == 1
@@ -93,17 +74,26 @@ def check_contents(data_file):
     assert data_file.channels[1].enabled
     assert (data_file.channels[1].data == np.arange(100).reshape((10, 10))).all()
 
-def test_datparse():
-    check_contents(read_dat_file(TEST_DAT))
 
-@with_setup(setup_pass, teardown_ras_file)
-def test_raswrite():
-    setup_ras_file()
+def test_dat():
+    data_file = read_dat_file(TEST_DAT)
+    check_contents(data_file)
+    write_dat_file(TEST2_DAT, data_file)
+    data_file2 = read_dat_file(TEST2_DAT)
+    check_contents(data_file2)
 
-@with_setup(setup_ras_file, teardown_ras_file)
-def test_rasparse():
-    check_contents(read_ras_file(TEST_RAS, TEST_CHANNELS))
+def test_rasroundtrip():
+    with open(TEST_CHANNELS, 'w') as f:
+        f.write('0 Zeros\n')
+        f.write('1 Sequence\n')
+    write_ras_file(TEST_RAS, read_dat_file(TEST_DAT))
+    data_file = read_ras_file(TEST_RAS, TEST_CHANNELS)
+    check_contents(data_file)
+    write_ras_file(TEST2_RAS, data_file)
+    data_file2 = read_ras_file(TEST2_RAS, TEST_CHANNELS)
+    check_contents(data_file2)
 
-@with_setup(setup_pass, teardown_dat_file)
-def test_datwrite():
-    setup_dat_file()
+def teardown():
+    for filename in (TEST_RAS, TEST_CHANNELS, TEST2_DAT, TEST2_RAS):
+        if os.path.exists(filename):
+            os.unlink(filename)

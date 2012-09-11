@@ -114,22 +114,22 @@ class RasWriter(object):
     def write(self, data):
         "Write the specified data to the output file"
         data_file = self._data_file
-        comments = data_file.header['comments'].split('\n') + [''] * 6
+        comments = data_file.comments.split('\n') + [''] * 6
         self._file.write(RasParser.header_struct.pack(
-            RasParser.header_string,
+            str(RasParser.header_string),
             RasParser.header_version,
             data_file.header.get('pid', 0),
-            comments[0],
-            comments[1],
-            comments[2],
-            comments[3],
-            comments[4],
-            comments[5],
-            data_file.header.get('x_motor', DEFAULT_X_MOTOR),
-            data_file.header.get('y_motor', DEFAULT_Y_MOTOR),
-            data_file.header.get('region_filename', DEFAULT_REGION_FILENAME),
-            data_file.filename_root,
-            data_file.header.get('filename_original', data_file.filename),
+            str(comments[0]),
+            str(comments[1]),
+            str(comments[2]),
+            str(comments[3]),
+            str(comments[4]),
+            str(comments[5]),
+            str(data_file.header.get('x_motor', DEFAULT_X_MOTOR)),
+            str(data_file.header.get('y_motor', DEFAULT_Y_MOTOR)),
+            str(data_file.header.get('region_filename', DEFAULT_REGION_FILENAME)),
+            str(data_file.filename_root),
+            str(data_file.header.get('filename_original', data_file.filename)),
             data_file.start_time.strftime(RasParser.datetime_format),
             data_file.stop_time.strftime(RasParser.datetime_format),
             1,            # num_chans
@@ -155,7 +155,7 @@ class RasWriter(object):
             0.0,          # offset 6
             data_file.header.get('run_number', 1),
         ))
-        output_struct = struct.Struct('I' * len(data[0]))
+        output_struct = struct.Struct(str('I' * len(data[0])))
         for row in data:
             self._file.write(output_struct.pack(*row))
         self._file.close()

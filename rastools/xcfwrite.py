@@ -41,7 +41,7 @@ GIMP_EXECUTABLE = 'gimp'
 #
 #   {input} -- double-quoted input filename
 #   {output} -- double-quoted output filename
-UNILAYER_SCRIPT = """
+SINGLE_LAYER_SCRIPT = """
 (let*
   (
     (im (car (file-png-load RUN-NONINTERACTIVE {input} {input})))
@@ -60,7 +60,7 @@ UNILAYER_SCRIPT = """
 #   {width} -- the width of the output image in pixels
 #   {height} -- the height of the output image in pixels
 #   {output} -- the output filename
-MULTILAYER_SCRIPT = """
+MULTI_LAYER_SCRIPT = """
 (let*
   (
     (images '({layers}))
@@ -91,6 +91,17 @@ MULTILAYER_SCRIPT = """
   (gimp-image-delete im)
 )
 """
+
+# http://stackoverflow.com/questions/11301138/how-to-check-if-variable-is-string-with-python-2-and-3-compatibility
+try:
+    basestring
+    def is_string(s):
+        "Tests whether s is a string in Python 2"
+        return isinstance(s, basestring)
+except NameError:
+    def is_string(s):
+        "Tests whether s is a string in Python 3"
+        return isinstance(s, str)
 
 def quote_string(s):
     "Quotes a string for use in a GIMP script"
@@ -139,7 +150,7 @@ class FigureCanvasXcf(FigureCanvasAgg):
         "Writes the figure to a GIMP XCF image file"
         # If filename_or_obj is a file-like object we need a temporary file for
         # GIMP's output too...
-        if isinstance(filename_or_obj, type('')):
+        if is_string(filename_or_obj):
             out_temp_handle, out_temp_name = None, filename_or_obj
         else:
             out_temp_handle, out_temp_name = tempfile.mkstemp(suffix='.xcf')
@@ -149,7 +160,7 @@ class FigureCanvasXcf(FigureCanvasAgg):
             try:
                 FigureCanvasAgg.print_png(self, in_temp_name, *args, **kwargs)
                 run_gimp_script(
-                    UNILAYER_SCRIPT.format(
+                    SINGLE_LAYER_SCRIPT.format(
                         input=quote_string(in_temp_name),
                         output=quote_string(out_temp_name)))
             finally:
@@ -201,7 +212,7 @@ class XcfLayers(object):
             except OSError:
                 pass
             run_gimp_script(
-                MULTILAYER_SCRIPT.format(
+                MULTI_LAYER_SCRIPT.format(
                     layers=' '.join(
                         quote_string(s) for (s, _) in self._layers),
                     titles=' '.join(

@@ -37,7 +37,7 @@ class XlsWriter(object):
         self._file = filename_or_obj
         self._workbook = xlwt.Workbook()
         self._worksheet = self._workbook.add_sheet(
-            channel.format('{channel} - {channel_name}'))
+            '{channel} - {channel_name}'.format(**channel.format_dict()))
 
     def write(self, data):
         "Writes channel data to the first workbook sheet"
@@ -59,7 +59,7 @@ class XlsMulti(object):
     def write_page(self, data, channel):
         "Writes channel data to a new workbook sheet"
         sheet = self._workbook.add_sheet(
-            channel.format('{channel} - {channel_name}'))
+            '{channel} - {channel_name}'.format(**channel.format_dict()))
         for row_num, row in enumerate(data):
             for col_num, cell in enumerate(row):
                 sheet.write(row_num, col_num, int(cell))
