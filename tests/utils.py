@@ -68,6 +68,11 @@ def check_exists(filename, delete_later=True):
         TO_DELETE.append(filename)
     assert os.path.exists(filename)
 
+def check_not_exists(filename, delete_later=True):
+    if delete_later:
+        TO_DELETE.append(filename)
+    assert not os.path.exists(filename)
+
 def delete_produced_files():
     for filename in TO_DELETE:
         if os.path.exists(filename):

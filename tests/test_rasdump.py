@@ -49,7 +49,7 @@ def check_rasdump(filename):
     formats = get_dump_formats()
     for fmt in formats:
         out, err = run([
-            'rasdump', '-e', '-o',
+            'rasdump', '--empty', '--output',
             os.path.join(THIS_PATH, 'test.{channel}%s' % fmt), filename])
         test0 = os.path.join(THIS_PATH, 'test.0%s' % fmt)
         test1 = os.path.join(THIS_PATH, 'test.1%s' % fmt)

@@ -291,8 +291,9 @@ class RasExtractUtility(RasUtility):
                         if figure is not None:
                             canvas = canvas_class(figure)
                             output.savefig(
-                                figure, title=channel.format(
-                                    '{channel} - {channel_name}'))
+                                figure,
+                                title='{channel} - {channel_name}'.format(
+                                    **channel.format_dict()))
             finally:
                 output.close()
         else:

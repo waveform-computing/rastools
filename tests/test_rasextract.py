@@ -46,6 +46,15 @@ def get_picture_formats():
             accept = True
     return result
 
+def check_image_size(filename, exactly=None, at_least=None):
+    image = Image.open(filename)
+    if exactly:
+        assert image.size == exactly
+    elif at_least:
+        assert image.size >= at_least
+    else:
+        assert False
+
 def check_image_zeros(filename):
     # Test every pixel in the image is black. We convert the image's mode to
     # RGB for the test as this saves mucking around with palettes
@@ -80,19 +89,36 @@ def check_rasextract(filename):
     multi_formats = ('.xcf', )
     for fmt in formats:
         out, err = run([
-            'rasextract', '-e', '-o',
+            'rasextract', '--empty', '--output',
             os.path.join(THIS_PATH, 'test.{channel}%s' % fmt), filename])
         test0 = os.path.join(THIS_PATH, 'test.0%s' % fmt)
         test1 = os.path.join(THIS_PATH, 'test.1%s' % fmt)
         check_exists(test0)
         check_exists(test1)
         if fmt in pil_formats:
+            check_image_size(test0, exactly=(10, 10))
             check_image_zeros(test0)
+            check_image_size(test1, exactly=(10, 10))
             # Don't test sequences with the GIF format as the dithering
             # employed by PIL when changing the image mode to palette-based
             # makes it fail (correctly)
             if not test1.endswith('.gif'):
                 check_image_sequence(test1)
+            out, err = run([
+                'rasextract', '--resize', '2', '--output',
+                os.path.join(THIS_PATH, 'test-resized.{channel}%s' % fmt), filename])
+            test0 = os.path.join(THIS_PATH, 'test-resized.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-resized.1%s' % fmt)
+            # test0 shouldn't exist as we don't specify --empty above and
+            # channel 0 is empty
+            check_not_exists(test0)
+            check_exists(test1)
+            check_image_size(test1, exactly=(20, 20))
+        if fmt in multi_formats:
+            test = os.path.join(THIS_PATH, 'test%s' % fmt)
+            out, err = run([
+                'rasextract', '--multi', '--output', test, filename])
+            check_exists(test)
 
 
 def setup():
