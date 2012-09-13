@@ -88,7 +88,7 @@ def check_rasextract(filename):
     pil_formats = ('.bmp', '.gif', '.png', '.tif')
     multi_formats = ('.xcf', )
     for fmt in formats:
-        out, err = run([
+        run([
             'rasextract', '--empty', '--output',
             os.path.join(THIS_PATH, 'test.{channel}%s' % fmt), filename])
         test0 = os.path.join(THIS_PATH, 'test.0%s' % fmt)
@@ -104,7 +104,7 @@ def check_rasextract(filename):
             # makes it fail (correctly)
             if not test1.endswith('.gif'):
                 check_image_sequence(test1)
-            out, err = run([
+            run([
                 'rasextract', '--resize', '2', '--output',
                 os.path.join(THIS_PATH, 'test-resized.{channel}%s' % fmt), filename])
             test0 = os.path.join(THIS_PATH, 'test-resized.0%s' % fmt)
@@ -116,8 +116,7 @@ def check_rasextract(filename):
             check_image_size(test1, exactly=(20, 20))
         if fmt in multi_formats:
             test = os.path.join(THIS_PATH, 'test%s' % fmt)
-            out, err = run([
-                'rasextract', '--multi', '--output', test, filename])
+            run(['rasextract', '--multi', '--output', test, filename])
             check_exists(test)
 
 

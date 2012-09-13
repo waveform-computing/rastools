@@ -262,6 +262,22 @@ class RasChannelProcessor(object):
                 for index in range(3)]
         elif isinstance(self.clip, Range):
             data_range = [self.clip] * 3
+            for index, (channel_color, channel, channel_domain, channel_range) in enumerate(zip(
+                    ('Red', 'Green', 'Blue'), channels, data_domain, data_range)):
+                if channel:
+                    if channel_range.low < channel_domain.low:
+                        logging.warning(
+                            '%s channel (%d - %s) has no values below %d',
+                            channel_color, channel.index, channel.name,
+                            channel_range.low)
+                    if channel_range.high > channel_domain.high:
+                        logging.warning(
+                            '%s channel (%d - %s) has no values above %d',
+                            channel_color, channel.index, channel.name,
+                            channel_range.high)
+                    data_range[index] = Range(
+                        max(channel_range.low, channel_domain.low),
+                        min(channel_range.high, channel_domain.high))
         else:
             data_range = data_domain
         for (channel_color, channel, channel_domain, channel_range) in zip(
@@ -272,17 +288,7 @@ class RasChannelProcessor(object):
                         '%s channel (%d - %s) has new range %d-%d',
                         channel_color, channel.index, channel.name,
                         channel_range.low, channel_range.high)
-                if channel_range.low < channel_domain.low:
-                    logging.warning(
-                        '%s channel (%d - %s) has no values below %d',
-                        channel_color, channel.index, channel.name,
-                        channel_range.low)
-                if channel_range.high > channel_domain.high:
-                    logging.warning(
-                        '%s channel (%d - %s) has no values above %d',
-                        channel_color, channel.index, channel.name,
-                        channel_range.high)
-                if channel_range.low == channel_range.high:
+                if channel_range.low >= channel_range.high:
                     logging.warning(
                         '%s channel (%d - %s) is empty',
                         channel_color, channel.index, channel.name)
@@ -315,21 +321,24 @@ class RasChannelProcessor(object):
                 self.clip.high, data_range.high)
         elif isinstance(self.clip, Range):
             data_range = self.clip
+            if data_range.low < data_domain.low:
+                logging.warning(
+                    'Channel %d (%s) has no values below %d',
+                    channel.index, channel.name, data_range.low)
+            if data_range.high > data_domain.high:
+                logging.warning(
+                    'Channel %d (%s) has no values above %d',
+                    channel.index, channel.name, data_range.high)
+            data_range = Range(
+                max(data_range.low, data_domain.low),
+                min(data_range.high, data_domain.high))
         else:
             data_range = data_domain
         if data_range != data_domain:
             logging.info(
                 'Channel %d (%s) has new range %d-%d',
                 channel.index, channel.name, data_range.low, data_range.high)
-        if data_range.low < data_domain.low:
-            logging.warning(
-                'Channel %d (%s) has no values below %d',
-                channel.index, channel.name, data_range.low)
-        if data_range.high > data_domain.high:
-            logging.warning(
-                'Channel %d (%s) has no values above %d',
-                channel.index, channel.name, data_range.high)
-        if data_range.low == data_range.high:
+        if data_range.low >= data_range.high:
             if self.empty:
                 logging.warning(
                     'Channel %d (%s) is empty',

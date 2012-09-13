@@ -62,15 +62,15 @@ def run(cmdline):
 def in_output(pattern, output):
     return re.search(pattern, output, flags=re.MULTILINE | re.UNICODE)
 
-TO_DELETE = []
+TO_DELETE = set()
 def check_exists(filename, delete_later=True):
     if delete_later:
-        TO_DELETE.append(filename)
+        TO_DELETE.add(filename)
     assert os.path.exists(filename)
 
 def check_not_exists(filename, delete_later=True):
     if delete_later:
-        TO_DELETE.append(filename)
+        TO_DELETE.add(filename)
     assert not os.path.exists(filename)
 
 def delete_produced_files():

@@ -26,6 +26,7 @@ from __future__ import (
     )
 
 import os
+import csv
 from utils import *
 
 
@@ -45,17 +46,50 @@ def get_dump_formats():
             accept = True
     return result
 
+def check_dump_zeros(filename, dialect):
+    reader = csv.reader(open(filename, 'r'), dialect=dialect)
+    assert all([float(value) == 0.0 for line in reader for value in line])
+
+def check_dump_sequence(filename, dialect, min_value=None, max_value=None):
+    last_value = 0.0
+    reader = csv.reader(open(filename, 'r'), dialect=dialect)
+    for line in reader:
+        for value in line:
+            value = float(value)
+            assert value >= last_value
+            if min_value is not None:
+                assert value >= min_value
+            if max_value is not None:
+                assert value <= max_value
+            last_value = value
+
 def check_rasdump(filename):
     formats = get_dump_formats()
+    csv_formats = {
+        '.csv': 'excel',
+        '.tsv': 'excel-tab'}
     for fmt in formats:
-        out, err = run([
+        run([
             'rasdump', '--empty', '--output',
             os.path.join(THIS_PATH, 'test.{channel}%s' % fmt), filename])
         test0 = os.path.join(THIS_PATH, 'test.0%s' % fmt)
         test1 = os.path.join(THIS_PATH, 'test.1%s' % fmt)
         check_exists(test0)
         check_exists(test1)
-
+        if fmt in csv_formats:
+            check_dump_zeros(test0, dialect=csv_formats[fmt])
+            check_dump_sequence(test1, dialect=csv_formats[fmt])
+            run([
+                'rasdump', '--range', '2-80', '--output',
+                os.path.join(THIS_PATH, 'test-range.{channel}%s' % fmt),
+                filename])
+            test0 = os.path.join(THIS_PATH, 'test-range.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-range.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_dump_sequence(
+                test1, dialect=csv_formats[fmt],
+                min_value=2, max_value=80)
 
 def setup():
     create_test_ras()
