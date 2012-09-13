@@ -60,8 +60,7 @@ develop: tags
 	$(PYTHON) $(PYFLAGS) setup.py develop
 
 test:
-	@echo "No tests currently implemented"
-	#cd examples && ./runtests.sh
+	nosetests -w tests/
 
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean

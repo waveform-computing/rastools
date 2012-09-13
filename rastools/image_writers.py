@@ -41,8 +41,6 @@ except ImportError:
 else:
     IMAGE_WRITERS.extend([
         # canvas class, method, exts, description, default interpolation, multi-class
-        (FigureCanvasAgg, FigureCanvasAgg.print_bmp, ('.bmp', '.BMP'),
-            'BMP - Windows or OS/2 bitmap', 'nearest', None),
         (FigureCanvasAgg, FigureCanvasAgg.print_png, ('.png', '.PNG'),
             'PNG - Portable Network Graphics', 'nearest', None),
     ])
@@ -67,6 +65,9 @@ except ImportError:
     logging.warning('Failed to load TIFF support')
 else:
     IMAGE_WRITERS.extend([
+        (FigureCanvasPIL, FigureCanvasPIL.print_bmp,
+            ('.bmp', '.BMP'),
+            'BMP - Windows Bitmap Format', 'nearest', None),
         (FigureCanvasPIL, FigureCanvasPIL.print_tif,
             ('.tif', '.tiff', '.TIF', '.TIFF'),
             'TIFF - Tagged Image File Format', 'nearest', None),

@@ -274,7 +274,7 @@ class RasExtractUtility(RasUtility):
             logging.warning('Writing all layers to %s', filename)
             figure = renderer.draw(*options.layers)
             canvas = canvas_class(figure)
-            canvas_method(canvas, filename, dpi=DPI)
+            canvas_method(canvas, filename)
         elif options.multi:
             filename = options.output.format(
                 **data_file.format_dict(
@@ -309,7 +309,7 @@ class RasExtractUtility(RasUtility):
                         # Finally, dump the figure to disk as whatever format
                         # the user requested
                         canvas = canvas_class(figure)
-                        canvas_method(canvas, filename, dpi=DPI)
+                        canvas_method(canvas, filename)
 
     def list_colormaps(self):
         "List the available colormaps"

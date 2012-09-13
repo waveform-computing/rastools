@@ -94,11 +94,13 @@ MULTI_LAYER_SCRIPT = """
 
 # http://stackoverflow.com/questions/11301138/how-to-check-if-variable-is-string-with-python-2-and-3-compatibility
 try:
+    # XXX Py2 only
     basestring
     def is_string(s):
         "Tests whether s is a string in Python 2"
         return isinstance(s, basestring)
 except NameError:
+    # XXX Py3 only
     def is_string(s):
         "Tests whether s is a string in Python 3"
         return isinstance(s, str)

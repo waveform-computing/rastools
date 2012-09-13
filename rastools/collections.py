@@ -76,3 +76,10 @@ class BoundingBox(object):
     def __contains__(self, value):
         return value in (self.left, self.bottom, self.width, self.height)
 
+    def __str__(self):
+        return 'BoundingBox from ({0}, {1}) to ({2}, {3})'.format(
+            self.left, self.bottom, self.right, self.top)
+
+    def __repr__(self):
+        return 'BoundingBox(left={0}, bottom={1}, width={2}, height={3})'.format(
+            self.left, self.bottom, self.width, self.height)

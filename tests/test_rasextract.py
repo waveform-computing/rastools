@@ -1,0 +1,107 @@
+# vim: set et sw=4 sts=4:
+
+# Copyright 2012 Dave Hughes.
+#
+# This file is part of rastools.
+#
+# rastools is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# rastools is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# rastools.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Unit tests for the rasextract utility"""
+
+from __future__ import (
+    unicode_literals,
+    print_function,
+    absolute_import,
+    division,
+    )
+
+import os
+from PIL import Image
+from utils import *
+
+
+def get_picture_formats():
+    formats, _ = run(['rasextract', '--help-formats'])
+    accept = False
+    result = []
+    for line in formats.splitlines():
+        line = line.rstrip()
+        if not line:
+            continue
+        if accept:
+            ext = line.split()[0].lower()
+            if not ext in result:
+                result.append(ext)
+        elif 'output formats' in line:
+            accept = True
+    return result
+
+def check_image_zeros(filename):
+    # Test every pixel in the image is black. We convert the image's mode to
+    # RGB for the test as this saves mucking around with palettes
+    image = Image.open(filename)
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    assert all([pixel == (0, 0, 0) for pixel in image.getdata()])
+
+def check_image_sequence(filename):
+    # Test every pixel in the image is brighter than the prior one, or that the
+    # current line of pixels is a repeat of the last one (as in the case of
+    # resized images)
+    last_pixel = (0, 0, 0)
+    last_raster = []
+    image = Image.open(filename)
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    for raster in chunks(image.size[0], image.getdata()):
+        raster = list(raster)
+        for index, pixel in enumerate(raster):
+            if pixel < last_pixel:
+                # Check for repeated raster...
+                if index == 0 and raster == last_raster:
+                    break
+                assert False
+            last_pixel = pixel
+        last_raster = raster
+
+def check_rasextract(filename):
+    formats = get_picture_formats()
+    pil_formats = ('.bmp', '.gif', '.png', '.tif')
+    multi_formats = ('.xcf', )
+    for fmt in formats:
+        out, err = run([
+            'rasextract', '-e', '-o',
+            os.path.join(THIS_PATH, 'test.{channel}%s' % fmt), filename])
+        test0 = os.path.join(THIS_PATH, 'test.0%s' % fmt)
+        test1 = os.path.join(THIS_PATH, 'test.1%s' % fmt)
+        check_exists(test0)
+        check_exists(test1)
+        if fmt in pil_formats:
+            check_image_zeros(test0)
+            # Don't test sequences with the GIF format as the dithering
+            # employed by PIL when changing the image mode to palette-based
+            # makes it fail (correctly)
+            if not test1.endswith('.gif'):
+                check_image_sequence(test1)
+
+
+def setup():
+    create_test_ras()
+    create_test_channels()
+
+def test_rasextract():
+    check_rasextract(TEST_DAT)
+    check_rasextract(TEST_RAS)
+
+def teardown():
+    delete_produced_files()

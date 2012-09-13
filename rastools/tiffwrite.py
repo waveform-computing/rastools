@@ -42,6 +42,15 @@ except ImportError:
 # If PIL's available, define a sub-class of Agg which can handle conversion
 # to odd formats like TIFF
 class FigureCanvasPIL(FigureCanvasAgg):
+    def print_bmp(self, filename_or_obj, *args, **kwargs):
+        png = StringIO()
+        FigureCanvasAgg.print_png(self, png, *args, **kwargs)
+        png.seek(0) # rewind
+        # Convert the PNG to a BMP (uncompressed)
+        im = Image.open(png)
+        im = im.convert('RGB')
+        im.save(filename_or_obj, 'BMP')
+
     def print_tif(self, filename_or_obj, *args, **kwargs):
         png = StringIO()
         FigureCanvasAgg.print_png(self, png, *args, **kwargs)
