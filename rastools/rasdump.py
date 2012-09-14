@@ -90,6 +90,7 @@ class RasDumpUtility(RasUtility):
         # Verify the various command line options
         data_file = self.parse_files(options, args)
         self.converter = RasConverter((data_file.x_size, data_file.y_size))
+        self.converter.crop = self.parse_crop_option(options)
         self.converter.clip = self.parse_range_options(options)
         self.converter.empty = options.empty
         writer_class, multi_class = self.parse_output_options(options)

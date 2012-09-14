@@ -46,22 +46,42 @@ def get_dump_formats():
             accept = True
     return result
 
+def check_dump_size(filename, dialect, exactly=None, at_least=None):
+    if exactly:
+        w, h = exactly
+    elif at_least:
+        w, h = at_least
+    else:
+        assert False
+    with open(filename, 'r') as f:
+        dump = csv.reader(f, dialect=dialect)
+        for row_num, row in enumerate(dump):
+            if exactly:
+                assert len(row) == w
+            elif at_least:
+                assert len(row) >= w
+        if exactly:
+            assert row_num == h - 1
+        elif at_least:
+            assert row_num >= h - 1
+
 def check_dump_zeros(filename, dialect):
     reader = csv.reader(open(filename, 'r'), dialect=dialect)
     assert all([float(value) == 0.0 for line in reader for value in line])
 
 def check_dump_sequence(filename, dialect, min_value=None, max_value=None):
     last_value = 0.0
-    reader = csv.reader(open(filename, 'r'), dialect=dialect)
-    for line in reader:
-        for value in line:
-            value = float(value)
-            assert value >= last_value
-            if min_value is not None:
-                assert value >= min_value
-            if max_value is not None:
-                assert value <= max_value
-            last_value = value
+    with open(filename, 'r') as f:
+        reader = csv.reader(f, dialect=dialect)
+        for line in reader:
+            for value in line:
+                value = float(value)
+                assert value >= last_value
+                if min_value is not None:
+                    assert value >= min_value
+                if max_value is not None:
+                    assert value <= max_value
+                last_value = value
 
 def check_rasdump(filename):
     formats = get_dump_formats()
@@ -77,8 +97,11 @@ def check_rasdump(filename):
         check_exists(test0)
         check_exists(test1)
         if fmt in csv_formats:
-            check_dump_zeros(test0, dialect=csv_formats[fmt])
-            check_dump_sequence(test1, dialect=csv_formats[fmt])
+            dialect = csv_formats[fmt]
+            check_dump_size(test0, dialect, exactly=(10, 10))
+            check_dump_size(test1, dialect, exactly=(10, 10))
+            check_dump_zeros(test0, dialect)
+            check_dump_sequence(test1, dialect)
             run([
                 'rasdump', '--range', '50-80', '--output',
                 os.path.join(THIS_PATH, 'test-range.{channel}%s' % fmt),
@@ -87,9 +110,8 @@ def check_rasdump(filename):
             test1 = os.path.join(THIS_PATH, 'test-range.1%s' % fmt)
             check_not_exists(test0)
             check_exists(test1)
-            check_dump_sequence(
-                test1, dialect=csv_formats[fmt],
-                min_value=50, max_value=80)
+            check_dump_size(test1, dialect, exactly=(10, 10))
+            check_dump_sequence(test1, dialect, min_value=50, max_value=80)
             run([
                 'rasdump', '--percentile', '50-80', '--output',
                 os.path.join(THIS_PATH, 'test-percentile.{channel}%s' % fmt),
@@ -98,9 +120,18 @@ def check_rasdump(filename):
             test1 = os.path.join(THIS_PATH, 'test-percentile.1%s' % fmt)
             check_not_exists(test0)
             check_exists(test1)
-            check_dump_sequence(
-                test1, dialect=csv_formats[fmt],
-                min_value=50, max_value=80)
+            check_dump_size(test1, dialect, exactly=(10, 10))
+            check_dump_sequence(test1, dialect, min_value=50, max_value=80)
+            run([
+                'rasdump', '--crop', '1,1,1,1', '--output',
+                os.path.join(THIS_PATH, 'test-crop.{channel}%s' % fmt),
+                filename])
+            test0 = os.path.join(THIS_PATH, 'test-crop.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-crop.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_dump_size(test1, dialect, exactly=(8, 8))
+            check_dump_sequence(test1, dialect, min_value=11, max_value=88)
 
 def setup():
     create_test_ras()
