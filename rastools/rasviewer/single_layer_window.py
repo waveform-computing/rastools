@@ -192,7 +192,10 @@ class SingleLayerWindow(SubWindow):
         self.ui.percentile_to_spinbox.setMinimum(value)
         self.ui.percentile_from_slider.setValue(int(value * 100.0))
         self.ui.value_from_spinbox.setValue(
-            self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+            self.data_sorted[
+                min(
+                    len(self.data_sorted) - 1,
+                    int(len(self.data_sorted) * value / 100.0))])
         self.ui.value_from_slider.setValue(
             int(self.ui.value_from_spinbox.value() * 100.0))
         self.invalidate_image()
@@ -202,7 +205,10 @@ class SingleLayerWindow(SubWindow):
         self.ui.percentile_from_spinbox.setMaximum(value)
         self.ui.percentile_to_slider.setValue(int(value * 100.0))
         self.ui.value_to_spinbox.setValue(
-            self.data_sorted[(len(self.data_sorted) - 1) * value / 100.0])
+            self.data_sorted[
+                min(
+                    len(self.data_sorted) - 1,
+                    int(len(self.data_sorted) * value / 100.0))])
         self.ui.value_to_slider.setValue(
             int(self.ui.value_to_spinbox.value() * 100.0))
         self.invalidate_image()
@@ -224,8 +230,8 @@ class SingleLayerWindow(SubWindow):
         self.ui.value_to_spinbox.setMinimum(value)
         self.ui.value_from_slider.setValue(int(value * 100.0))
         self.ui.percentile_from_spinbox.setValue(
-            self.data_sorted.searchsorted(value) * 100.0 /
-            (len(self.data_sorted) - 1))
+            ((self.data_sorted.searchsorted(value) + 1) * 100.0 /
+            len(self.data_sorted)) - 1)
         self.ui.percentile_from_slider.setValue(
             int(self.ui.percentile_from_spinbox.value() * 100.0))
         self.invalidate_image()
@@ -235,8 +241,8 @@ class SingleLayerWindow(SubWindow):
         self.ui.value_from_spinbox.setMaximum(value)
         self.ui.value_to_slider.setValue(int(value * 100.0))
         self.ui.percentile_to_spinbox.setValue(
-            self.data_sorted.searchsorted(value) * 100.0 /
-            (len(self.data_sorted) - 1))
+            ((self.data_sorted.searchsorted(value) + 1) * 100.0 /
+            len(self.data_sorted)) - 1)
         self.ui.percentile_to_slider.setValue(
             int(self.ui.percentile_to_spinbox.value() * 100.0))
         self.invalidate_image()
@@ -253,15 +259,19 @@ class SingleLayerWindow(SubWindow):
                 self.data_domain.high)
             self.ui.value_from_spinbox.setValue(
                 self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_from_spinbox.value() / 100.0])
+                    min(
+                        len(self.data_sorted) - 1,
+                        int(len(self.data_sorted) *
+                            self.ui.percentile_from_spinbox.value() / 100.0))])
             self.ui.value_to_spinbox.setRange(
                 self.data_domain.low,
                 self.data_domain.high)
             self.ui.value_to_spinbox.setValue(
                 self.data_sorted[
-                    (len(self.data_sorted) - 1) *
-                    self.ui.percentile_to_spinbox.value() / 100.0])
+                    min(
+                        len(self.data_sorted) - 1,
+                        int(len(self.data_sorted) *
+                            self.ui.percentile_to_spinbox.value() / 100.0))])
             self.ui.value_from_slider.setRange(
                 int(self.data_sorted[0] * 100.0),
                 int(self.data_sorted[-1] * 100.0))

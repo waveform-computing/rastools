@@ -27,7 +27,6 @@ from __future__ import (
 
 import os
 import numpy as np
-from nose import with_setup
 
 from rastools.datparse import DatParser
 from rastools.datwrite import DatMultiWriter

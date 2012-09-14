@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for the rasextract utility"""
+"""Blackbox tests for the rasextract utility"""
 
 from __future__ import (
     unicode_literals,

@@ -292,7 +292,9 @@ class MultiLayerWindow(SubWindow):
         self._current_set.percentile_from_slider.setValue(int(value * 100.0))
         self._current_set.value_from_spinbox.setValue(
             self.data_sorted[
-                (self.data_sorted.shape[0] - 1) * value / 100.0,
+                min(
+                    self.data_sorted.shape[0] - 1,
+                    int(self.data_sorted.shape[0] * value / 100.0)),
                 self._current_set.index])
         self._current_set.value_from_slider.setValue(
             int(self._current_set.value_from_spinbox.value() * 100.0))
@@ -304,7 +306,9 @@ class MultiLayerWindow(SubWindow):
         self._current_set.percentile_to_slider.setValue(int(value * 100.0))
         self._current_set.value_to_spinbox.setValue(
             self.data_sorted[
-                (self.data_sorted.shape[0] - 1) * value / 100.0,
+                min(
+                    self.data_sorted.shape[0] - 1,
+                    int(self.data_sorted.shape[0] * value / 100.0)),
                 self._current_set.index])
         self._current_set.value_to_slider.setValue(
             int(self._current_set.value_to_spinbox.value() * 100.0))
@@ -354,7 +358,8 @@ class MultiLayerWindow(SubWindow):
         cset.value_to_spinbox.setMinimum(value)
         cset.value_from_slider.setValue(int(value * 100.0))
         cset.percentile_from_spinbox.setValue(
-            self.data_sorted[..., cset.index].searchsorted(value) * 100.0 / (self.data_sorted.shape[0] - 1))
+            ((self.data_sorted[..., cset.index].searchsorted(value) + 1) * 100.0 /
+            self.data_sorted.shape[0]) - 1)
         cset.percentile_from_slider.setValue(
             int(cset.percentile_from_spinbox.value() * 100.0))
         self.invalidate_data_normalized()
@@ -365,7 +370,8 @@ class MultiLayerWindow(SubWindow):
         cset.value_from_spinbox.setMaximum(value)
         cset.value_to_slider.setValue(int(value * 100.0))
         cset.percentile_to_spinbox.setValue(
-            self.data_sorted[..., cset.index].searchsorted(value) * 100.0 / (self.data_sorted.shape[0] - 1))
+            ((self.data_sorted[..., cset.index].searchsorted(value) + 1) * 100.0 /
+            self.data_sorted.shape[0]) - 1)
         cset.percentile_to_slider.setValue(
             int(cset.percentile_to_spinbox.value() * 100.0))
         self.invalidate_data_normalized()
@@ -384,14 +390,20 @@ class MultiLayerWindow(SubWindow):
                     self.data_domain[cset.index].low,
                     self.data_domain[cset.index].high)
                 cset.value_from_spinbox.setValue(self.data_sorted[
-                    (self.data_sorted.shape[0] - 1) *
-                    cset.percentile_from_spinbox.value() / 100.0, cset.index])
+                    min(
+                        self.data_sorted.shape[0] - 1,
+                        int(self.data_sorted.shape[0] *
+                            cset.percentile_from_spinbox.value() / 100.0)),
+                    cset.index])
                 cset.value_to_spinbox.setRange(
                     self.data_domain[cset.index].low,
                     self.data_domain[cset.index].high)
                 cset.value_to_spinbox.setValue(self.data_sorted[
-                    (self.data_sorted.shape[0] - 1) *
-                    cset.percentile_to_spinbox.value() / 100.0, cset.index])
+                    min(
+                        self.data_sorted.shape[0] - 1,
+                        int(self.data_sorted.shape[0] *
+                            cset.percentile_to_spinbox.value() / 100.0)),
+                    cset.index])
                 cset.value_from_slider.setRange(
                     int(self.data_domain[cset.index].low * 100.0),
                     int(self.data_domain[cset.index].high * 100.0))

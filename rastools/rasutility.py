@@ -257,8 +257,12 @@ class RasChannelProcessor(object):
         if isinstance(self.clip, Percentile):
             data_range = [
                 Range(
-                    vsorted[(vsorted.shape[0] - 1) * self.clip.low / 100.0, index],
-                    vsorted[(vsorted.shape[0] - 1) * self.clip.high / 100.0, index])
+                    vsorted[min(
+                        vsorted.shape[0] - 1,
+                        int(vsorted.shape[0] * self.clip.low / 100.0)), index],
+                    vsorted[min(
+                        vsorted.shape[0] - 1,
+                        int(vsorted.shape[0] * self.clip.high / 100.0)), index])
                 for index in range(3)]
         elif isinstance(self.clip, Range):
             data_range = [self.clip] * 3
@@ -311,8 +315,12 @@ class RasChannelProcessor(object):
             channel.index, channel.name, data_domain.low, data_domain.high)
         if isinstance(self.clip, Percentile):
             data_range = Range(
-                vsorted[(len(vsorted) - 1) * self.clip.low / 100.0],
-                vsorted[(len(vsorted) - 1) * self.clip.high / 100.0])
+                vsorted[min(
+                    len(vsorted) - 1,
+                    int(len(vsorted) * self.clip.low / 100.0))],
+                vsorted[min(
+                    len(vsorted) - 1,
+                    int(len(vsorted) * self.clip.high / 100.0))])
             logging.info(
                 '%gth percentile is %d',
                 self.clip.low, data_range.low)

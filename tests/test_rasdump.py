@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for the rasdump utility"""
+"""Blackbox tests for the rasdump utility"""
 
 from __future__ import (
     unicode_literals,
@@ -80,7 +80,7 @@ def check_rasdump(filename):
             check_dump_zeros(test0, dialect=csv_formats[fmt])
             check_dump_sequence(test1, dialect=csv_formats[fmt])
             run([
-                'rasdump', '--range', '2-80', '--output',
+                'rasdump', '--range', '50-80', '--output',
                 os.path.join(THIS_PATH, 'test-range.{channel}%s' % fmt),
                 filename])
             test0 = os.path.join(THIS_PATH, 'test-range.0%s' % fmt)
@@ -89,7 +89,18 @@ def check_rasdump(filename):
             check_exists(test1)
             check_dump_sequence(
                 test1, dialect=csv_formats[fmt],
-                min_value=2, max_value=80)
+                min_value=50, max_value=80)
+            run([
+                'rasdump', '--percentile', '50-80', '--output',
+                os.path.join(THIS_PATH, 'test-percentile.{channel}%s' % fmt),
+                filename])
+            test0 = os.path.join(THIS_PATH, 'test-percentile.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-percentile.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_dump_sequence(
+                test1, dialect=csv_formats[fmt],
+                min_value=50, max_value=80)
 
 def setup():
     create_test_ras()
