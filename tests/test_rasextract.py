@@ -83,6 +83,16 @@ def check_image_sequence(filename):
             last_pixel = pixel
         last_raster = raster
 
+def check_image_range(filename, first, last):
+    # Test that the first n and last n pixels of filename have the same color
+    # due to range or percentile limiting
+    image = Image.open(filename)
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    data = list(image.getdata())
+    assert all(pixel == data[0] for pixel in data[:first])
+    assert all(pixel == data[-1] for pixel in data[-last:])
+
 def check_rasextract(filename):
     formats = get_picture_formats()
     pil_formats = ('.bmp', '.gif', '.png', '.tif')
@@ -114,6 +124,30 @@ def check_rasextract(filename):
             check_not_exists(test0)
             check_exists(test1)
             check_image_size(test1, exactly=(20, 20))
+            run([
+                'rasextract', '--crop', '1,1,1,1', '--output',
+                os.path.join(THIS_PATH, 'test-crop.{channel}%s' % fmt), filename])
+            test0 = os.path.join(THIS_PATH, 'test-crop.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-crop.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_image_size(test1, exactly=(8, 8))
+            run([
+                'rasextract', '--range', '20-80', '--output',
+                os.path.join(THIS_PATH, 'test-range.{channel}%s' % fmt), filename])
+            test0 = os.path.join(THIS_PATH, 'test-range.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-range.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_image_range(test1, 10, 10)
+            run([
+                'rasextract', '--percentile', '20-80', '--output',
+                os.path.join(THIS_PATH, 'test-percentile.{channel}%s' % fmt), filename])
+            test0 = os.path.join(THIS_PATH, 'test-percentile.0%s' % fmt)
+            test1 = os.path.join(THIS_PATH, 'test-percentile.1%s' % fmt)
+            check_not_exists(test0)
+            check_exists(test1)
+            check_image_range(test1, 10, 10)
         if fmt in multi_formats:
             test = os.path.join(THIS_PATH, 'test%s' % fmt)
             run(['rasextract', '--multi', '--output', test, filename])
