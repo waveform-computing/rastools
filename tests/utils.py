@@ -27,21 +27,33 @@ from __future__ import (
 
 import os
 import re
+import sys
 import subprocess
-from itertools import izip_longest
+try:
+    # XXX Py3 only
+    from itertools import zip_longest
+except ImportError:
+    # XXX Py2 only
+    from itertools import izip_longest as zip_longest
 
 
 THIS_PATH = os.path.abspath(os.path.dirname(__file__))
 TEST_DAT = os.path.join(THIS_PATH, 'test.dat')
 TEST_RAS = os.path.join(THIS_PATH, 'test.ras')
 TEST_CHANNELS = os.path.join(THIS_PATH, 'channels.txt')
+try:
+    ENCODING = sys.stdout.encoding
+except AttributeError:
+    ENCODING = None
+if not ENCODING:
+    ENCODING = 'UTF-8'
 
 
 def chunks(n, iterable, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
     # chunks(3, 'ABCDEFG', 'x') --> ABC DEF Gxx
     args = [iter(iterable)] * n
-    return izip_longest(*args, fillvalue=fillvalue)
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def run(cmdline):
     process = subprocess.Popen(
@@ -51,6 +63,8 @@ def run(cmdline):
         stderr=subprocess.PIPE,
         shell=False)
     out, err = process.communicate()
+    out = out.decode(ENCODING)
+    err = err.decode(ENCODING)
     print(out)
     print(err)
     if process.returncode != 0:

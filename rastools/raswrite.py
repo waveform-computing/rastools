@@ -115,23 +115,25 @@ class RasWriter(object):
         "Write the specified data to the output file"
         data_file = self._data_file
         comments = data_file.comments.split('\n') + [''] * 6
+        def b(s):
+            return s.encode(RasParser.char_encoding)
         self._file.write(RasParser.header_struct.pack(
-            str(RasParser.header_string),
+            b(RasParser.header_string),
             RasParser.header_version,
             data_file.header.get('pid', 0),
-            str(comments[0]),
-            str(comments[1]),
-            str(comments[2]),
-            str(comments[3]),
-            str(comments[4]),
-            str(comments[5]),
-            str(data_file.header.get('x_motor', DEFAULT_X_MOTOR)),
-            str(data_file.header.get('y_motor', DEFAULT_Y_MOTOR)),
-            str(data_file.header.get('region_filename', DEFAULT_REGION_FILENAME)),
-            str(data_file.filename_root),
-            str(data_file.header.get('filename_original', data_file.filename)),
-            data_file.start_time.strftime(RasParser.datetime_format),
-            data_file.stop_time.strftime(RasParser.datetime_format),
+            b(comments[0]),
+            b(comments[1]),
+            b(comments[2]),
+            b(comments[3]),
+            b(comments[4]),
+            b(comments[5]),
+            b(data_file.header.get('x_motor', DEFAULT_X_MOTOR)),
+            b(data_file.header.get('y_motor', DEFAULT_Y_MOTOR)),
+            b(data_file.header.get('region_filename', DEFAULT_REGION_FILENAME)),
+            b(data_file.filename_root),
+            b(data_file.header.get('filename_original', data_file.filename)),
+            b(data_file.start_time.strftime(RasParser.datetime_format)),
+            b(data_file.stop_time.strftime(RasParser.datetime_format)),
             1,            # num_chans
             0,            # unknown header field
             data_file.header.get('count_time', DEFAULT_COUNT_TIME),
@@ -157,7 +159,7 @@ class RasWriter(object):
         ))
         output_struct = struct.Struct(str('I' * len(data[0])))
         for row in data:
-            self._file.write(output_struct.pack(*row))
+            self._file.write(output_struct.pack(*(int(i) for i in row)))
         self._file.close()
 
 
@@ -247,23 +249,25 @@ class RasMultiWriter(object):
         "Finalize and close the output file"
         data_file = self._data_file
         comments = data_file.comments.split('\n') + [''] * 6
+        def b(s):
+            return s.encode(RasParser.char_encoding)
         self._file.write(RasParser.header_struct.pack(
-            str(RasParser.header_string),
+            b(RasParser.header_string),
             RasParser.header_version,
             data_file.header.get('pid', 0),
-            str(comments[0]),
-            str(comments[1]),
-            str(comments[2]),
-            str(comments[3]),
-            str(comments[4]),
-            str(comments[5]),
-            str(data_file.header.get('x_motor', 'HORZ')),
-            str(data_file.header.get('y_motor', 'VERT')),
-            str(data_file.header.get('region_filename', '')),
-            str(data_file.filename_root),
-            str(data_file.header.get('filename_original', data_file.filename)),
-            data_file.start_time.strftime(RasParser.datetime_format),
-            data_file.stop_time.strftime(RasParser.datetime_format),
+            b(comments[0]),
+            b(comments[1]),
+            b(comments[2]),
+            b(comments[3]),
+            b(comments[4]),
+            b(comments[5]),
+            b(data_file.header.get('x_motor', 'HORZ')),
+            b(data_file.header.get('y_motor', 'VERT')),
+            b(data_file.header.get('region_filename', '')),
+            b(data_file.filename_root),
+            b(data_file.header.get('filename_original', data_file.filename)),
+            b(data_file.start_time.strftime(RasParser.datetime_format)),
+            b(data_file.stop_time.strftime(RasParser.datetime_format)),
             len(self._data[0, 0]),      # num_chans
             0,            # unknown header field
             data_file.header.get('count_time', 0.0),
@@ -291,7 +295,7 @@ class RasMultiWriter(object):
             str('I' * len(self._data[..., 0][0]) * len(self._data[0, 0])))
         for raster in range(len(self._data[..., 0])):
             self._file.write(
-                output_struct.pack(*(i for i in self._data[raster].flat)))
+                output_struct.pack(*(int(i) for i in self._data[raster].flat)))
         # XXX See the note in rasparse.py about the off-by-one error in the
         # header. This extraneous uint32 ensures that our output matches the
         # length of the original, bugs'n'all
