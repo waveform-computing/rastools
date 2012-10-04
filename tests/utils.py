@@ -36,7 +36,6 @@ except ImportError:
     # XXX Py2 only
     from itertools import izip_longest as zip_longest
 
-
 THIS_PATH = os.path.abspath(os.path.dirname(__file__))
 TEST_DAT = os.path.join(THIS_PATH, 'test.dat')
 TEST_RAS = os.path.join(THIS_PATH, 'test.ras')

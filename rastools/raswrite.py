@@ -299,5 +299,5 @@ class RasMultiWriter(object):
         # XXX See the note in rasparse.py about the off-by-one error in the
         # header. This extraneous uint32 ensures that our output matches the
         # length of the original, bugs'n'all
-        self._file.write(struct.pack('I', 0))
+        self._file.write(struct.pack(str('I'), 0))
         self._file.close()
