@@ -38,7 +38,7 @@ def require_python(minimum):
         if parts[-1] == 0xf0:
             error = 'Python %d.%d.%d or better is required' % parts[:3]
         else:
-            error = 'Python %d.%d.%d (%02x) of better is required' % parts
+            error = 'Python %d.%d.%d (%02x) or better is required' % parts
         raise Exception(error)
 
 def get_version(filename):
