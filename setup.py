@@ -88,7 +88,7 @@ def main():
         name                 = 'rastools',
         version              = get_version(os.path.join(HERE, 'rastools/__init__.py')),
         description          = 'Tools for converting SSRL scans into images',
-        long_description     = description(os.path.join(HERE, 'README.txt')),
+        long_description     = description(os.path.join(HERE, 'README.rst')),
         classifiers          = CLASSIFIERS,
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
