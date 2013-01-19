@@ -92,7 +92,7 @@ def main():
         classifiers          = CLASSIFIERS,
         author               = 'Dave Hughes',
         author_email         = 'dave@waveform.org.uk',
-        url                  = 'http://www.waveform.org.uk/trac/rastools/',
+        url                  = 'https://github.com/waveform80/rastools',
         keywords             = 'science synchrotron',
         packages             = find_packages(exclude=['distribute_setup', 'utils']),
         include_package_data = True,
