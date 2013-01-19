@@ -102,7 +102,7 @@ release: $(PY_SOURCES) $(DOC_SOURCES)
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
 	# update the changelog with new release information
-	dch --version $(VER)-1~ppa1 --controlmaint
+	dch --newversion $(VER)-1~ppa1 --controlmaint
 	# commit the changes and add a new tag
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s release-$(VER) -m "Release $(VER)"
@@ -116,3 +116,4 @@ upload: $(PY_SOURCES) $(DOC_SOURCES)
 	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	@echo "Now run 'dput waveform-ppa $(NAME)_$(VER)-1~ppa1_source.changes'"
 	@echo "from the home directory"
+
