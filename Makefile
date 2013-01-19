@@ -4,7 +4,6 @@
 PYTHON=python
 PYFLAGS=
 DEST_DIR=/
-PROJECT=rastools
 
 # Calculate the base names of the distribution, the location of all source,
 # documentation and executable script files
@@ -35,6 +34,7 @@ all:
 	@echo "make builddeb - Generate a Debian package"
 	@echo "make buildexe - Generate a Windows exe installer"
 	@echo "make clean - Get rid of scratch and byte files"
+	@echo "make release - Create, tag, and upload a new release"
 
 install:
 	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR) $(COMPILE)
@@ -71,13 +71,6 @@ clean:
 tags: $(PY_SOURCES)
 	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
 
-ppa_release: $(PY_SOURCES) $(DOC_SOURCES)
-	$(MAKE) clean
-	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
-	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
-	rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
-	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
-
 $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 
@@ -99,8 +92,27 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
-	rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
+	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
 	debuild -b -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	mkdir -p dist/
 	mv ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 
+release: $(PY_SOURCES) $(DOC_SOURCES)
+	$(MAKE) clean
+	# ensure there are no current uncommitted changes
+	test -z "$(shell git status --porcelain)"
+	# update the changelog with new release information
+	dch --version $(VER)-1~ppa1 --controlmaint
+	# commit the changes and add a new tag
+	git commit debian/changelog -m "Updated changelog for release $(VER)"
+	git tag -s release-$(VER) -m "Release $(VER)"
+
+upload: $(PY_SOURCES) $(DOC_SOURCES)
+	# build the deb source archive
+	$(MAKE) clean
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
+	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
+	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
+	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
+	@echo "Now run 'dput waveform-ppa $(NAME)_$(VER)-1~ppa1_source.changes'"
+	@echo "from the home directory"
