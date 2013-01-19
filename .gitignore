@@ -1,0 +1,5 @@
+*.py[cdo]
+*.swp
+*.vim
+*.egg-info
+tags
