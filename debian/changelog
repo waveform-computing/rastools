@@ -1,3 +1,13 @@
+rastools (0.4-1~ppa1) precise; urgency=low
+
+  * Fixed several bugs (after adding functional tests)
+  * Added multi-layer rendering capabilities to rasviewer and rasextract
+  * Added icons to rasviewer
+  * Python 3 compatibility tested (no more 2to3!) - some functionality that
+    relies on PIL still doesn't work though (no official py3k PIL yet)
+
+ -- Dave Hughes <dave@waveform.org.uk>  Sat, 19 Jan 2013 11:03:08 +0000
+
 rastools (0.3-1~ppa1) precise; urgency=low
 
   * Extended rasextract to maintain feature parity with rasviewer
