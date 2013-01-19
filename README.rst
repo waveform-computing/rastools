@@ -10,7 +10,8 @@ into images. Various simple manipulations (cropping, percentiles, histograms,
 color-maps) are supported. Most tools are command line based, but a Qt-based
 GUI is also included.
 
-This package is also available in .deb form from ppa://waveform/ppa
+This package is available in .deb form from ppa://waveform/ppa and the source
+can be obtained from `GitHub <https://github.com/waveform80/rastools>`_.
 
 
 Pre-requisites
@@ -53,8 +54,8 @@ The set of tools included is:
    files. It supports all the transforms that ``rasextract`` supports and also
    allows exporting of images
 
-Further information on the tools can be found at the `rastools wiki
-<http://www.waveform.org.uk/trac/rastools/wiki>`_.
+Further information on the tools can be found in the `rastools documentation
+<http://www.waveform.org.uk/rastools/>`_.
 
 
 License
