@@ -37,7 +37,7 @@ all:
 	@echo "make release - Create, tag, and upload a new release"
 
 install:
-	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR) $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR)
 
 doc: $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b html
@@ -75,23 +75,23 @@ $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 
 $(DIST_TAR): $(PY_SOURCES)
-	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py sdist
 
 $(DIST_EGG): $(PY_SOURCES)
-	$(PYTHON) $(PYFLAGS) setup.py bdist_egg $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
 $(DIST_EXE): $(PY_SOURCES)
-	$(PYTHON) $(PYFLAGS) setup.py bdist_wininst $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py bdist_wininst
 
 $(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES)
-	$(PYTHON) $(PYFLAGS) setup.py bdist_rpm $(COMPILE)
+	$(PYTHON) $(PYFLAGS) setup.py bdist_rpm
 	# XXX Add man-pages to RPMs ... how?
-	#$(PYTHON) $(PYFLAGS) setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall $(COMPILE)
+	#$(PYTHON) $(PYFLAGS) setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall
 
 $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
-	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
+	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
 	debuild -b -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	mkdir -p dist/
@@ -108,12 +108,15 @@ release: $(PY_SOURCES) $(DOC_SOURCES)
 	git tag -s release-$(VER) -m "Release $(VER)"
 
 upload: $(PY_SOURCES) $(DOC_SOURCES)
-	# build the deb source archive
 	$(MAKE) clean
+	# build a source archive and upload to PyPI
+	$(PYTHON) $(PYFLAGS) setup.py sdist upload
+	# build the deb source archive
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
-	$(PYTHON) $(PYFLAGS) setup.py sdist $(COMPILE) --dist-dir=../
+	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
 	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
+	# prompt the user to upload it to the PPA
 	@echo "Now run 'dput waveform-ppa $(NAME)_$(VER)-1~ppa1_source.changes'"
 	@echo "from the home directory"
 
