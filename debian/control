@@ -1,15 +1,15 @@
 Source: rastools
 Maintainer: Dave Hughes <dave@waveform.org.uk>
-Homepage: http://www.waveform.org.uk/trac/rastools
+Homepage: https://github.com/waveform80/rastools
 Section: science
-Priority: optional
+Priority: extra
 Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
 Standards-Version: 3.9.3
-X-Python-Version: >= 2.5
+X-Python-Version: >= 2.6
 
 Package: rastools
-Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-matplotlib, python-qt4, python-optcomplete
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-matplotlib, python-qt4, python-optcomplete
 Suggests: gimp, python-xlwt
 Description: Tools for converting scans from the SSRL to images.
  rastools is a small suite of utilities for converting data files obtained from
