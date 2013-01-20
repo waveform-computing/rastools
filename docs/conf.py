@@ -20,7 +20,7 @@ from __future__ import (
 
 import sys, os
 
-YEAR = 2012
+YEAR = 2013
 AUTHORS = ['Dave Hughes']
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -58,7 +58,7 @@ copyright = '%d, %s' % (YEAR, ', '.join(AUTHORS))
 # built documents.
 #
 # The short X.Y version.
-version = '0.3'
+version = '0.4'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -101,7 +101,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+#html_theme = 'sphinxdoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

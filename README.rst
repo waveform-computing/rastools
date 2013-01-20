@@ -55,7 +55,7 @@ The set of tools included is:
    allows exporting of images
 
 Further information on the tools can be found in the `rastools documentation
-<http://www.waveform.org.uk/rastools/>`_.
+<http://rastools.readthedocs.org/>`_.
 
 
 License
