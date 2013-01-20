@@ -22,9 +22,6 @@ Contents
    rasviewer
    license
 
-Further information on the tools can be found at the `rastools wiki
-<http://www.waveform.org.uk/trac/rastools/wiki>`_.
-
 
 Indices and tables
 ==================

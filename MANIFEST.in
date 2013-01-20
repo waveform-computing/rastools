@@ -3,3 +3,5 @@ prune docs
 prune icons
 prune etc
 exclude Makefile
+include README.rst
+include LICENSE.txt
