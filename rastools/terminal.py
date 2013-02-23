@@ -104,7 +104,7 @@ def expand_args(args):
             result.append(arg)
     # Perform globbing on everything for Windows
     if windows:
-        result = flatten(glob_arg(f) for f in result)
+        result = list(flatten(glob_arg(f) for f in result))
     return result
 
 
