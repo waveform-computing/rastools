@@ -181,3 +181,6 @@ class RasInfoUtility(RasUtility):
 
 
 main = RasInfoUtility()
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

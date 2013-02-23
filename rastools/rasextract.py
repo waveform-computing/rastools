@@ -804,3 +804,6 @@ class ChannelRenderer(BaseRenderer):
 
 
 main = RasExtractUtility()
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
