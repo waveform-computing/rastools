@@ -112,6 +112,7 @@ ENTRY_POINTS = {
     }
 
 OPTIONS = {}
+EXTRA_OPTIONS = {}
 
 if py2exe:
     # Construct Windows-specific build options
@@ -128,6 +129,8 @@ if py2exe:
             'modes.editingmodes',
             'startup',
             ],
+        }
+    EXTRA_OPTIONS = {
         # We fill out the console and GUI entry points below. No idea why
         # py2exe can't just use the setuptools entry points...
         'console': [],
@@ -135,7 +138,7 @@ if py2exe:
         }
     for entry_point_group, target_key in [
             ('console_scripts', 'console'),
-            ('gui_scripts', 'windows'),
+            ('gui_scripts',     'windows'),
             ]:
         for entry_point in ENTRY_POINTS[entry_point_group]:
             # Extract module/package name from the entry point
@@ -148,7 +151,7 @@ if py2exe:
                 entry_point = os.path.join(entry_point, '__init__.py')
             else:
                 entry_point += '.py'
-            OPTIONS['py2exe'][target_key].append(entry_point)
+            EXTRA_OPTIONS[target_key].append(entry_point)
 
 if py2app:
     # Mac specific build options
@@ -175,6 +178,7 @@ def main():
         test_suite           = 'rastools',
         entry_points         = ENTRY_POINTS,
         options              = OPTIONS,
+        **EXTRA_OPTIONS,
         )
 
 if __name__ == '__main__':
