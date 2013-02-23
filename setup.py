@@ -29,6 +29,20 @@ import sys
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
+# Attempt to import platform specific build packages; py2exe for Windows,
+# py2app for Mac. Leave placeholders in the case of failed imports so that we
+# can later test what got imported successfully
+try:
+    import py2exe
+    py2app = None
+except ImportError:
+    py2exe = None
+    try:
+        import py2app
+    except:
+        py2app = None
+
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 # Workaround a silly bug in py2exe's unicode handling which results in
