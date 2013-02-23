@@ -142,7 +142,7 @@ if py2exe:
             ]:
         for entry_point in ENTRY_POINTS[entry_point_group]:
             # Extract module/package name from the entry point
-            entry_point = entry_point.split('=', 1)[1].strip().split(':', 0)[0]
+            entry_point = entry_point.split('=', 1)[1].strip().split(':', 1)[0]
             # Convert the module/package name to a file path
             entry_point = os.path.join(HERE, entry_point.replace('.', os.path.sep))
             if os.path.isdir(entry_point):
