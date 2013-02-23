@@ -144,9 +144,7 @@ if py2exe:
             # Extract module/package name from the entry point
             entry_point = entry_point.split('=', 1)[1].strip().split(':', 0)[0]
             # Convert the module/package name to a file path
-            entry_point = os.path.join(
-                os.path.dirname(__file__),
-                entry_point.replace('.', os.path.sep))
+            entry_point = os.path.join(HERE, entry_point.replace('.', os.path.sep))
             if os.path.isdir(entry_point):
                 entry_point = os.path.join(entry_point, '__init__.py')
             else:
@@ -161,7 +159,7 @@ if py2app:
 def main():
     setup(
         name                 = 'rastools',
-        version              = get_version(os.path.join(HERE, 'rastools/__init__.py')),
+        version              = get_version(os.path.join(HERE, 'rastools', '__init__.py')),
         description          = 'Tools for converting SSRL scans into images',
         long_description     = description(os.path.join(HERE, 'README.rst')),
         classifiers          = CLASSIFIERS,
@@ -178,7 +176,7 @@ def main():
         test_suite           = 'rastools',
         entry_points         = ENTRY_POINTS,
         options              = OPTIONS,
-        **EXTRA_OPTIONS,
+        **EXTRA_OPTIONS
         )
 
 if __name__ == '__main__':
