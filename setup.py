@@ -18,14 +18,16 @@
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (
-    unicode_literals,
+    # XXX Alright! I give in! Distutils and all its myriad extensions (py2exe,
+    # py2app, et al.) are all too shit to handle unicode with barfing all over
+    # the floor, so out goes the following line...
+    #unicode_literals,
     print_function,
     absolute_import,
     division,
     )
 
 import os
-import sys
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
@@ -44,20 +46,6 @@ except ImportError:
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-
-# Workaround a silly bug in py2exe's unicode handling which results in
-# "TypeError: decoding Unicode is not supported" when passing unicode
-# strings to setup(). Patch submitted to SF site: #3605752
-if py2exe:
-    import py2exe.resources.StringTables
-    def w32_uc(text):
-        """convert a string into unicode, then encode it into UTF-16
-        little endian, ready to use for win32 apis"""
-        if isinstance(text, unicode):
-            return text.encode("utf-16-le")
-        else:
-            return unicode(text, "unicode-escape").encode("utf-16-le")
-    py2exe.resources.StringTables.w32_uc = w32_uc
 
 # Workaround <http://bugs.python.org/issue10945>
 import codecs
@@ -111,26 +99,30 @@ ENTRY_POINTS = {
     ]
     }
 
+
 OPTIONS = {}
 EXTRA_OPTIONS = {}
 
 if py2exe:
-    # Construct Windows-specific build options
+    MSVCRT_PATH = r'..\redist'
+    import sys
+    import matplotlib
+    from glob import glob
+    # Hack to permit py2exe to find MSVCP90.dll
+    sys.path.append(MSVCRT_PATH)
     OPTIONS['py2exe'] = {
         'compressed': True,
-        # No idea why py2exe wants to include all these "missing" modules,
-        # but we don't need them so just exclude the lot
+        # Tell py2exe not to try and import the Py3k specific stuff from PyQt4
         'excludes': [
-            'IronPythonConsole',
-            'System',
-            'System.Windows.Forms.Clipboard',
-            '_scproxy',
-            'clr',
-            'modes.editingmodes',
-            'startup',
+            'PyQt4.uic.port_v3',
             ],
         }
     EXTRA_OPTIONS = {
+        # py2exe needs a bit of help figuring out what things to include for
+        # MSVCRT and where to stick matplotlib's stuff...
+        'data_files': [
+            ('Microsoft.VC90.CRT', glob(os.path.join(MSVCRT_PATH, '*')))
+            ] + matplotlib.get_py2exe_datafiles(),
         # We fill out the console and GUI entry points below. No idea why
         # py2exe can't just use the setuptools entry points...
         'console': [],
@@ -167,8 +159,8 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'https://github.com/waveform80/rastools',
         keywords             = 'science synchrotron',
-        packages             = find_packages(exclude=['distribute_setup', 'utils']),
-        include_package_data = True,
+        packages             = ['rastools', 'rastools.rasviewer'],
+        package_data         = {'rastools.rasviewer': ['*.ui']},
         platforms            = 'ALL',
         install_requires     = REQUIRES,
         extras_require       = EXTRA_REQUIRES,
