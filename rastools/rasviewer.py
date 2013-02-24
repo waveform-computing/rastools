@@ -34,7 +34,7 @@ for api in ('QDate', 'QDateTime', 'QTime', 'QString', 'QTextStream', 'QUrl', 'QV
 from PyQt4 import QtCore, QtGui
 
 from rastools import __version__
-from rastools.rasviewer.main_window import MainWindow
+from rastools.windows.main_window import MainWindow
 
 
 APPLICATION = None
