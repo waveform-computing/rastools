@@ -29,10 +29,9 @@ import os
 
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.rasviewer.open_dialog import OpenDialog
-from rastools.rasviewer.single_layer_window import SingleLayerWindow
-from rastools.rasviewer.multi_layer_window import MultiLayerWindow
-#from rastools.rasviewer.figure_canvas import FigureCanvas
+from rastools.windows.open_dialog import OpenDialog
+from rastools.windows.single_layer_window import SingleLayerWindow
+from rastools.windows.multi_layer_window import MultiLayerWindow
 
 
 MODULE_DIR = os.path.abspath(os.path.dirname(__file__))

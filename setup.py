@@ -103,11 +103,14 @@ ENTRY_POINTS = {
 OPTIONS = {}
 EXTRA_OPTIONS = {}
 
+# Windows specific packaging hacks
 if py2exe:
-    MSVCRT_PATH = r'..\redist'
     import sys
     import matplotlib
     from glob import glob
+    # Path to the MSVCRT90 redistributable stuff
+    MSVCRT_PATH = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), '..', 'redist'))
     # Hack to permit py2exe to find MSVCP90.dll
     sys.path.append(MSVCRT_PATH)
     OPTIONS['py2exe'] = {
@@ -143,8 +146,8 @@ if py2exe:
                 entry_point += '.py'
             EXTRA_OPTIONS[target_key].append(entry_point)
 
+# Mac specific packaging hacks
 if py2app:
-    # Mac specific build options
     OPTIONS['py2app'] = {}
 
 
@@ -159,8 +162,8 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'https://github.com/waveform80/rastools',
         keywords             = 'science synchrotron',
-        packages             = ['rastools', 'rastools.rasviewer'],
-        package_data         = {'rastools.rasviewer': ['*.ui']},
+        packages             = ['rastools', 'rastools.windows'],
+        package_data         = {'rastools.windows': ['*.ui']},
         platforms            = 'ALL',
         install_requires     = REQUIRES,
         extras_require       = EXTRA_REQUIRES,

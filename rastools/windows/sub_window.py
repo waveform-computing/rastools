@@ -37,8 +37,8 @@ import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 
 from rastools.collections import Crop, Coord, Range, BoundingBox
-from rastools.rasviewer.progress_dialog import ProgressDialog
-from rastools.rasviewer.figure_canvas import FigureCanvas
+from rastools.windows.progress_dialog import ProgressDialog
+from rastools.windows.figure_canvas import FigureCanvas
 
 
 DEFAULT_COLORMAP = 'gray'
