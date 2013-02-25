@@ -99,6 +99,18 @@ ENTRY_POINTS = {
     ]
     }
 
+PACKAGES = [
+    'rastools',
+    'rastools.windows',
+    ]
+
+PACKAGE_DATA = {
+    'rastools.windows': [
+        '*.ui',
+        os.path.join('fallback-theme', '*.png'),
+        os.path.join('fallback-theme', '*.svg'),
+        ],
+    }
 
 OPTIONS = {}
 EXTRA_OPTIONS = {}
@@ -126,11 +138,19 @@ if py2exe:
         'data_files': [
             ('Microsoft.VC90.CRT', glob(os.path.join(MSVCRT_PATH, '*')))
             ] + matplotlib.get_py2exe_datafiles(),
-        # We fill out the console and GUI entry points below. No idea why
-        # py2exe can't just use the setuptools entry points...
         'console': [],
         'windows': [],
         }
+    # Fill out the data_files list below. No idea why py2exe can't just use the
+    # setuptools package_data list...
+    for package, patterns in PACKAGE_DATA.items():
+        source = package.replace('.', os.sep)
+        for pattern in patterns:
+            EXTRA_OPTIONS['data_files'].append(
+                (source, glob(os.path.join(source, pattern)))
+                )
+    # Fill out the console and GUI entry points below. No idea why py2exe can't
+    # just use the setuptools entry points...
     for entry_point_group, target_key in [
             ('console_scripts', 'console'),
             ('gui_scripts',     'windows'),
@@ -162,8 +182,8 @@ def main():
         author_email         = 'dave@waveform.org.uk',
         url                  = 'https://github.com/waveform80/rastools',
         keywords             = 'science synchrotron',
-        packages             = ['rastools', 'rastools.windows'],
-        package_data         = {'rastools.windows': ['*.ui']},
+        packages             = PACKAGES,
+        package_data         = PACKAGE_DATA,
         platforms            = 'ALL',
         install_requires     = REQUIRES,
         extras_require       = EXTRA_REQUIRES,

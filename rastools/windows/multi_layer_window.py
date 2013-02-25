@@ -37,6 +37,7 @@ import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 
 from rastools.collections import Coord, Range, BoundingBox
+from rastools.windows import UI_DIR
 from rastools.windows.progress_dialog import ProgressDialog
 from rastools.windows.figure_canvas import FigureCanvas
 from rastools.windows.sub_window import SubWindow
@@ -71,7 +72,8 @@ class MultiLayerWindow(SubWindow):
         self._data_normalized = None
         self._data_flat = None
         super(MultiLayerWindow, self).__init__(
-            'multi_layer_window.ui', data_file, channel_file)
+            os.path.join(UI_DIR, 'multi_layer_window.ui'),
+            data_file, channel_file)
 
     def _config_interface(self):
         self._current_set = None

@@ -29,19 +29,10 @@ import os
 
 from PyQt4 import QtCore, QtGui, uic
 
+from rastools.windows import UI_DIR, get_icon
 from rastools.windows.open_dialog import OpenDialog
 from rastools.windows.single_layer_window import SingleLayerWindow
 from rastools.windows.multi_layer_window import MultiLayerWindow
-
-
-MODULE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-
-def get_icon(icon_id):
-    "Returns an icon from the system theme or our fallback theme if required"
-    return QtGui.QIcon.fromTheme(icon_id,
-        QtGui.QIcon(os.path.join(
-            MODULE_DIR, 'fallback-theme', icon_id + '.png')))
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -49,7 +40,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.ui = uic.loadUi(os.path.join(MODULE_DIR, 'main_window.ui'), self)
+        self.ui = uic.loadUi(os.path.join(UI_DIR, 'main_window.ui'), self)
         # Read configuration
         self.settings = QtCore.QSettings()
         self.settings.beginGroup('main_window')
