@@ -146,8 +146,9 @@ if py2exe:
     for package, patterns in PACKAGE_DATA.items():
         source = package.replace('.', os.sep)
         for pattern in patterns:
+            target, pattern = os.path.split(pattern)
             EXTRA_OPTIONS['data_files'].append(
-                (source, glob(os.path.join(source, pattern)))
+                (os.path.join(source, target), glob(os.path.join(source, target, pattern)))
                 )
     # Fill out the console and GUI entry points below. No idea why py2exe can't
     # just use the setuptools entry points...
