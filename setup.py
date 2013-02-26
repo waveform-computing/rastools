@@ -128,12 +128,11 @@ if py2exe:
     OPTIONS['py2exe'] = {
         'compressed': True,
         # Tell py2exe not to try and import the Py3k specific stuff from PyQt4,
-        # and exclude GTK and Tcl/Tk stuff from matplotlib (we're using Qt
-        # dammit!)
+        # and exclude all non-Qt GUI stuff
         'excludes': [
             'PyQt4.uic.port_v3',
-            '_gtkagg',
-            '_tkagg',
+            '_gtkagg', '_tkagg', '_wxagg',
+            'Tkconstants', 'Tkinter', 'tcl', 'wx',
             ],
         }
     EXTRA_OPTIONS = {
