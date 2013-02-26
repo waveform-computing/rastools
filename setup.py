@@ -127,9 +127,13 @@ if py2exe:
     sys.path.append(MSVCRT_PATH)
     OPTIONS['py2exe'] = {
         'compressed': True,
-        # Tell py2exe not to try and import the Py3k specific stuff from PyQt4
+        # Tell py2exe not to try and import the Py3k specific stuff from PyQt4,
+        # and exclude GTK and Tcl/Tk stuff from matplotlib (we're using Qt
+        # dammit!)
         'excludes': [
             'PyQt4.uic.port_v3',
+            '_gtkagg',
+            '_tkagg',
             ],
         }
     EXTRA_OPTIONS = {
