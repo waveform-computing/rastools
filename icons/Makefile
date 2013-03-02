@@ -25,9 +25,17 @@ clean:
 128x128/%.png: scalable/%.svg
 	inkscape -e $@ -w 128 -h 128 $<
 
+# Starting from a large res PNG and resizing downward seems to produce the best
+# "lower resolution" XPMs and ICOs
+
 xpm/%.xpm: 128x128/%.png
 	convert $< -resize 32x32 $@
 
-ico/rasviewer.ico: 16x16/rasviewer.png 32x32/rasviewer.png 64x64/rasviewer.png 128x128/rasviewer.png
-	convert $< -colors 256 $@
+ico/%.ico: 128x128/%.png
+	convert $< -bordercolor white -border 0 \
+		\( -clone 0 -resize 16x16 \) \
+		\( -clone 0 -resize 32x32 \) \
+		\( -clone 0 -resize 48x48 \) \
+		\( -clone 0 -resize 64x64 \) \
+		-delete 0 -alpha off -colors 256 $@
 
