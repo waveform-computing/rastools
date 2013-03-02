@@ -20,6 +20,7 @@ DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
 DIST_EXE=dist/$(NAME)-$(VER).win32.exe
 DIST_RPM=dist/$(NAME)-$(VER)-1.src.rpm
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
+DIST_MSI=dist/$(NAME)-$(VER).msi
 DIST_DEB=dist/$(NAME)_$(VER)-1~ppa1_all.deb
 MAN_DIR=build/sphinx/man
 MAN_PAGES=$(MAN_DIR)/rasextract.1 $(MAN_DIR)/rasdump.1 $(MAN_DIR)/rasinfo.1
@@ -54,6 +55,8 @@ buildegg: $(DIST_EGG)
 buildrpm: $(DIST_RPM)
 
 builddeb: $(DIST_DEB)
+
+buildmsi: $(DIST_MSI)
 
 dist: $(DIST_EXE) $(DIST_EGG) $(DIST_RPM) $(DIST_DEB) $(DIST_TAR) $(DIST_ZIP)
 
@@ -102,6 +105,9 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	debuild -b -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	mkdir -p dist/
 	cp ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
+
+$(DIST_MSI): $(PY_SOURCES)
+	windows/msibuild $(NAME) $(VER)
 
 release: $(PY_SOURCES) $(DOC_SOURCES)
 	$(MAKE) clean
