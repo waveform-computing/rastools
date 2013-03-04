@@ -3,8 +3,6 @@ prune windows
 prune docs
 prune icons
 prune etc
-exclude Makefile
 include README.rst
 include LICENSE.txt
-recursive-include rastools/windows *.ui
-recursive-include rastools/windows/fallback-theme *.png *.svg
+recursive-include rastools/windows *.ui *.png *.svg
