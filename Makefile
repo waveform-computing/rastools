@@ -125,6 +125,9 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS)
 	cp ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 
 $(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS)
+	# build the MSI package on the remote winbuild instance (on EC2) then
+	# copy it back to this machine (the script assumes winbuild has been
+	# launched separately - see windows/winbuild)
 	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
 	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
 	ssh winbuild "cd $(ROOT_TARGET); python setup.py py2exe"
