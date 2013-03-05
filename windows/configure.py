@@ -16,6 +16,11 @@ import sys
 import uuid
 from xml.etree.ElementTree import fromstring, tostring, SubElement, _namespace_map
 
+
+# Find the various paths
+MY_PATH = os.path.dirname(__file__)
+PROJECT_PATH = os.path.dirname(MY_PATH)
+
 # Set the WiX namespace as the default to prevent namespace prefixes in output
 XMLNS = 'http://schemas.microsoft.com/wix/2006/wi'
 _namespace_map[XMLNS] = ''
@@ -94,8 +99,10 @@ def add_components(path, dir_elem):
 
 
 def configure_wxs(
-        template='template.wxs', output='rastools.wxs',
-        source_dir='dist', encoding='utf-8'):
+        template=os.path.join(MY_PATH, 'template.wxs'),
+        output=os.path.join(PROJECT_PATH, 'rastools.wxs'),
+        source_dir=os.path.join(PROJECT_PATH, 'dist'),
+        encoding='utf-8'):
     # Open the WiX installer template
     with io.open(template, 'rb') as f:
         document = fromstring(f.read().decode(encoding))
@@ -133,4 +140,4 @@ def configure_wxs(
 
 
 if __name__ == '__main__':
-    configure_wxs()
+    configure_wxs(sys.argv[1], sys.argv[2])

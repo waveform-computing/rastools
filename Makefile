@@ -25,6 +25,10 @@ DEB_SOURCES:=debian/changelog \
 	$(wildcard debian/*.desktop)
 SUBDIRS:=icons $(NAME)/windows/fallback-theme
 
+# Calculate path names for remote builds
+ROOT_SOURCE:=$(CURDIR)
+ROOT_TARGET:=$(notdir $(ROOT_SOURCE))
+
 # Calculate the name of all outputs
 DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
 DIST_RPM=dist/$(NAME)-$(VER)-1.src.rpm
@@ -120,8 +124,15 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS)
 	mkdir -p dist/
 	cp ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 
-$(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) subdirs
-	windows/msibuild $(NAME) $(VER)
+$(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS)
+	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
+	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	ssh winbuild "cd $(ROOT_TARGET); python setup.py py2exe"
+	ssh winbuild "cd $(ROOT_TARGET); python windows/configure.py windows/template.wxs $(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); candle -nologo -out $(NAME).wixobj $(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); light -nologo -ext WixUIExtension -out $(NAME)-$(VER).msi $(NAME).wixobj"
+	mkdir -p dist
+	scp -B winbuild:$(ROOT_TARGET)/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
 release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
 	$(MAKE) clean
