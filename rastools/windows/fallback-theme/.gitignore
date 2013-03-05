@@ -1,0 +1,3 @@
+# Ignore PNGs when committing
+*.png
+!.gitignore

@@ -1,0 +1,84 @@
+#!/bin/bash
+# vim: set et sw=4 sts=4:
+
+set -o errexit
+set -o nounset
+
+TAGNAME="winbuild"
+INSTANCE=$(ec2din -F "tag:Name=$TAGNAME" | awk '/^INSTANCE/ {print $2}')
+
+function get_state() {
+    # In running state, instance status is the sixth field of the INSTANCE
+    # line. In all other states it's the fourth field of the INSTANCE line
+    local state=$(ec2din $INSTANCE | awk '/^INSTANCE/ {print $4, $6}')
+    local running_state=$(echo $state | awk '{print $2}')
+    local stopped_state=$(echo $state | awk '{print $1}')
+    if [ "$stopped_state" = "stopped" ]; then
+        echo $stopped_state
+    else
+        echo $running_state
+    fi
+}
+
+function get_address() {
+    ec2din $INSTANCE | awk '/^INSTANCE/ {print $4}'
+}
+
+function wait_for_state() {
+    # Wait up to 30 seconds for the instance to enter the required state
+    local required_state=$1
+    local current_state=""
+    local timeout=60
+    local start=$(date +%s)
+    while [ $(date +%s) -lt $((start + timeout)) ]; do
+        current_state=$(get_state)
+        if [ "$current_state" = "$required_state" ]; then
+            break
+        fi
+        echo "Waiting for $required_state state (currently: $current_state)"
+        sleep 2
+    done
+    if [ "$current_state" != "$required_state" ]; then
+        echo "Timed out waiting for $required_state state" >&2
+        return 1
+    fi
+}
+
+case $1 in
+    desktop)
+        rdesktop -xb -f -r disk:home=$HOME -r clipboard:CLIPBOARD -r sound:local -u winbuild -p - $(get_address)
+        ;;
+
+    start)
+        echo "Starting instance $INSTANCE"
+        ec2start "$INSTANCE"
+        wait_for_state "running"
+        echo "Instance $INSTANCE started"
+        awk "BEGIN {state=\"begin\";}
+             \$1==\"Host\" && \$2==\"winbuild\" {state=\"winbuild\";}
+             \$1==\"Hostname\" && state==\"winbuild\" {
+             print \"  Hostname $(get_address)\";
+                 state=\"done\";
+                 next;
+             }
+             {print;}" $HOME/.ssh/config > $HOME/.ssh/config.new
+        mv $HOME/.ssh/config.new $HOME/.ssh/config
+        echo "Updated ssh config with host $ADDRESS"
+        ;;
+
+    stop)
+        echo "Stopping instance $INSTANCE"
+        ec2stop "$INSTANCE"
+        wait_for_state "stopped"
+        echo "Instance $INSTANCE stopped"
+        ;;
+
+    status)
+        get_state
+        ;;
+
+    *)
+        echo "Invalid action $1" >&2
+        exit 1
+        ;;
+esac

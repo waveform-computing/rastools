@@ -6,7 +6,7 @@ PYFLAGS=
 DEST_DIR=/
 
 # Calculate the base names of the distribution, the location of all source,
-# documentation and executable script files
+# documentation, packaging, icon, and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.version_info[:2]")
@@ -14,10 +14,23 @@ PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
 DOC_SOURCES:=$(wildcard docs/*.rst)
+MSI_SOURCES:=windows/configure.py windows/template.wxs
+DEB_SOURCES:=debian/changelog \
+	debian/control \
+	debian/copyright \
+	debian/install \
+	debian/rules \
+	debian/source/include-binaries \
+	debian/$(NAME).manpages \
+	$(wildcard debian/*.desktop)
+SUBDIRS:=icons $(NAME)/windows/fallback-theme
+
+# Calculate path names for remote builds
+ROOT_SOURCE:=$(CURDIR)
+ROOT_TARGET:=$(notdir $(ROOT_SOURCE))
 
 # Calculate the name of all outputs
 DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
-DIST_EXE=dist/$(NAME)-$(VER).win32.exe
 DIST_RPM=dist/$(NAME)-$(VER)-1.src.rpm
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
 DIST_MSI=dist/$(NAME)-$(VER).msi
@@ -25,20 +38,24 @@ DIST_DEB=dist/$(NAME)_$(VER)-1~ppa1_all.deb
 MAN_DIR=build/sphinx/man
 MAN_PAGES=$(MAN_DIR)/rasextract.1 $(MAN_DIR)/rasdump.1 $(MAN_DIR)/rasinfo.1
 
+
 # Default target
 all:
 	@echo "make install - Install on local system"
+	@echo "make develop - Install symlinks for development"
+	@echo "make test - Run tests through nose environment"
 	@echo "make doc - Generate HTML and PDF documentation"
 	@echo "make source - Create source package"
-	@echo "make buildegg - Generate a PyPI egg package"
-	@echo "make buildrpm - Generate an RedHat package"
-	@echo "make builddeb - Generate a Debian package"
-	@echo "make buildexe - Generate a Windows exe installer"
+	@echo "make egg - Generate a PyPI egg package"
+	@echo "make rpm - Generate an RedHat package"
+	@echo "make deb - Generate a Debian package"
+	@echo "make msi - Generate a Windows package"
 	@echo "make dist - Generate all packages"
 	@echo "make clean - Get rid of all generated files"
-	@echo "make release - Create, tag, and upload a new release"
+	@echo "make release - Create and tag a new release"
+	@echo "make upload - Upload the new release to repositories"
 
-install:
+install: $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR)
 
 doc: $(DOC_SOURCES)
@@ -48,17 +65,15 @@ doc: $(DOC_SOURCES)
 
 source: $(DIST_TAR) $(DIST_ZIP)
 
-buildexe: $(DIST_EXE)
+egg: $(DIST_EGG)
 
-buildegg: $(DIST_EGG)
+rpm: $(DIST_RPM)
 
-buildrpm: $(DIST_RPM)
+deb: $(DIST_DEB)
 
-builddeb: $(DIST_DEB)
+msi: $(DIST_MSI)
 
-buildmsi: $(DIST_MSI)
-
-dist: $(DIST_EXE) $(DIST_EGG) $(DIST_RPM) $(DIST_DEB) $(DIST_TAR) $(DIST_ZIP)
+dist: $(DIST_EGG) $(DIST_RPM) $(DIST_DEB) $(DIST_TAR) $(DIST_ZIP) $(DIST_MSI)
 
 develop: tags
 	$(PYTHON) $(PYFLAGS) setup.py develop
@@ -69,35 +84,38 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags distribute-*.egg distribute-*.tar.gz
+	rm -fr build/ dist/ $(NAME).egg-info/ tags
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done
 	find $(CURDIR) -name "*.pyc" -delete
 
 tags: $(PY_SOURCES)
-	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
+	ctags -R --exclude="build/*" --exclude="windows/*" --exclude="docs/*" --languages="Python"
+
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 
-$(DIST_TAR): $(PY_SOURCES)
+$(DIST_TAR): $(PY_SOURCES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats gztar
 
-$(DIST_ZIP): $(PY_SOURCES)
+$(DIST_ZIP): $(PY_SOURCES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats zip
 
-$(DIST_EGG): $(PY_SOURCES)
+$(DIST_EGG): $(PY_SOURCES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
-$(DIST_EXE): $(PY_SOURCES)
-	$(PYTHON) $(PYFLAGS) setup.py bdist_wininst
-
-$(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES)
+$(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_rpm \
 		--source-only \
 		--doc-files README.rst,LICENSE.txt \
 		--requires python,python-matplotlib,python-qt4
 	# XXX Add man-pages to RPMs ... how?
 
-$(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
+$(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -106,10 +124,20 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES)
 	mkdir -p dist/
 	cp ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 
-$(DIST_MSI): $(PY_SOURCES)
-	windows/msibuild $(NAME) $(VER)
+$(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS)
+	# build the MSI package on the remote winbuild instance (on EC2) then
+	# copy it back to this machine (the script assumes winbuild has been
+	# launched separately - see windows/winbuild)
+	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
+	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	ssh winbuild "cd $(ROOT_TARGET); python setup.py py2exe"
+	ssh winbuild "cd $(ROOT_TARGET); python windows/configure.py windows/template.wxs $(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); candle -nologo -out $(NAME).wixobj $(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); light -nologo -ext WixUIExtension -out $(NAME)-$(VER).msi $(NAME).wixobj"
+	mkdir -p dist
+	scp -B winbuild:$(ROOT_TARGET)/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
-release: $(PY_SOURCES) $(DOC_SOURCES)
+release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
 	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
@@ -119,7 +147,7 @@ release: $(PY_SOURCES) $(DOC_SOURCES)
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s release-$(VER) -m "Release $(VER)"
 
-upload: $(PY_SOURCES) $(DOC_SOURCES)
+upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
 	$(MAKE) clean
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload
@@ -131,4 +159,6 @@ upload: $(PY_SOURCES) $(DOC_SOURCES)
 	# prompt the user to upload it to the PPA
 	@echo "Now run 'dput waveform-ppa $(NAME)_$(VER)-1~ppa1_source.changes'"
 	@echo "from the home directory"
+
+.PHONY: all install develop test doc source egg rpm deb msi dist clean tags release upload $(SUBDIRS)
 
