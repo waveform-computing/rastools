@@ -55,7 +55,7 @@ function update_ssh_config() {
         cat - $SSH_CONFIG << EOF > $SSH_CONFIG.new
 
 Host winbuild
-  User Administrator
+  User winbuild
   Hostname $(get_address)
   StrictHostKeyChecking no
   UserKnownHostsFile /dev/null
