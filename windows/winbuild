@@ -5,6 +5,7 @@ set -o errexit
 set -o nounset
 
 TAGNAME="winbuild"
+SSH_CONFIG="$HOME/.ssh/config"
 INSTANCE=$(ec2din -F "tag:Name=$TAGNAME" | awk '/^INSTANCE/ {print $2}')
 
 function get_state() {
@@ -41,15 +42,28 @@ function wait_for_state() {
 }
 
 function update_ssh_config() {
-    awk "BEGIN {state=\"begin\";}
-         \$1==\"Host\" && \$2==\"winbuild\" {state=\"winbuild\";}
-         \$1==\"Hostname\" && state==\"winbuild\" {
-         print \"  Hostname $(get_address)\";
-             state=\"done\";
-             next;
-         }
-         {print;}" $HOME/.ssh/config > $HOME/.ssh/config.new
-    mv $HOME/.ssh/config.new $HOME/.ssh/config
+    if grep "^\s*Host\s\s*winbuild\s*$" $SSH_CONFIG; then
+        awk "BEGIN {state=\"begin\";}
+             \$1==\"Host\" && \$2==\"winbuild\" {state=\"winbuild\";}
+             \$1==\"Hostname\" && state==\"winbuild\" {
+             print \"  Hostname $(get_address)\";
+                 state=\"done\";
+                 next;
+             }
+             {print;}" $SSH_CONFIG > $SSH_CONFIG.new
+    else
+        cat - $SSH_CONFIG << EOF > $SSH_CONFIG.new
+
+Host winbuild
+  User Administrator
+  Hostname $(get_address)
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  Compression yes
+
+EOF
+    fi
+    mv $SSH_CONFIG.new $SSH_CONFIG
 }
 
 function wait_for_ssh() {
@@ -76,7 +90,7 @@ case $1 in
         ec2start "$INSTANCE"
         wait_for_state "running"
         echo "Instance $INSTANCE started"
-        update_ssh
+        update_ssh_config
         echo "Updated ssh config with new host address"
         wait_for_ssh winbuild
         ;;
