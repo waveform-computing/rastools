@@ -36,7 +36,7 @@ import matplotlib.cm
 import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.collections import Crop, Coord, Range, BoundingBox
+from rastools.settings import Crop, Coord, Range, BoundingBox
 from rastools.windows.progress_dialog import ProgressDialog
 from rastools.windows.figure_canvas import FigureCanvas
 

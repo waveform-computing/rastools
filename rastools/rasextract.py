@@ -45,7 +45,7 @@ except ImportError:
 
 from rastools.rasutility import (
     RasUtility, RasChannelEmptyError, RasChannelProcessor)
-from rastools.collections import BoundingBox, Coord, Range
+from rastools.settings import BoundingBox, Coord, Range
 
 
 DPI = 72.0

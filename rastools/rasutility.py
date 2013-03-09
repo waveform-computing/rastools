@@ -38,7 +38,7 @@ except ImportError:
     optcomplete = None
 
 from rastools.terminal import TerminalApplication
-from rastools.collections import Percentile, Range, Crop, Coord
+from rastools.settings import Percentile, Range, Crop, Coord
 
 class RasUtility(TerminalApplication):
     """Base class for ras terminal utilities.
