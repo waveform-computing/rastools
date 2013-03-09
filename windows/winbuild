@@ -25,23 +25,45 @@ function get_address() {
 }
 
 function wait_for_state() {
-    # Wait up to 30 seconds for the instance to enter the required state
+    # Wait up to 60 seconds for the instance to enter the required state
     local required_state=$1
     local current_state=""
     local timeout=60
     local start=$(date +%s)
     while [ $(date +%s) -lt $((start + timeout)) ]; do
         current_state=$(get_state)
-        if [ "$current_state" = "$required_state" ]; then
-            break
-        fi
+        [ "$current_state" = "$required_state" ] && return 0
         echo "Waiting for $required_state state (currently: $current_state)"
         sleep 2
     done
-    if [ "$current_state" != "$required_state" ]; then
-        echo "Timed out waiting for $required_state state" >&2
-        return 1
-    fi
+    echo "Timed out waiting for $required_state state" >&2
+    return 1
+}
+
+function update_ssh_config() {
+    awk "BEGIN {state=\"begin\";}
+         \$1==\"Host\" && \$2==\"winbuild\" {state=\"winbuild\";}
+         \$1==\"Hostname\" && state==\"winbuild\" {
+         print \"  Hostname $(get_address)\";
+             state=\"done\";
+             next;
+         }
+         {print;}" $HOME/.ssh/config > $HOME/.ssh/config.new
+    mv $HOME/.ssh/config.new $HOME/.ssh/config
+}
+
+function wait_for_ssh() {
+    # Wait up to 60 seconds for the SSH daemon to become available
+    local host=$1
+    local timeout=60
+    local start=$(date +%s)
+    while [ $(date +%s) -lt $((start + timeout)) ]; do
+        ssh $host "true" && return 0
+        echo "Waiting for SSH daemon to become available"
+        sleep 10
+    done
+    echo "SSH daemon is still not available" >&2
+    return 1
 }
 
 case $1 in
@@ -54,16 +76,9 @@ case $1 in
         ec2start "$INSTANCE"
         wait_for_state "running"
         echo "Instance $INSTANCE started"
-        awk "BEGIN {state=\"begin\";}
-             \$1==\"Host\" && \$2==\"winbuild\" {state=\"winbuild\";}
-             \$1==\"Hostname\" && state==\"winbuild\" {
-             print \"  Hostname $(get_address)\";
-                 state=\"done\";
-                 next;
-             }
-             {print;}" $HOME/.ssh/config > $HOME/.ssh/config.new
-        mv $HOME/.ssh/config.new $HOME/.ssh/config
-        echo "Updated ssh config with host $ADDRESS"
+        update_ssh
+        echo "Updated ssh config with new host address"
+        wait_for_ssh winbuild
         ;;
 
     stop)
