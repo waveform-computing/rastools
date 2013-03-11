@@ -112,68 +112,6 @@ PACKAGE_DATA = {
         ],
     }
 
-OPTIONS = {}
-EXTRA_OPTIONS = {}
-
-# Windows specific packaging hacks
-if py2exe:
-    import sys
-    import matplotlib
-    from glob import glob
-    # Path to the MSVCRT90 redistributable stuff
-    MSVCRT_PATH = os.path.abspath(os.path.join(
-        os.path.dirname(__file__), '..', 'redist'))
-    # Hack to permit py2exe to find MSVCP90.dll
-    sys.path.append(MSVCRT_PATH)
-    OPTIONS['py2exe'] = {
-        'compressed': True,
-        # Tell py2exe not to try and import the Py3k specific stuff from PyQt4,
-        # and exclude all non-Qt GUI stuff
-        'excludes': [
-            'PyQt4.uic.port_v3',
-            '_gtkagg', '_tkagg', '_wxagg',
-            'Tkconstants', 'Tkinter', 'tcl', 'wx',
-            ],
-        }
-    EXTRA_OPTIONS = {
-        # py2exe needs a bit of help figuring out what things to include for
-        # MSVCRT and where to stick matplotlib's stuff...
-        'data_files': [
-            ('Microsoft.VC90.CRT', glob(os.path.join(MSVCRT_PATH, '*')))
-            ] + matplotlib.get_py2exe_datafiles(),
-        'console': [],
-        'windows': [],
-        }
-    # Fill out the data_files list below. No idea why py2exe can't just use the
-    # setuptools package_data list...
-    for package, patterns in PACKAGE_DATA.items():
-        source = package.replace('.', os.sep)
-        for pattern in patterns:
-            target, pattern = os.path.split(pattern)
-            EXTRA_OPTIONS['data_files'].append(
-                (os.path.join(source, target), glob(os.path.join(source, target, pattern)))
-                )
-    # Fill out the console and GUI entry points below. No idea why py2exe can't
-    # just use the setuptools entry points...
-    for entry_point_group, target_key in [
-            ('console_scripts', 'console'),
-            ('gui_scripts',     'windows'),
-            ]:
-        for entry_point in ENTRY_POINTS[entry_point_group]:
-            # Extract module/package name from the entry point
-            entry_point = entry_point.split('=', 1)[1].strip().split(':', 1)[0]
-            # Convert the module/package name to a file path
-            entry_point = os.path.join(HERE, entry_point.replace('.', os.path.sep))
-            if os.path.isdir(entry_point):
-                entry_point = os.path.join(entry_point, '__init__.py')
-            else:
-                entry_point += '.py'
-            EXTRA_OPTIONS[target_key].append(entry_point)
-
-# Mac specific packaging hacks
-if py2app:
-    OPTIONS['py2app'] = {}
-
 
 def main():
     setup(
@@ -194,8 +132,6 @@ def main():
         zip_safe             = False,
         test_suite           = 'rastools',
         entry_points         = ENTRY_POINTS,
-        options              = OPTIONS,
-        **EXTRA_OPTIONS
         )
 
 if __name__ == '__main__':

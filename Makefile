@@ -130,12 +130,12 @@ $(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS)
 	# launched separately - see windows/winbuild)
 	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
 	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
-	ssh winbuild "cd $(ROOT_TARGET); python setup.py py2exe"
-	ssh winbuild "cd $(ROOT_TARGET); python windows/configure.py windows/template.wxs $(NAME).wxs"
-	ssh winbuild "cd $(ROOT_TARGET); candle -nologo -out $(NAME).wixobj $(NAME).wxs"
-	ssh winbuild "cd $(ROOT_TARGET); light -nologo -ext WixUIExtension -out $(NAME)-$(VER).msi $(NAME).wixobj"
+	ssh winbuild "cd $(ROOT_TARGET); TEMP=/tmp python ../pyinstaller/utils/Build.py windows/rastools.spec"
+	ssh winbuild "cd $(ROOT_TARGET); python windows/configure.py windows/template.wxs windows/$(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); candle -nologo -out windows/$(NAME).wixobj windows/$(NAME).wxs"
+	ssh winbuild "cd $(ROOT_TARGET); light -nologo -ext WixUIExtension -out dist/$(NAME)-$(VER).msi windows/$(NAME).wixobj"
 	mkdir -p dist
-	scp -B winbuild:$(ROOT_TARGET)/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
+	scp -B winbuild:$(ROOT_TARGET)/dist/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
 release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
 	$(MAKE) clean

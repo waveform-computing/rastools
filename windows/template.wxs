@@ -15,7 +15,7 @@
         <Media Id="1" Cabinet="rastools.cab" EmbedCab="yes" />
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder" Name="PFiles">
-                <Directory Id="INSTALLDIR" Name="RasTools" FileSource="dist">
+                <Directory Id="INSTALLDIR" Name="RasTools" FileSource="windows\dist">
                     <Component Id="rasinfo.exe"><File Name="rasinfo.exe" /></Component>
                     <Component Id="rasdump.exe"><File Name="rasdump.exe" /></Component>
                     <Component Id="rasextract.exe"><File Name="rasextract.exe" /></Component>
@@ -67,8 +67,6 @@
                 <ComponentRef Id="rasinfo.exe" />
             </Feature>
         </Feature>
-        <Icon Id="DesktopIcon.exe" SourceFile="dist\rasviewer.exe" />
-        <Icon Id="StartMenuIcon.exe" SourceFile="dist\rasviewer.exe" />
         <UIRef Id="WixUI_FeatureTree" />
         <UIRef Id="WixUI_ErrorProgressText" />
     </Product>

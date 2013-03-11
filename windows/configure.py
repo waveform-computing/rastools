@@ -19,7 +19,6 @@ from xml.etree.ElementTree import fromstring, tostring, SubElement, _namespace_m
 
 # Find the various paths
 MY_PATH = os.path.dirname(__file__)
-PROJECT_PATH = os.path.dirname(MY_PATH)
 
 # Set the WiX namespace as the default to prevent namespace prefixes in output
 XMLNS = 'http://schemas.microsoft.com/wix/2006/wi'
@@ -98,10 +97,26 @@ def add_components(path, dir_elem):
             add_components(fullname, child_elem)
 
 
+def fix_icons(product_elem, dir_elem, current_dir):
+    for file_elem in dir_elem.findall('./{%s}Component/{%s}File' % (XMLNS, XMLNS)):
+        for shortcut_elem in file_elem.findall('./{%s}Shortcut' % XMLNS):
+            icon_id = shortcut_elem.attrib.get('Icon')
+            if icon_id:
+                icon_elem = product_elem.find('./{%s}Icon[@Id="%s"]' % (XMLNS, icon_id))
+                if icon_elem is None:
+                    icon_elem = SubElement(product_elem, '{%s}Icon' % XMLNS)
+                    icon_elem.attrib['Id'] = icon_id
+                icon_elem.attrib['SourceFile'] = os.path.join(
+                    current_dir, file_elem.attrib['Name'])
+    for sub_dir_elem in dir_elem.findall('./{%s}Directory' % XMLNS):
+        fix_icons(product_elem, sub_dir_elem, os.path.join(
+            current_dir, sub_dir_elem.attrib['Name']))
+
+
 def configure_wxs(
         template=os.path.join(MY_PATH, 'template.wxs'),
-        output=os.path.join(PROJECT_PATH, 'rastools.wxs'),
-        source_dir=os.path.join(PROJECT_PATH, 'dist'),
+        output=os.path.join(MY_PATH, 'rastools.wxs'),
+        source_dir=os.path.join(MY_PATH, 'dist'),
         encoding='utf-8'):
     # Open the WiX installer template
     with io.open(template, 'rb') as f:
@@ -115,6 +130,7 @@ def configure_wxs(
     install_dir = product.find('.//{%s}Directory[@Id="INSTALLDIR"]' % XMLNS)
     install_dir.attrib['FileSource'] = source_dir
     add_components(source_dir, install_dir)
+    fix_icons(product, install_dir, source_dir)
     # Find the default <Feature> element or create one if it doesn't exist
     default_feature = product.find('.//{%s}Feature[@Id="DefaultFeature"]' % XMLNS)
     all_features = product.findall('.//{%s}Feature' % XMLNS)
