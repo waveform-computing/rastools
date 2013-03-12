@@ -18,6 +18,9 @@ gui_scripts = {
     }
 scripts = console_scripts | gui_scripts
 
+def is_gui(script):
+    return script in gui_scripts
+
 analyses = {
     script: Analysis(
                 scripts=[os.path.join('rastools', script + '.py')],
@@ -27,7 +30,8 @@ analyses = {
                     'wx',
                     'matplotlib.backends._wxagg',
                     'matplotlib.backends._tkagg',
-                    ]
+                    ],
+                runtime_hooks=['rthook_pyqt4.py']
                 )
     for script in scripts
     }
@@ -41,9 +45,10 @@ exes = {
         debug=False,
         strip=None,
         upx=True,
+        icon=os.path.join('..', 'icons', 'ico', script + '.ico') if is_gui(script) else None,
         # For some reason this doesn't work!
         #console=(script in console_scripts))
-        console=(script != 'rasviewer'))
+        console=not is_gui(script))
     for script, analysis in analyses.items()
     }
 
