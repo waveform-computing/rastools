@@ -27,9 +27,10 @@ from __future__ import (
 
 import os
 
+import pkg_resources
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.windows import UI_DIR
+from rastools.windows import get_ui_file
 
 
 class OpenDialog(QtGui.QDialog):
@@ -37,7 +38,7 @@ class OpenDialog(QtGui.QDialog):
 
     def __init__(self, parent=None):
         super(OpenDialog, self).__init__(parent)
-        self.ui = uic.loadUi(os.path.join(UI_DIR, 'open_dialog.ui'), self)
+        self.ui = uic.loadUi(get_ui_file('open_dialog.ui'), self)
         # Read the last-used lists
         self.settings = self.parent().settings
         self.settings.beginGroup('last_used')

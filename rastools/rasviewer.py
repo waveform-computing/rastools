@@ -27,7 +27,9 @@ from __future__ import (
     )
 
 import sys
+import atexit
 
+import pkg_resources
 import sip
 for api in ('QDate', 'QDateTime', 'QTime', 'QString', 'QTextStream', 'QUrl', 'QVariant'):
     sip.setapi(api, 2)
@@ -52,6 +54,7 @@ def main(args=None):
     global APPLICATION, MAIN_WINDOW
     if args is None:
         args = sys.argv
+    atexit.register(pkg_resources.cleanup_resources)
     APPLICATION = QtGui.QApplication(args)
     APPLICATION.setApplicationName('rasviewer')
     APPLICATION.setApplicationVersion(__version__)

@@ -23,9 +23,10 @@ from __future__ import (
 
 import os
 
+import pkg_resources
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.windows import UI_DIR
+from rastools.windows import get_ui_file
 
 
 class ProgressDialog(QtGui.QDialog):
@@ -34,7 +35,7 @@ class ProgressDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         super(ProgressDialog, self).__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.ui = uic.loadUi(os.path.join(UI_DIR, 'progress_dialog.ui'), self)
+        self.ui = uic.loadUi(get_ui_file('progress_dialog.ui'), self)
         self.cancelled = False
 
     def _get_task(self):

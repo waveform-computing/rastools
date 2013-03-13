@@ -27,9 +27,10 @@ from __future__ import (
 
 import os
 
+import pkg_resources
 from PyQt4 import QtCore, QtGui, uic
 
-from rastools.windows import UI_DIR, get_icon
+from rastools.windows import get_icon, get_ui_file
 from rastools.windows.open_dialog import OpenDialog
 from rastools.windows.single_layer_window import SingleLayerWindow
 from rastools.windows.multi_layer_window import MultiLayerWindow
@@ -40,7 +41,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.ui = uic.loadUi(os.path.join(UI_DIR, 'main_window.ui'), self)
+        self.ui = uic.loadUi(get_ui_file('main_window.ui'), self)
         # Read configuration
         self.settings = QtCore.QSettings()
         self.settings.beginGroup('main_window')

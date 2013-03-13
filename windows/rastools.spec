@@ -2,11 +2,12 @@
 
 import os
 import sys
+import glob
 
 # Need to insert the current directory in order to import setup (because
 # PyInstaller is relying on execfile...)
 sys.path.insert(0, os.getcwd())
-from setup import ENTRY_POINTS
+from setup import ENTRY_POINTS, PACKAGE_DATA
 
 console_scripts = {
     entry_point.split('=')[0].rstrip()
@@ -18,9 +19,6 @@ gui_scripts = {
     }
 scripts = console_scripts | gui_scripts
 
-def is_gui(script):
-    return script in gui_scripts
-
 analyses = {
     script: Analysis(
                 scripts=[os.path.join('rastools', script + '.py')],
@@ -31,7 +29,7 @@ analyses = {
                     'matplotlib.backends._wxagg',
                     'matplotlib.backends._tkagg',
                     ],
-                runtime_hooks=['rthook_pyqt4.py']
+                runtime_hooks=[os.path.join('windows', 'rthook_pyqt4.py')]
                 )
     for script in scripts
     }
@@ -44,11 +42,11 @@ exes = {
         name=os.path.join('build', 'pyi.' + sys.platform, script, script + '.exe'),
         debug=False,
         strip=None,
-        upx=True,
-        icon=os.path.join('..', 'icons', 'ico', script + '.ico') if is_gui(script) else None,
+        upx=False,
+        icon=os.path.join('icons', 'ico', script + '.ico') if (script == 'rasviewer') else None,
         # For some reason this doesn't work!
         #console=(script in console_scripts))
-        console=not is_gui(script))
+        console=(script != 'rasviewer'))
     for script, analysis in analyses.items()
     }
 
@@ -63,4 +61,12 @@ collect = [
         )
     ]
 
-dist = COLLECT(*collect, strip=None, upx=True, name='dist')
+data = [
+    (filename, filename, 'DATA')
+    for package, paths in PACKAGE_DATA.items()
+    for path in paths
+    for filename in glob.glob(os.path.join(*(package.split('.') + [path])))
+    ]
+
+
+dist = COLLECT(data, *collect, strip=None, upx=False, name='dist')

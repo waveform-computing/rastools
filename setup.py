@@ -64,6 +64,7 @@ REQUIRES = [
     # picked up first ... yes, it's backwards ...
     'matplotlib',
     'numpy',
+    'distribute',
     ]
 
 EXTRA_REQUIRES = {
@@ -129,7 +130,7 @@ def main():
         platforms            = 'ALL',
         install_requires     = REQUIRES,
         extras_require       = EXTRA_REQUIRES,
-        zip_safe             = False,
+        zip_safe             = True,
         test_suite           = 'rastools',
         entry_points         = ENTRY_POINTS,
         )

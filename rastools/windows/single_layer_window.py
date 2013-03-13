@@ -37,7 +37,6 @@ import matplotlib.image
 from PyQt4 import QtCore, QtGui, uic
 
 from rastools.settings import Coord, Range, BoundingBox
-from rastools.windows import UI_DIR
 from rastools.windows.progress_dialog import ProgressDialog
 from rastools.windows.figure_canvas import FigureCanvas
 from rastools.windows.sub_window import SubWindow
@@ -51,8 +50,7 @@ class SingleLayerWindow(SubWindow):
         self._data_sorted = None
         self._data_cropped = None
         super(SingleLayerWindow, self).__init__(
-            os.path.join(UI_DIR, 'single_layer_window.ui'),
-            data_file, channel_file)
+            'single_layer_window.ui', data_file, channel_file)
 
     def _config_interface(self):
         super(SingleLayerWindow, self)._config_interface()

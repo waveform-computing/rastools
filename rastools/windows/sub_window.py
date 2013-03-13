@@ -34,9 +34,11 @@ import matplotlib
 from matplotlib.figure import Figure
 import matplotlib.cm
 import matplotlib.image
+import pkg_resources
 from PyQt4 import QtCore, QtGui, uic
 
 from rastools.settings import Crop, Coord, Range, BoundingBox
+from rastools.windows import get_ui_file
 from rastools.windows.progress_dialog import ProgressDialog
 from rastools.windows.figure_canvas import FigureCanvas
 
@@ -70,10 +72,7 @@ class SubWindow(QtGui.QWidget):
     def _load_interface(self, ui_file):
         "Called by __init__ to load the Qt interface file"
         self.ui = None
-        self.ui = uic.loadUi(
-            os.path.abspath(
-                os.path.join(os.path.dirname(__file__), ui_file)),
-            self)
+        self.ui = uic.loadUi(get_ui_file(ui_file), self)
 
     def _load_data(self, data_file, channel_file=None):
         "Called by __init__ to load the data file"
