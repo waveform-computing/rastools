@@ -23,6 +23,7 @@ DEB_SOURCES:=debian/changelog \
 	debian/source/include-binaries \
 	debian/$(NAME).manpages \
 	$(wildcard debian/*.desktop)
+LICENSES:=LICENSE.txt LICENSE.rtf
 SUBDIRS:=icons $(NAME)/windows/fallback-theme
 
 # Calculate path names for remote builds
@@ -84,7 +85,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags
+	rm -fr build/ dist/ $(NAME).egg-info/ tags $(LICENSES)
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
@@ -93,29 +94,38 @@ clean:
 tags: $(PY_SOURCES)
 	ctags -R --exclude="build/*" --exclude="windows/*" --exclude="docs/*" --languages="Python"
 
+LICENSE.txt:
+	wget http://www.gnu.org/licenses/gpl-3.0.txt -O $@
+
+LICENSE.odt:
+	wget http://www.gnu.org/licenses/gpl-3.0.odt -O $@
+
+LICENSE.rtf: LICENSE.odt
+	unoconv -d document -f rtf --stdout $< > $@
+
 $(SUBDIRS):
 	$(MAKE) -C $@
 
 $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 
-$(DIST_TAR): $(PY_SOURCES) $(SUBDIRS)
+$(DIST_TAR): $(PY_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats gztar
 
-$(DIST_ZIP): $(PY_SOURCES) $(SUBDIRS)
+$(DIST_ZIP): $(PY_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats zip
 
-$(DIST_EGG): $(PY_SOURCES) $(SUBDIRS)
+$(DIST_EGG): $(PY_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
-$(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES) $(SUBDIRS)
+$(DIST_RPM): $(PY_SOURCES) $(MAN_PAGES) $(SUBDIRS) $(LICENSES)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_rpm \
 		--source-only \
 		--doc-files README.rst,LICENSE.txt \
 		--requires python,python-matplotlib,python-qt4
 	# XXX Add man-pages to RPMs ... how?
 
-$(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS)
+$(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -124,24 +134,23 @@ $(DIST_DEB): $(PY_SOURCES) $(MAN_PAGES) $(DEB_SOURCES) $(SUBDIRS)
 	mkdir -p dist/
 	cp ../$(NAME)_$(VER)-1~ppa1_all.deb dist/
 
-$(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS)
+$(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS) $(LICENSES)
 	# build the MSI package on the remote winbuild instance (on EC2) then
 	# copy it back to this machine (the script assumes winbuild has been
 	# launched separately - see windows/winbuild)
 	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
 	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
-	ssh winbuild "cd $(ROOT_TARGET); \
-		TEMP=/tmp python ../pyinstaller/utils/Build.py windows/rastools.spec"
-	ssh winbuild "cd $(ROOT_TARGET); \
-		python windows/configure.py windows/template.wxs windows/$(NAME).wxs"
-	ssh winbuild "cd $(ROOT_TARGET); \
-		candle -nologo -out windows/$(NAME).wixobj windows/$(NAME).wxs"
-	ssh winbuild "cd $(ROOT_TARGET); \
+	ssh winbuild "\
+		cd $(ROOT_TARGET); \
+		rm -fr windows/dist/; \
+		TEMP=/tmp python ../pyinstaller/utils/Build.py windows/rastools.spec; \
+		python windows/configure.py windows/template.wxs windows/$(NAME).wxs; \
+		candle -nologo -out windows/$(NAME).wixobj windows/$(NAME).wxs; \
 		light -nologo -ext WixUIExtension -out dist/$(NAME)-$(VER).msi windows/$(NAME).wixobj"
 	mkdir -p dist
 	scp -B winbuild:$(ROOT_TARGET)/dist/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
-release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
+release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
@@ -151,7 +160,7 @@ release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s release-$(VER) -m "Release $(VER)"
 
-upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS)
+upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(MAKE) clean
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload

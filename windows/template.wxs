@@ -67,6 +67,7 @@
                 <ComponentRef Id="rasinfo.exe" />
             </Feature>
         </Feature>
+        <WixVariable Id="WixUILicenseRtf" Value="..\LICENSE.rtf" />
         <UIRef Id="WixUI_FeatureTree" />
         <UIRef Id="WixUI_ErrorProgressText" />
     </Product>
