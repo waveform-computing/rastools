@@ -423,6 +423,12 @@
              <layout class="QGridLayout" name="red_percentile_layout">
               <item row="0" column="0">
                <widget class="QSlider" name="red_percentile_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -442,6 +448,12 @@
               </item>
               <item row="0" column="1">
                <widget class="QDoubleSpinBox" name="red_percentile_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -455,6 +467,12 @@
               </item>
               <item row="1" column="0">
                <widget class="QSlider" name="red_percentile_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure red</string>
                 </property>
@@ -477,6 +495,12 @@
               </item>
               <item row="1" column="1">
                <widget class="QDoubleSpinBox" name="red_percentile_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure red</string>
                 </property>
@@ -553,6 +577,12 @@
               </item>
               <item row="0" column="4">
                <widget class="QDoubleSpinBox" name="red_value_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -560,6 +590,12 @@
               </item>
               <item row="1" column="4">
                <widget class="QDoubleSpinBox" name="red_value_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure red</string>
                 </property>
@@ -567,6 +603,12 @@
               </item>
               <item row="1" column="0" colspan="4">
                <widget class="QSlider" name="red_value_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure red</string>
                 </property>
@@ -593,6 +635,12 @@
               </item>
               <item row="0" column="0" colspan="4">
                <widget class="QSlider" name="red_value_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -650,6 +698,12 @@
              <layout class="QGridLayout" name="green_percentile_layout">
               <item row="1" column="0">
                <widget class="QSlider" name="green_percentile_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure green</string>
                 </property>
@@ -672,6 +726,12 @@
               </item>
               <item row="1" column="1">
                <widget class="QDoubleSpinBox" name="green_percentile_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure green</string>
                 </property>
@@ -688,6 +748,12 @@
               </item>
               <item row="0" column="1">
                <widget class="QDoubleSpinBox" name="green_percentile_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -701,6 +767,12 @@
               </item>
               <item row="0" column="0">
                <widget class="QSlider" name="green_percentile_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -754,6 +826,12 @@
              <layout class="QGridLayout" name="green_value_layout">
               <item row="0" column="4">
                <widget class="QDoubleSpinBox" name="green_value_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -761,6 +839,12 @@
               </item>
               <item row="1" column="4">
                <widget class="QDoubleSpinBox" name="green_value_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure green</string>
                 </property>
@@ -791,6 +875,12 @@
               </item>
               <item row="0" column="0" colspan="4">
                <widget class="QSlider" name="green_value_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -804,6 +894,12 @@
               </item>
               <item row="1" column="0" colspan="4">
                <widget class="QSlider" name="green_value_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure green</string>
                 </property>
@@ -878,6 +974,12 @@
              <layout class="QGridLayout" name="blue_percentile_layout">
               <item row="0" column="1">
                <widget class="QDoubleSpinBox" name="blue_percentile_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -891,6 +993,12 @@
               </item>
               <item row="1" column="0">
                <widget class="QSlider" name="blue_percentile_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure blue</string>
                 </property>
@@ -913,6 +1021,12 @@
               </item>
               <item row="1" column="1">
                <widget class="QDoubleSpinBox" name="blue_percentile_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile above which all counts will be mapped to pure blue</string>
                 </property>
@@ -929,6 +1043,12 @@
               </item>
               <item row="0" column="0">
                <widget class="QSlider" name="blue_percentile_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>The percentile below which all counts will be mapped to black</string>
                 </property>
@@ -982,6 +1102,12 @@
              <layout class="QGridLayout" name="blue_value_layout">
               <item row="0" column="0" colspan="4">
                <widget class="QSlider" name="blue_value_from_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -995,6 +1121,12 @@
               </item>
               <item row="0" column="4">
                <widget class="QDoubleSpinBox" name="blue_value_from_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts below this value will be mapped to black</string>
                 </property>
@@ -1002,6 +1134,12 @@
               </item>
               <item row="1" column="4">
                <widget class="QDoubleSpinBox" name="blue_value_to_spinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure blue</string>
                 </property>
@@ -1022,6 +1160,12 @@
               </item>
               <item row="1" column="0" colspan="4">
                <widget class="QSlider" name="blue_value_to_slider">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="toolTip">
                  <string>All counts above this value will be mapped to pure blue</string>
                 </property>
