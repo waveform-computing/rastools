@@ -13,7 +13,6 @@ import os
 import io
 import re
 import sys
-import uuid
 from xml.etree.ElementTree import fromstring, tostring, SubElement, _namespace_map
 
 
@@ -123,7 +122,6 @@ def configure_wxs(
         document = fromstring(f.read().decode(encoding))
     # Replace Product[@Id] to force "major upgrade" semantics
     product = document.find('{%s}Product' % XMLNS)
-    product.attrib['Id'] = str(uuid.uuid1()).upper()
     # XXX Fix Manufacturer, Name, and Version attributes
     # Construct Component/File elements for all files under source_dir
     # (ignoring any entries that are already present)
