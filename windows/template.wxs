@@ -1,36 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product
-        Id="BA051E9D-673C-472C-8B36-499E0AF0FE33"
+        Id="*"
         Manufacturer="Waveform"
         Name="RasTools"
         Version="0.4"
         Language="1033"
         UpgradeCode="4F8B8A32-32FB-4022-8908-CF98B89BA00C">
+
         <Package
             Description="A suite of applications for handling SSRL scan data"
             Comments="RasTools installer"
-            InstallerVersion="200"
+            InstallerVersion="300"
+            InstallScope="perMachine"
             Compressed="yes" />
         <Media Id="1" Cabinet="rastools.cab" EmbedCab="yes" />
+        <MajorUpgrade
+            DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit."
+            AllowSameVersionUpgrades="no" />
+
         <Directory Id="TARGETDIR" Name="SourceDir">
-            <Directory Id="ProgramFilesFolder" Name="PFiles">
-                <Directory Id="INSTALLDIR" Name="RasTools" FileSource="windows\dist">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLDIR" Name="[ProductName]" FileSource="windows\dist">
                     <Component Id="rasinfo.exe"><File Name="rasinfo.exe" /></Component>
                     <Component Id="rasdump.exe"><File Name="rasdump.exe" /></Component>
                     <Component Id="rasextract.exe"><File Name="rasextract.exe" /></Component>
                     <Component Id="rasviewer.exe">
                         <File Name="rasviewer.exe">
                             <Shortcut
-                                Id="desktopShortcut"
+                                Id="DesktopShortcut"
                                 Directory="DesktopFolder"
                                 Name="RasViewer"
-                                WorkingDirectory="INSTALLDIR"
                                 Advertise="yes"
                                 Icon="DesktopIcon.exe"
                                 IconIndex="0" />
                             <Shortcut
-                                Id="menuShortcut"
+                                Id="MenuShortcut"
                                 Directory="ProgramMenuDir"
                                 Name="RasViewer"
                                 Advertise="yes"
@@ -42,22 +47,25 @@
             </Directory>
             <Directory Id="DesktopFolder" />
             <Directory Id="ProgramMenuFolder">
-                <Directory Id="ProgramMenuDir" Name="RasTools">
+                <Directory Id="ProgramMenuDir" Name="[ProductName]">
                     <Component Id="StartMenuShortcuts" Guid="4868E555-D5CC-4279-874C-2F232F09BC8F">
                         <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
-                        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Type="string" Value="" />
-                        <Shortcut Id="UninstallProduct" Name="Uninstall" Description="Uninstalls RasTools" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
+                        <RegistryValue
+                            Root="HKMU" Key="Software\[Manufacturer]\[ProductName]"
+                            Type="integer" Name="StartMenuShortCut" Value="1"
+                            KeyPath="yes" />
                     </Component>
                 </Directory>
             </Directory>
         </Directory>
+
         <Feature
-            Id="Complete"
-            Title="The rastools package"
+            Id="RootFeature"
+            Title="[ProductName]"
             Display="expand"
             ConfigurableDirectory="INSTALLDIR">
             <Feature Id="DefaultFeature" Display="hidden" />
-            <Feature Id="GUIFeature" Title="GUI application (rasviewer)">
+            <Feature Id="GUIFeature" Title="Graphical applications">
                 <ComponentRef Id="StartMenuShortcuts" />
                 <ComponentRef Id="rasviewer.exe" />
             </Feature>
@@ -67,6 +75,7 @@
                 <ComponentRef Id="rasinfo.exe" />
             </Feature>
         </Feature>
+
         <WixVariable Id="WixUILicenseRtf" Value="..\LICENSE.rtf" />
         <UIRef Id="WixUI_FeatureTree" />
         <UIRef Id="WixUI_ErrorProgressText" />
