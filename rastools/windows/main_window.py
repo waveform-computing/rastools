@@ -234,7 +234,7 @@ class MainWindow(QtGui.QMainWindow):
 <p>Version {version}</p>
 <p>{application} is a visual previewer for the content of .RAS and
 .DAT files from the SSRL facility. Project homepage is at
-<a href="http://www.waveform.org.uk/trac/rastools/">http://www.waveform.org.uk/trac/rastools/</a></p>
+<a href="http://www.waveform.org.uk/rastools/">http://www.waveform.org.uk/rastools/</a></p>
 <p>Copyright 2012 Dave Hughes &lt;dave@waveform.org.uk&gt;</p>""")).format(
                 application=QtGui.QApplication.instance().applicationName(),
                 version=QtGui.QApplication.instance().applicationVersion(),
