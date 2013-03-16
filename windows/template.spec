@@ -46,7 +46,7 @@ exes = {
         icon=os.path.join('icons', 'ico', script + '.ico') if (script in [@GUI_SCRIPTS@]) else None,
         # For some reason this doesn't work!
         #console=(script in console_scripts))
-        console=(script not in [@GUI_SCRIPTS@])
+        console=(script not in [@GUI_SCRIPTS@]))
     for script, analysis in analyses.items()
     }
 

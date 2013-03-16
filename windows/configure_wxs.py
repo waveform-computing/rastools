@@ -17,9 +17,9 @@ import subprocess
 from xml.etree.ElementTree import fromstring, tostring, SubElement, _namespace_map
 
 
-MY_PATH = os.path.abspath(os.path.dirname(__file__))
-NAME = subprocess.check_output(['python', os.path.join(os.path.dirname(MY_PATH), 'setup.py'), '--name'])
-VERSION = subprocess.check_output(['python', os.path.join(os.path.dirname(MY_PATH), 'setup.py'), '--version'])
+MY_PATH = os.path.dirname(__file__)
+NAME = subprocess.check_output(['python', os.path.join(MY_PATH, '..', 'setup.py'), '--name']).strip()
+VERSION = subprocess.check_output(['python', os.path.join(MY_PATH, '..', 'setup.py'), '--version']).strip()
 # Set the WiX namespace as the default to prevent namespace prefixes in output
 XMLNS = 'http://schemas.microsoft.com/wix/2006/wi'
 _namespace_map[XMLNS] = ''

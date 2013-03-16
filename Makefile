@@ -14,7 +14,7 @@ PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
 DOC_SOURCES:=$(wildcard docs/*.rst)
-MSI_SOURCES:=windows/configure.py windows/template.wxs
+MSI_SOURCES:=windows/configure_spec.py windows/template.spec windows/configure_wxs.py windows/template.wxs
 DEB_SOURCES:=debian/changelog \
 	debian/control \
 	debian/copyright \
@@ -138,9 +138,9 @@ $(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS) $(LICENSES)
 	# build the MSI package on the remote winbuild instance (on EC2) then
 	# copy it back to this machine (the script assumes winbuild has been
 	# launched separately - see windows/winbuild)
-	#ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
-	#scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
-	rsync -av $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
+	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	#rsync -av $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
 	ssh winbuild "\
 		cd $(ROOT_TARGET); \
 		rm -fr windows/dist/; \
