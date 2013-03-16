@@ -3,8 +3,6 @@
     <Product
         Id="*"
         Manufacturer="Waveform"
-        Name="RasTools"
-        Version="0.4"
         Language="1033"
         UpgradeCode="4F8B8A32-32FB-4022-8908-CF98B89BA00C">
 

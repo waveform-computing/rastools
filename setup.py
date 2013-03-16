@@ -31,20 +31,6 @@ import os
 from setuptools import setup, find_packages
 from utils import description, get_version, require_python
 
-# Attempt to import platform specific build packages; py2exe for Windows,
-# py2app for Mac. Leave placeholders in the case of failed imports so that we
-# can later test what got imported successfully
-try:
-    import py2exe
-    py2app = None
-except ImportError:
-    py2exe = None
-    try:
-        import py2app
-    except:
-        py2app = None
-
-
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 # Workaround <http://bugs.python.org/issue10945>
@@ -57,6 +43,16 @@ except LookupError:
     codecs.register(func)
 
 require_python(0x020600f0)
+
+# All meta-data is defined as global variables so that other modules can query
+# it easily without having to wade through distutils nonsense
+NAME         = 'rastools'
+DESCRIPTION  = 'Tools for converting SSRL scans into images'
+KEYWORDS     = ['science', 'synchrotron']
+AUTHOR       = 'Dave Hughes'
+AUTHOR_EMAIL = 'dave@waveform.org.uk'
+MANUFACTURER = 'waveform'
+URL          = 'https://www.waveform.org.uk/rastools/'
 
 REQUIRES = [
     # For some bizarre reason, matplotlib doesn't "require" numpy in its
@@ -116,22 +112,22 @@ PACKAGE_DATA = {
 
 def main():
     setup(
-        name                 = 'rastools',
-        version              = get_version(os.path.join(HERE, 'rastools', '__init__.py')),
-        description          = 'Tools for converting SSRL scans into images',
+        name                 = NAME,
+        version              = get_version(os.path.join(HERE, NAME, '__init__.py')),
+        description          = DESCRIPTION,
         long_description     = description(os.path.join(HERE, 'README.rst')),
         classifiers          = CLASSIFIERS,
-        author               = 'Dave Hughes',
-        author_email         = 'dave@waveform.org.uk',
-        url                  = 'https://github.com/waveform80/rastools',
-        keywords             = 'science synchrotron',
+        author               = AUTHOR,
+        author_email         = AUTHOR_EMAIL,
+        url                  = URL,
+        keywords             = ' '.join(KEYWORDS),
         packages             = PACKAGES,
         package_data         = PACKAGE_DATA,
         platforms            = 'ALL',
         install_requires     = REQUIRES,
         extras_require       = EXTRA_REQUIRES,
         zip_safe             = True,
-        test_suite           = 'rastools',
+        test_suite           = NAME,
         entry_points         = ENTRY_POINTS,
         )
 

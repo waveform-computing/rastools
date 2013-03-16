@@ -138,17 +138,19 @@ $(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS) $(LICENSES)
 	# build the MSI package on the remote winbuild instance (on EC2) then
 	# copy it back to this machine (the script assumes winbuild has been
 	# launched separately - see windows/winbuild)
-	ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
-	scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	#ssh winbuild "rm -fr $(ROOT_TARGET)/; mkdir $(ROOT_TARGET)"
+	#scp -Br $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
+	rsync -av $(ROOT_SOURCE)/* winbuild:$(ROOT_TARGET)/
 	ssh winbuild "\
 		cd $(ROOT_TARGET); \
 		rm -fr windows/dist/; \
+		python windows/configure_spec.py windows/template.spec windows/$(NAME).spec; \
 		TEMP=/tmp python ../pyinstaller/utils/Build.py windows/rastools.spec; \
-		python windows/configure.py windows/template.wxs windows/$(NAME).wxs; \
+		python windows/configure_wxs.py windows/template.wxs windows/$(NAME).wxs; \
 		candle -nologo -out windows/$(NAME).wixobj windows/$(NAME).wxs; \
 		light -nologo -ext WixUIExtension -out dist/$(NAME)-$(VER).msi windows/$(NAME).wixobj"
 	mkdir -p dist
-	scp -B winbuild:$(ROOT_TARGET)/dist/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
+	#scp -B winbuild:$(ROOT_TARGET)/dist/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
 release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(MAKE) clean
