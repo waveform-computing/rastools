@@ -13,12 +13,13 @@ import os
 import io
 import re
 import sys
+import subprocess
 from xml.etree.ElementTree import fromstring, tostring, SubElement, _namespace_map
 
 
-# Find the various paths
-MY_PATH = os.path.dirname(__file__)
-
+MY_PATH = os.path.abspath(os.path.dirname(__file__))
+NAME = subprocess.check_output(['python', os.path.join(os.path.dirname(MY_PATH), 'setup.py'), '--name'])
+VERSION = subprocess.check_output(['python', os.path.join(os.path.dirname(MY_PATH), 'setup.py'), '--version'])
 # Set the WiX namespace as the default to prevent namespace prefixes in output
 XMLNS = 'http://schemas.microsoft.com/wix/2006/wi'
 _namespace_map[XMLNS] = ''
@@ -120,9 +121,9 @@ def configure_wxs(
     # Open the WiX installer template
     with io.open(template, 'rb') as f:
         document = fromstring(f.read().decode(encoding))
-    # Replace Product[@Id] to force "major upgrade" semantics
     product = document.find('{%s}Product' % XMLNS)
-    # XXX Fix Manufacturer, Name, and Version attributes
+    product.attrib['Name'] = NAME
+    product.attrib['Version'] = VERSION
     # Construct Component/File elements for all files under source_dir
     # (ignoring any entries that are already present)
     install_dir = product.find('.//{%s}Directory[@Id="INSTALLDIR"]' % XMLNS)
