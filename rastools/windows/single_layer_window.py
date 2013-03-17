@@ -49,6 +49,7 @@ class SingleLayerWindow(SubWindow):
         self._data = None
         self._data_sorted = None
         self._data_cropped = None
+        self._range_locked = False
         super(SingleLayerWindow, self).__init__(
             'single_layer_window.ui', data_file, channel_file)
 
@@ -162,6 +163,7 @@ class SingleLayerWindow(SubWindow):
             self.value_to_slider_changed)
         self.ui.value_to_spinbox.valueChanged.connect(
             self.value_to_spinbox_changed)
+        self._range_locked = True
 
     def range_disconnect(self):
         "Disconnects range controls from event handlers"
@@ -174,6 +176,7 @@ class SingleLayerWindow(SubWindow):
             self.value_to_slider_changed)
         self.ui.value_to_spinbox.valueChanged.disconnect(
             self.value_to_spinbox_changed)
+        self._range_locked = False
 
     def percentile_from_slider_changed(self, value):
         "Handler for percentile_from_slider change event"
@@ -252,6 +255,9 @@ class SingleLayerWindow(SubWindow):
         super(SingleLayerWindow, self).crop_changed(value)
         self.invalidate_data_cropped()
         if self.data is not None:
+            save_range_locked = self._range_locked
+            if save_range_locked:
+                self.range_disconnect()
             self.ui.value_from_label.setText(str(self.data_domain.low))
             self.ui.value_to_label.setText(str(self.data_domain.high))
             self.ui.value_from_spinbox.setRange(
@@ -285,6 +291,8 @@ class SingleLayerWindow(SubWindow):
             y_size, x_size = self.data_cropped.shape
             self.ui.x_size_label.setText(str(x_size))
             self.ui.y_size_label.setText(str(y_size))
+            if save_range_locked:
+                self.range_connect()
 
     def default_title_clicked(self):
         "Handler for default_title_button click event"

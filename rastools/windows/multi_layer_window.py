@@ -70,6 +70,7 @@ class MultiLayerWindow(SubWindow):
         self._data_cropped = None
         self._data_normalized = None
         self._data_flat = None
+        self._range_locked = False
         super(MultiLayerWindow, self).__init__(
             'multi_layer_window.ui', data_file, channel_file)
 
@@ -261,6 +262,7 @@ class MultiLayerWindow(SubWindow):
             self.value_to_slider_changed)
         cset.value_to_spinbox.valueChanged.connect(
             self.value_to_spinbox_changed)
+        self._range_locked = True
 
     def range_disconnect(self, cset):
         "Disconnects range controls from event handlers"
@@ -273,6 +275,7 @@ class MultiLayerWindow(SubWindow):
             self.value_to_slider_changed)
         cset.value_to_spinbox.valueChanged.disconnect(
             self.value_to_spinbox_changed)
+        self._range_locked = False
 
     def percentile_from_slider_changed(self, value):
         "Handler for percentile_from_slider change event"
@@ -381,6 +384,9 @@ class MultiLayerWindow(SubWindow):
         super(MultiLayerWindow, self).crop_changed(value)
         self.invalidate_data_cropped()
         if self.data is not None:
+            save_range_locked = self._range_locked
+            if save_range_locked:
+                self.range_disconnect()
             for cset in self._control_sets:
                 cset.value_from_label.setText(
                     str(self.data_domain[cset.index].low))
@@ -417,6 +423,8 @@ class MultiLayerWindow(SubWindow):
             y_size, x_size, _ = self.data_cropped.shape
             self.ui.x_size_label.setText(str(x_size))
             self.ui.y_size_label.setText(str(y_size))
+            if save_range_locked:
+                self._range_connect()
 
     def default_title_clicked(self):
         "Handler for default_title_button click event"
