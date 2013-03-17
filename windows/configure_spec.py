@@ -18,13 +18,13 @@ import subprocess
 MY_PATH = os.path.dirname(__file__)
 NAME = subprocess.check_output(['python', os.path.join(MY_PATH, '..', 'setup.py'), '--name']).strip()
 VERSION = subprocess.check_output(['python', os.path.join(MY_PATH, '..', 'setup.py'), '--version']).strip()
-sys.path.insert(0, os.path.dirname(MY_PATH))
+sys.path.insert(0, os.path.join(MY_PATH, '..'))
 from setup import ENTRY_POINTS
 
 
 def configure_spec(
         template=os.path.join(MY_PATH, 'template.spec'),
-        output=os.path.join(MY_PATH, 'rastools.spec'),
+        output=os.path.join(MY_PATH, NAME + '.spec'),
         encoding='utf-8'):
     # Open the WiX installer template
     with io.open(template, 'rb') as f:
