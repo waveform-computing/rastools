@@ -7,45 +7,22 @@
         UpgradeCode="4F8B8A32-32FB-4022-8908-CF98B89BA00C">
 
         <Package
-            Description="A suite of applications for handling SSRL scan data"
-            Comments="RasTools installer"
             InstallerVersion="300"
             InstallScope="perMachine"
             Compressed="yes" />
-        <Media Id="1" Cabinet="rastools.cab" EmbedCab="yes" />
+        <Media Id="1" Cabinet="disk1.cab" EmbedCab="yes" />
         <MajorUpgrade
             DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit."
             AllowSameVersionUpgrades="no" />
 
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder">
-                <Directory Id="INSTALLDIR" Name="[ProductName]" FileSource="windows\dist">
-                    <Component Id="rasinfo.exe"><File Name="rasinfo.exe" /></Component>
-                    <Component Id="rasdump.exe"><File Name="rasdump.exe" /></Component>
-                    <Component Id="rasextract.exe"><File Name="rasextract.exe" /></Component>
-                    <Component Id="rasviewer.exe">
-                        <File Name="rasviewer.exe">
-                            <Shortcut
-                                Id="DesktopShortcut"
-                                Directory="DesktopFolder"
-                                Name="RasViewer"
-                                Advertise="yes"
-                                Icon="DesktopIcon.exe"
-                                IconIndex="0" />
-                            <Shortcut
-                                Id="MenuShortcut"
-                                Directory="ProgramMenuDir"
-                                Name="RasViewer"
-                                Advertise="yes"
-                                Icon="StartMenuIcon.exe"
-                                IconIndex="0" />
-                        </File>
-                    </Component>
+                <Directory Id="INSTALLDIR" FileSource="windows\dist">
                 </Directory>
             </Directory>
             <Directory Id="DesktopFolder" />
             <Directory Id="ProgramMenuFolder">
-                <Directory Id="ProgramMenuDir" Name="[ProductName]">
+                <Directory Id="ProgramMenuDir">
                     <Component Id="StartMenuShortcuts" Guid="4868E555-D5CC-4279-874C-2F232F09BC8F">
                         <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
                         <RegistryValue
@@ -59,19 +36,9 @@
 
         <Feature
             Id="RootFeature"
-            Title="[ProductName]"
             Display="expand"
             ConfigurableDirectory="INSTALLDIR">
             <Feature Id="DefaultFeature" Display="hidden" />
-            <Feature Id="GUIFeature" Title="Graphical applications">
-                <ComponentRef Id="StartMenuShortcuts" />
-                <ComponentRef Id="rasviewer.exe" />
-            </Feature>
-            <Feature Id="CLIFeature" Title="Command line applications">
-                <ComponentRef Id="rasextract.exe" />
-                <ComponentRef Id="rasdump.exe" />
-                <ComponentRef Id="rasinfo.exe" />
-            </Feature>
         </Feature>
 
         <WixVariable Id="WixUILicenseRtf" Value="..\LICENSE.rtf" />
