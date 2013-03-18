@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Package for rastools GUI elements"""
+"""
+Utility routines for GUI applications using pkg_resources
+"""
 
 from __future__ import (
     unicode_literals,
