@@ -170,9 +170,7 @@ upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
 	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
-	# prompt the user to upload it to the PPA
-	@echo "Now run 'dput waveform-ppa $(NAME)_$(VER)-1~ppa1_source.changes'"
-	@echo "from the home directory"
+	dput waveform-ppa ../$(NAME)_$(VER)-1~ppa1_source.changes
 
 .PHONY: all install develop test doc source egg rpm deb msi dist clean tags release upload $(SUBDIRS)
 
