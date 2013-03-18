@@ -14,7 +14,10 @@ PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
 DOC_SOURCES:=$(wildcard docs/*.rst)
-MSI_SOURCES:=windows/configure_spec.py windows/template.spec windows/configure_wxs.py windows/template.wxs
+MSI_SOURCES:=windows/configure_spec.py \
+	windows/template.spec \
+	windows/configure_wxs.py \
+	windows/template.wxs
 DEB_SOURCES:=debian/changelog \
 	debian/control \
 	debian/copyright \
@@ -161,16 +164,37 @@ release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s release-$(VER) -m "Release $(VER)"
 
-upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
+upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
 	$(MAKE) clean
+	$(MAKE) $(SUBDIRS)
+	$(MAKE) $(LICENSES)
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload
-	# build the deb source archive
+	# build the deb source archive and upload to the PPA
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
 	debuild -S -i -I -Idist -Idocs -Ibuild/sphinx/doctrees -rfakeroot
 	dput waveform-ppa ../$(NAME)_$(VER)-1~ppa1_source.changes
+	# build the binary packages and upload them to the website
+	$(MAKE) deb
+	scp $(DIST_DEB) waveform:$(NAME)/downloads/
+	ssh waveform "cd $(NAME)/downloads; md5sum $(notdir $(DIST_DEB)) > $(notdir $(DIST_DEB)).md5sum"
+	ssh waveform "cd $(NAME)/downloads; sha1sum $(notdir $(DIST_DEB)) > $(notdir $(DIST_DEB)).sha1sum"
+	$(MAKE) rpm
+	scp $(DIST_RPM) waveform:$(NAME)/downloads/
+	ssh waveform "cd $(NAME)/downloads; md5sum $(notdir $(DIST_RPM)) > $(notdir $(DIST_RPM)).md5sum"
+	ssh waveform "cd $(NAME)/downloads; sha1sum $(notdir $(DIST_RPM)) > $(notdir $(DIST_RPM)).sha1sum"
+	$(MAKE) egg
+	scp $(DIST_EGG) waveform:$(NAME)/downloads/
+	ssh waveform "cd $(NAME)/downloads; md5sum $(notdir $(DIST_EGG)) > $(notdir $(DIST_EGG)).md5sum"
+	ssh waveform "cd $(NAME)/downloads; sha1sum $(notdir $(DIST_EGG)) > $(notdir $(DIST_EGG)).sha1sum"
+	$(MAKE) msi
+	scp $(DIST_MSI) waveform:$(NAME)/downloads/
+	ssh waveform "cd $(NAME)/downloads; md5sum $(notdir $(DIST_MSI)) > $(notdir $(DIST_MSI)).md5sum"
+	ssh waveform "cd $(NAME)/downloads; sha1sum $(notdir $(DIST_MSI)) > $(notdir $(DIST_MSI)).sha1sum"
+	# fix the "-latest" redirect to point to the new packages
+	ssh waveform "cd $(NAME)/downloads; sed -i -e '1,1 s/LATEST=.*$$/LATEST=$(VER)/' .htaccess"
 
 .PHONY: all install develop test doc source egg rpm deb msi dist clean tags release upload $(SUBDIRS)
 
