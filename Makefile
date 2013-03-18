@@ -95,7 +95,7 @@ clean:
 	find $(CURDIR) -name "*.pyc" -delete
 
 tags: $(PY_SOURCES)
-	ctags -R --exclude="build/*" --exclude="windows/*" --exclude="docs/*" --languages="Python"
+	ctags -R --exclude="build/*" --exclude="debian/*" --exclude="windows/*" --exclude="docs/*" --languages="Python"
 
 LICENSE.txt:
 	wget http://www.gnu.org/licenses/gpl-3.0.txt -O $@
