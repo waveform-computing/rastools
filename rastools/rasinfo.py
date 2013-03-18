@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Main module for the rasinfo utility."""
+"""
+Main module for the rasinfo utility.
+"""
 
 from __future__ import (
     unicode_literals,
@@ -28,11 +30,12 @@ from __future__ import (
 
 import sys
 
-from rastools.rasutility import RasUtility
+from rastools.terminal import RasApplication
 
 
-class RasInfoUtility(RasUtility):
-    """%prog [options] data-file [channels-file]
+class RasInfoUtility(RasApplication):
+    """
+    %prog [options] data-file [channels-file]
 
     This utility accepts a source RAS file from QSCAN. It extracts and prints
     the information from the RAS file's header. If the optional channels

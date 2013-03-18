@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Main module for the rasextract utility."""
+"""
+Main module for the rasextract utility.
+"""
 
 from __future__ import (
     unicode_literals,
@@ -43,15 +45,16 @@ try:
 except ImportError:
     optcomplete = None
 
-from rastools.rasutility import (
-    RasUtility, RasChannelEmptyError, RasChannelProcessor)
+from rastools.terminal import (
+    RasApplication, RasChannelEmptyError, RasChannelProcessor)
 from rastools.settings import BoundingBox, Coord, Range
 
 
 DPI = 72.0
 
-class RasExtractUtility(RasUtility):
-    """%prog [options] data-file [channel-file]
+class RasExtractUtility(RasApplication):
+    """
+    %prog [options] data-file [channel-file]
 
     This utility accepts a data file and an optional channel definition file.
     For each channel listed in the latter, an image is produced from the

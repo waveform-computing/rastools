@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Main module for the rasdump command line utility"""
+"""
+Main module for the rasdump command line utility
+"""
 
 from __future__ import (
     unicode_literals,
@@ -30,12 +32,13 @@ import os
 import sys
 import logging
 
-from rastools.rasutility import (
-    RasUtility, RasChannelEmptyError, RasChannelProcessor)
+from rastools.terminal import (
+    RasApplication, RasChannelEmptyError, RasChannelProcessor)
 
 
-class RasDumpUtility(RasUtility):
-    """%prog [options] data-file [channels-file]
+class RasDumpUtility(RasApplication):
+    """
+    %prog [options] data-file [channels-file]
 
     This utility accepts a data file and an optional channel definition file.
     For each channel listed in the latter (or all channels if none is
