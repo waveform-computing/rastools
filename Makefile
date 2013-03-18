@@ -164,10 +164,7 @@ release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s release-$(VER) -m "Release $(VER)"
 
-upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
-	$(MAKE) clean
-	$(MAKE) $(SUBDIRS)
-	$(MAKE) $(LICENSES)
+upload: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload
 	# build the deb source archive and upload to the PPA
