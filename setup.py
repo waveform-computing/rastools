@@ -90,10 +90,10 @@ ENTRY_POINTS = {
         'rasinfo = rastools.rasinfo:main',
         'rasextract = rastools.rasextract:main',
         'rasdump = rastools.rasdump:main',
-    ],
+        ],
     'gui_scripts': [
         'rasviewer = rastools.rasviewer:main',
-    ]
+        ],
     }
 
 PACKAGES = [
