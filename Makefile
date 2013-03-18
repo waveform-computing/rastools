@@ -151,7 +151,7 @@ $(DIST_MSI): $(PY_SOURCES) $(MSI_SOURCES) $(SUBDIRS) $(LICENSES)
 	mkdir -p dist
 	scp -B winbuild:$(ROOT_TARGET)/dist/$(NAME)-$(VER).msi $(ROOT_SOURCE)/dist
 
-release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES) $(SUBDIRS) $(LICENSES)
+release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
 	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
