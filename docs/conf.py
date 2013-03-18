@@ -19,6 +19,8 @@ from __future__ import (
     )
 
 import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from rastools import __version__
 
 YEAR = 2013
 AUTHORS = ['Dave Hughes']
@@ -58,7 +60,7 @@ copyright = '%d, %s' % (YEAR, ', '.join(AUTHORS))
 # built documents.
 #
 # The short X.Y version.
-version = '0.4'
+version = __version__
 # The full version, including alpha/beta/rc tags.
 release = version
 
