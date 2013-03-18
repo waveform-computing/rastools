@@ -1,3 +1,11 @@
+rastools (0.5-1~ppa1) precise; urgency=low
+
+  * Fixed issue with panning around zoomed images while the range controls
+    are active; percentile controls remain static when doing this now
+  * Lots of work on Windows packaging and bug-fixing
+
+ -- Dave Hughes <dave@waveform.org.uk>  Mon, 18 Mar 2013 01:41:55 +0000
+
 rastools (0.4-1~ppa1) precise; urgency=low
 
   * Fixed several bugs (after adding functional tests)
