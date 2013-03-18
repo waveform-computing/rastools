@@ -1,6 +1,6 @@
 Source: rastools
 Maintainer: Dave Hughes <dave@waveform.org.uk>
-Homepage: https://github.com/waveform80/rastools
+Homepage: https://www.waveform.org.uk/rastools/
 Section: science
 Priority: extra
 Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
