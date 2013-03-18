@@ -10,29 +10,12 @@ into images. Various simple manipulations (cropping, percentiles, histograms,
 color-maps) are supported. Most tools are command line based, but a Qt-based
 GUI is also included.
 
-This package is available in .deb form from ppa://waveform/ppa and the source
-can be obtained from `GitHub <https://github.com/waveform80/rastools>`_.
 
+Installation
+============
 
-Pre-requisites
-==============
-
-rastools depends primarily on `matplotlib
-<http://matplotlib.sourceforge.net>`_. If you wish to use the GUI you will also
-need `PyQt4 <http://www.riverbankcomputing.com/software/pyqt/download>`_
-installed. On Linux these, and other dependencies should be automatically
-handled assuming you install from a .deb package. On Windows, it is probably
-simplest to install one of the pre-built Python distributions that includes
-matplotlib like the `Enthought Python Distribution
-<http://enthought.com/products/epd.php>`_ or `Python (x,y)
-<http://code.google.com/p/pythonxy/>`_ (both of these include matplotlib and
-PyQt4).
-
-Additional optional dependencies are:
-
- * `xlwt <http://pypi.python.org/pypi/xlwt>`_ - required for Excel writing support
-
- * `GIMP <http://www.gimp.org/>`_ - required for GIMP (.xcf) writing support
+The `project homepage <http://www.waveform.org.uk/rastools/>`_ has links to
+packages or instructions for all supported platforms.
 
 
 Tools Overview
