@@ -82,7 +82,7 @@ function wait_for_ssh() {
 
 case $1 in
     desktop)
-        rdesktop -xb -f -r disk:home=$HOME -r clipboard:CLIPBOARD -r sound:local -u winbuild -p - $(get_address)
+        rdesktop -P -z -xb -f -r disk:home=$HOME -r clipboard:CLIPBOARD -u winbuild -p - $(get_address)
         ;;
 
     start)
