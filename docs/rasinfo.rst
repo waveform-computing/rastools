@@ -1,3 +1,5 @@
+.. _rasinfo:
+
 =======
 rasinfo
 =======
@@ -7,12 +9,14 @@ information from the RAS file's header. If the optional channels definition
 file is also specified, then channels will be named in the output as they would
 be with rasextract.
 
+
 Synopsis
 ========
 
 ::
 
   $ rasinfo [options] data-file [channels-file]
+
 
 Description
 ===========
@@ -62,8 +66,10 @@ channels in .RAS files will be unnamed.
    output information about individual channels in addition to header details
    (note: this requires reading the entire file which can take some time)
 
+
 Examples
 ========
+
 
 Basic Usage
 -----------
@@ -117,6 +123,7 @@ The following is an example of basic usage of rasinfo, including
     line 4
     line 5
     and the final line
+
 
 Substitution Templates
 ----------------------
@@ -197,3 +204,4 @@ and :option:`rasextract -o` options::
     {channel_name}=
     {channel_enabled}=True
     ...
+

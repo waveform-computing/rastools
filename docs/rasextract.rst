@@ -1,3 +1,5 @@
+.. _rasextract:
+
 ==========
 rasextract
 ==========
@@ -8,12 +10,14 @@ corresponding channel in the RAS file. Various options are provided for
 customizing the output including percentile limiting, color-mapping, and
 drawing of axes and titles.
 
+
 Synopsis
 ========
 
 ::
 
   $ rasextract [options] data-file [channel-file]
+
 
 Description
 ===========
@@ -154,8 +158,10 @@ unnamed.
    if specified, produce a single output file with multiple layers or pages,
    one per channel (only available with certain formats)
 
+
 Examples
 ========
+
 
 Basic Usage
 -----------
@@ -211,6 +217,7 @@ standard MATLAB "jet" colormap::
     Writing channel 13 (ICR) to JAN12_CHINAFISH_HZ_13_ICR.png
     Writing channel 14 (Ni) to JAN12_CHINAFISH_HZ_14_Ni.png
 
+
 Help Lists
 ----------
 
@@ -237,8 +244,8 @@ options also exist to, for example, list the available image formats::
     .xcf
 
 Note that, depending on your installation and the availability of certain
-external utilities (like `GIMP <http://www.gimp.org>`_) certain formats may not
-be available.
+external utilities (like `GIMP`_) certain formats may not be available.
+
 
 Substitution Templates
 ----------------------
@@ -324,6 +331,7 @@ Will produce titles like this within the image:
 
 Note that the backslash-n (\\n) escape sequence was used to generate line-breaks within the template.
 
+
 Advanced Usage
 --------------
 
@@ -381,3 +389,7 @@ percentile, one could use the following command line::
     Writing channel 7 (Ca) to fish_C07_P90.0.tiff
     Writing channel 9 (HHH) to fish_C09_P90.0.tiff
     Writing channel 10 (Cr) to fish_C10_P90.0.tiff
+
+
+.. _GIMP: http://www.gimp.org
+

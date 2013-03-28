@@ -1,12 +1,15 @@
+.. _index:
+
 ========
 Welcome!
 ========
 
-rastools is a small suite of utilities for converting data files obtained from
-SSRL (Stanford Synchrotron Radiation Lightsource) scans (.RAS and .DAT files)
-into images. Various simple manipulations (cropping, percentiles, histograms,
-color-maps) are supported. Most tools are command line based, but a Qt-based
-GUI is also included.
+`RasTools`_ is a small suite of utilities for converting data files obtained
+from `Stanford Synchrotron Radiation Lightsource`_ (SSRL) scans (.RAS and .DAT
+files) into images. Various simple manipulations (cropping, percentiles,
+histograms, color-maps) are supported. Most tools are command line based, but a
+Qt-based GUI is also included which incorporates the functionality of the
+command line tools for convenience.
 
 
 Contents
@@ -30,3 +33,5 @@ Indices and tables
 * :ref:`search`
 .. * :ref:`modindex`
 
+.. _RasTools: https://www.waveform.org.uk/rastools/
+.. _Stanford Synchrotron Radiation Lightsource: http://www-ssrl.slac.stanford.edu/
