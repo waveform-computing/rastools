@@ -28,8 +28,14 @@ from __future__ import (
     )
 
 import os
+import sys
 from setuptools import setup, find_packages
-from utils import description, get_version, require_python
+from setuptools.command.test import test as TestCommand
+
+if not sys.version_info >= (2, 7):
+    raise ValueError('This package requires Python 2.7 or above')
+if sys.version_info[0] == 3 and not sys.version_info >= (3, 2):
+    raise ValueError('This package requires Python 3.2 or above')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -42,94 +48,65 @@ except LookupError:
     func = lambda name, enc=ascii: {True: enc}.get(name=='mbcs')
     codecs.register(func)
 
-require_python(0x020600f0)
+# All meta-data is defined as global variables in the package root so that
+# other modules can query it easily without having to wade through distutils
+# nonsense
+import rastools as app
 
-# All meta-data is defined as global variables so that other modules can query
-# it easily without having to wade through distutils nonsense
-NAME         = 'rastools'
-DESCRIPTION  = 'Tools for converting SSRL scans into images'
-KEYWORDS     = ['science', 'synchrotron']
-AUTHOR       = 'Dave Hughes'
-AUTHOR_EMAIL = 'dave@waveform.org.uk'
-MANUFACTURER = 'waveform'
-URL          = 'https://www.waveform.org.uk/rastools/'
+# Add a py.test based "test" command
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = [
+            '--cov', app.__name__,
+            '--cov-report', 'term-missing',
+            '--cov-report', 'html',
+            '--cov-config', 'coverage.cfg',
+            'tests',
+            ]
+        self.test_suite = True
 
-REQUIRES = [
-    # For some bizarre reason, matplotlib doesn't "require" numpy in its
-    # setup.py. The ordering below is also necessary to ensure numpy gets
-    # picked up first ... yes, it's backwards ...
-    'matplotlib',
-    'numpy',
-    'distribute',
-    ]
-
-EXTRA_REQUIRES = {
-    'XLS':        ['xlwt'],
-    'completion': ['optcomplete'],
-    'GUI':        ['pyqt'],
-    }
-
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'Environment :: Console',
-    'Environment :: Win32 (MS Windows)',
-    'Environment :: X11 Applications :: Qt',
-    'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Operating System :: Unix',
-    'Programming Language :: Python :: 2.6',
-    'Programming Language :: Python :: 2.7',
-    'Topic :: Multimedia :: Graphics',
-    'Topic :: Scientific/Engineering',
-    ]
-
-ENTRY_POINTS = {
-    'console_scripts': [
-        'rasinfo = rastools.rasinfo:main',
-        'rasextract = rastools.rasextract:main',
-        'rasdump = rastools.rasdump:main',
-        ],
-    'gui_scripts': [
-        'rasviewer = rastools.rasviewer:main',
-        ],
-    }
-
-PACKAGES = [
-    'rastools',
-    'rastools.windows',
-    ]
-
-PACKAGE_DATA = {
-    'rastools.windows': [
-        '*.ui',
-        os.path.join('fallback-theme', '*.png'),
-        os.path.join('fallback-theme', '*.svg'),
-        ],
-    }
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
 
 
 def main():
-    setup(
-        name                 = NAME,
-        version              = get_version(os.path.join(HERE, NAME, '__init__.py')),
-        description          = DESCRIPTION,
-        long_description     = description(os.path.join(HERE, 'README.rst')),
-        classifiers          = CLASSIFIERS,
-        author               = AUTHOR,
-        author_email         = AUTHOR_EMAIL,
-        url                  = URL,
-        keywords             = ' '.join(KEYWORDS),
-        packages             = PACKAGES,
-        package_data         = PACKAGE_DATA,
-        platforms            = 'ALL',
-        install_requires     = REQUIRES,
-        extras_require       = EXTRA_REQUIRES,
-        zip_safe             = True,
-        test_suite           = NAME,
-        entry_points         = ENTRY_POINTS,
-        )
+    import io
+    with io.open(os.path.join(HERE, 'README.rst'), 'r') as readme:
+        setup(
+            name                 = app.__name__,
+            version              = app.__version__,
+            description          = app.__doc__,
+            long_description     = readme.read(),
+            classifiers          = app.__classifiers__,
+            author               = app.__author__,
+            author_email         = app.__author_email__,
+            url                  = app.__url__,
+            license              = [
+                c.rsplit('::', 1)[1].strip()
+                for c in app.__classifiers__
+                if c.startswith('License ::')
+                ][0],
+            keywords             = ' '.join(app.__keywords__),
+            packages             = ['rastools', 'rastools.windows'],
+            package_data         = {
+                'rastools.windows': [
+                    '*.ui',
+                    os.path.join('fallback-theme', '*.png'),
+                    os.path.join('fallback-theme', '*.svg'),
+                    ],
+                },
+            platforms            = app.__platforms__,
+            install_requires     = app.__requires__,
+            extras_require       = app.__extra_requires__,
+            zip_safe             = True,
+            entry_points         = app.__entry_points__,
+            tests_require        = ['pytest-cov', 'pytest', 'mock'],
+            cmdclass             = {'test': PyTest},
+            )
 
 if __name__ == '__main__':
     main()
+

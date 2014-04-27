@@ -5,11 +5,19 @@ PYTHON=python
 PYFLAGS=
 DEST_DIR=/
 
+# Horrid hack to ensure setuptools is installed in our python environment. This
+# is necessary with Python 3.3's venvs which don't install it by default.
+ifeq ($(shell python -c "import setuptools" 2>&1),)
+SETUPTOOLS:=
+else
+SETUPTOOLS:=$(shell wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py -O - | $(PYTHON))
+endif
+
 # Calculate the base names of the distribution, the location of all source,
 # documentation, packaging, icon, and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
-PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print 'py%d.%d' % sys.version_info[:2]")
+PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print('py%d.%d' % sys.version_info[:2])")
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(NAME).egg-info/SOURCES.txt)
@@ -47,7 +55,7 @@ MAN_PAGES=$(MAN_DIR)/rasextract.1 $(MAN_DIR)/rasdump.1 $(MAN_DIR)/rasinfo.1
 all:
 	@echo "make install - Install on local system"
 	@echo "make develop - Install symlinks for development"
-	@echo "make test - Run tests through nose environment"
+	@echo "make test - Run tests"
 	@echo "make doc - Generate HTML and PDF documentation"
 	@echo "make source - Create source package"
 	@echo "make egg - Generate a PyPI egg package"
@@ -64,6 +72,7 @@ install: $(SUBDIRS)
 
 doc: $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b html
+	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b latex
 	$(MAKE) -C build/sphinx/latex all-pdf
 
@@ -83,7 +92,7 @@ develop: tags
 	$(PYTHON) $(PYFLAGS) setup.py develop
 
 test:
-	nosetests -w tests/
+	$(PYTHON) $(PYFLAGS) setup.py test
 
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean

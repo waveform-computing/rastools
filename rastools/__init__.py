@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # rastools.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Implementation of the rastools package.
-"""
+"A suite of tools for converting SSRL scans into images"
 
 from __future__ import (
     unicode_literals,
@@ -28,4 +26,55 @@ from __future__ import (
     )
 
 __version__ = '0.5'
+__author__       = 'Dave Hughes'
+__author_email__ = 'dave@waveform.org.uk'
+__url__          = 'https://www.waveform.org.uk/rastools/'
+__platforms__    = ['ALL']
+
+__classifiers__ = [
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Environment :: Win32 (MS Windows)',
+    'Environment :: X11 Applications :: Qt',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Programming Language :: Python :: 2.6',
+    'Programming Language :: Python :: 2.7',
+    'Topic :: Multimedia :: Graphics',
+    'Topic :: Scientific/Engineering',
+    ]
+
+__keywords__ = [
+    'science',
+    'synchrotron',
+    ]
+
+__requires__ = [
+    # For some bizarre reason, matplotlib doesn't "require" numpy in its
+    # setup.py. The ordering below is also necessary to ensure numpy gets
+    # picked up first ... yes, it's backwards ...
+    'matplotlib',
+    'numpy',
+    'distribute',
+    ]
+
+__extra_requires__ = {
+    'XLS':        ['xlwt'],
+    'completion': ['optcomplete'],
+    'GUI':        ['pyqt'],
+    }
+
+__entry_points__ = {
+    'console_scripts': [
+        'rasinfo = rastools.rasinfo:main',
+        'rasextract = rastools.rasextract:main',
+        'rasdump = rastools.rasdump:main',
+        ],
+    'gui_scripts': [
+        'rasviewer = rastools.rasviewer:main',
+        ],
+    }
 
