@@ -25,6 +25,7 @@ from __future__ import (
     division,
     )
 
+__project__ = 'rastools'
 __version__ = '0.5'
 __author__       = 'Dave Hughes'
 __author_email__ = 'dave@waveform.org.uk'
