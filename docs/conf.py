@@ -110,9 +110,9 @@ latex_documents = [
 # -- Options for manual page output ---------------------------------------
 
 man_pages = [
-    ('rasinfo',    'rasinfo',    'rasinfo utility',        AUTHORS, 1),
-    ('rasdump',    'rasdump',    'rasdump utility',        AUTHORS, 1),
-    ('rasextract', 'rasextract', 'rasextract utility',     AUTHORS, 1),
+    ('rasinfo',    'rasinfo',    'rasinfo utility',        _setup.__author__, 1),
+    ('rasdump',    'rasdump',    'rasdump utility',        _setup.__author__, 1),
+    ('rasextract', 'rasextract', 'rasextract utility',     _setup.__author__, 1),
 ]
 
 #man_show_urls = False
